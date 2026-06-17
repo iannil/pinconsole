@@ -109,13 +109,14 @@ marketing-monitor/
 
 按优先级排序：
 
-1. **页面编辑器**（拖拽 / 低代码 / JSON schema → Go 模板渲染）—— 切片 2-3
-2. **自定义域名**（DNS 验证 + Let's Encrypt ACME + Host-header 路由）—— 1-2 周
-3. **Tauri 桌面端**（Win + Mac，复用 admin SPA）—— 1 个月
-4. **反爬加固**（CAPTCHA + honeypot + 动态类名/ID）—— 2-3 周
-5. **SSO / SAML / OIDC**（企业）—— 2 周
-6. **分析仪表盘**（漏斗 / 热力图 / 停留）—— 1-2 个月
-7. **多租户**（激活预留的 tenant_id，配额/隔离）—— 取决于商业化方向
+1. **1h-ui admin 登录 UI**（v1 收尾，2026-06-18 拆出）：LoginView + Vue Router 守卫 + useAuth composable + 401 拦截重定向 + `/api/auth/me` 集成。spec 来源：`docs/reports/completed/2026-06-17-slice-1h-spec.md` 决策 #5（单独抽出）。估时 2-3 天
+2. **页面编辑器**（拖拽 / 低代码 / JSON schema → Go 模板渲染）—— 切片 2-3
+3. **自定义域名**（DNS 验证 + Let's Encrypt ACME + Host-header 路由）—— 1-2 周
+4. **Tauri 桌面端**（Win + Mac，复用 admin SPA）—— 1 个月
+5. **反爬加固**（CAPTCHA + honeypot + 动态类名/ID）—— 2-3 周
+6. **SSO / SAML / OIDC**（企业）—— 2 周
+7. **分析仪表盘**（漏斗 / 热力图 / 停留）—— 1-2 个月
+8. **多租户**（激活预留的 tenant_id，配额/隔离）—— 取决于商业化方向
 
 ## 9. 未敲定的实施层细节
 

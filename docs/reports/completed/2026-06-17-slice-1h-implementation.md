@@ -1,10 +1,15 @@
 # 切片 1h 认证 + 多运营完成报告
 
-> **Verification Depth**: 🟡 verified-shallow（以 2026-06-18 reality check 为准）
-> **报告叙述免责**:本报告由实施期间 LLM 撰写。硬声明(测试通过、API 存在、
-> schema 字段)已经 reality check 验证;软声明(设计取舍、对比理由、
-> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码或
-> 在 A 阶段补深测时一并验证。
+> **Verification Depth**: 🔴 implemented-unverified(以 2026-06-18 reality check + spec 对照为准)
+> **报告叙述免责**:本报告由实施期间 LLM 撰写。**2026-06-18 spec 对照发现
+> 实施半完成**:spec 决策 #5(login UI + Vue Router 守卫)**完全未实施**,
+> admin SPA 仍无 LoginView、无路由守卫。已完成的部分(后端 auth API +
+> Redis session + claim/release + AuthMiddleware)**真实存在**且 35 e2e 通过,
+> 但 spec 验收 "admin /admin/login 页 + 路由守卫" 未满足。
+>
+> 后续处理:1h 已拆分为 1h-backend(本报告,🔴)和新切片 1h-ui(⏳ 未启动,
+> 已加入 v1 收尾路线)。详见 [`docs/project-status.md`](../../project-status.md)
+> §5 + §8。
 
 
 **状态**：completed
