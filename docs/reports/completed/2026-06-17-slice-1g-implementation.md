@@ -1,9 +1,15 @@
 # 切片 1g 弹窗 + 聊天完成报告
 
+> **Verification Depth**: 🟢 verified-deep（以 2026-06-18 reality check 为准）
+> **报告叙述免责**:本报告由实施期间 LLM 撰写。硬声明(测试通过、API 存在、
+> schema 字段)已经 reality check 验证;软声明(设计取舍、对比理由、
+> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码或
+> 在 A 阶段补深测时一并验证。
+
+
 **状态**：completed
 **完成时间**：2026-06-17
-**对应 progress**：[`docs/progress/2026-06-17-slice-1g-implementation.md`](../../progress/2026-06-17-slice-1g-implementation.md)
-**规格来源**：[`docs/progress/2026-06-17-slice-1g-spec.md`](../../progress/2026-06-17-slice-1g-spec.md)
+**对应 spec**：[`2026-06-17-slice-1g-spec.md`](./2026-06-17-slice-1g-spec.md)
 
 ## Summary
 

@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-17
+**最后更新**：2026-06-18（v1 全切片代码已交付 + reality check 完成）
 
 ---
 
@@ -40,7 +40,9 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**Pre-code**。规划完成（[`PLAN.md`](../PLAN.md)），代码未启动。下一步：切片 1a（仓库骨架）。
+**v1 全切片代码已交付 + reality check 完成(2026-06-18)**。深度分布 🟢×7 / 🟡×2 / 🔴×1。详见 [`docs/project-status.md`](../docs/project-status.md) §5。
+
+下一步优先级:**B 文档对齐(进行中) → A 浅测补深 → C 设计漏洞**。
 
 ### 范围边界
 - **不做**：多租户 SaaS、计费、注册流、营销页
@@ -93,7 +95,41 @@
 
 > 触发条件：发现错误修复模式、踩过的坑、值得未来回顾的判断。
 
-（首次写入，暂无。后续遇到时追加。）
+### 接手项目先做 reality check(2026-06-18)
+
+**Why**:2026-06-18 接手项目时,文档声称 1a-1j 全部 ✅ completed,但实际:
+- 只有 2 个 commit,5K+ 行未提交
+- 1c-1j 完成期间无任何 daily 笔记
+- 多处文档自相矛盾(status doc §2/§5/§7 三处对不上)
+- e2e 测试 39/39 pass 但其中 5 个是浅测(只 `resp.ok()` 或 `if (!length) return` 静默跳过)
+- HeadlessChrome UA ban 是死代码(新版 Playwright UA 是 `Chrome/...`)
+
+只读文档会误判项目真实状态。**先做 reality check 再做架构层判断**。
+
+**How to apply**:接手任何"声称已完成"的项目时,先跑:
+1. 静态:`go vet` + `go build` + `pnpm typecheck` + `pnpm lint`
+2. 单测:`go test ./...` + `pnpm test`
+3. e2e:启动 infra + 跑 Playwright
+4. 手测最小链路
+5. 看测试是否真验证(读断言、找静默跳过)
+6. 看文档是否内部一致
+
+### 切片"完成"必须有深度判定
+
+**Why**:若完成报告只标"✅ done",未来 Claude 会把所有切片视为同等可信。实际 1a-1g 是端到端深度验证(🟢),1h/1i 是 e2e 通过但浅(🟡),1j 是零专属测试(🔴)。
+
+**How to apply**:每份完成报告顶部加深度 badge;深度判定遵循 [`docs/standards/verification-depth.md`](../docs/standards/verification-depth.md) R2 rubric。新增测试时要说明升级了哪个切片的深度。
+
+### 浅测的常见模式(自动降级 🟡)
+
+**Why**:1h/1i 测试 pass 但没真验证功能,这是常见的"假绿"模式。
+
+**How to apply**:看到以下任一,自动判定为 🟡:
+- `if (!x.length) return;` 类静默跳过(空 DB 时测试不报错但不验证)
+- 断言只是 `expect(resp.ok()).toBeTruthy()`(没验证返回内容)
+- 测试名说"端到端"但实际只调 `request.post('/api/...')`(无 UI 流)
+- 测试名说"中间件存在"但只 GET `/healthz`(没触发中间件逻辑)
+- 安全/边界类切片(认证/反爬/跳转)缺负向测试(没测 401/403/429)
 
 ---
 
@@ -107,6 +143,7 @@
 | Claude 工作指南 | [`CLAUDE.md`](../CLAUDE.md) |
 | 文档规范 | [`docs/standards/doc-structure.md`](../docs/standards/doc-structure.md) |
 | 命名规范 | [`docs/standards/naming-conventions.md`](../docs/standards/naming-conventions.md) |
+| 验证深度判定标准 | [`docs/standards/verification-depth.md`](../docs/standards/verification-depth.md) |
 | 每日笔记（流层） | [`memory/daily/`](./daily/) |
 
 ---
