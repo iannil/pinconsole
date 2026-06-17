@@ -20,7 +20,7 @@ RUN pnpm --filter @marketing-monitor/admin build && \
     pnpm --filter @marketing-monitor/visitor-sdk build
 
 # ===== Stage 2: Go builder =====
-FROM golang:1.22-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
 WORKDIR /app
 
 RUN apk add --no-cache git ca-certificates

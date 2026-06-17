@@ -45,11 +45,11 @@
 | 🟡 → 🟢 | (a) 替换浅断言为真实行为断言;(b) 若是安全/边界类,补负向测试;(c) 移除静默跳过模式 |
 | 🟢 维持 | 任何重构后必须重新确认上述四项仍满足 |
 
-## 3. 当前分布(2026-06-18 reality check 后)
+## 3. 当前分布(2026-06-18 A 阶段升级后)
 
 详见 [`docs/project-status.md`](../project-status.md) §5。snapshot:
 
-| 切片 | 深度 | 升级所需(若 🟡/🔴) |
+| 切片 | 深度 | 备注 |
 |---|---|---|
 | 1a 骨架 | 🟢 | – |
 | 1b 单向最小 | 🟢 | – |
@@ -58,11 +58,13 @@
 | 1e 双向通道 | 🟢 | – |
 | 1f 表单 + 跳转 | 🟢 | – |
 | 1g 弹窗 + 聊天 | 🟢 | – |
-| 1h 认证 + 多运营 | 🟡 | UI 登录流;未登录 → 401;移除 `if (!length) return` 静默跳过 |
-| 1i 反爬虫 | 🟡 | prod 模式 429 触发;fingerprint 写 PG 验证;FlagSession → Redis 验证 |
-| 1j i18n + 部署 + CI | 🔴 | i18n 切换 e2e;docker-prod 启动 e2e;CI 触发验证 |
+| 1h 认证 + 多运营(后端) | 🔴 | spec partial:决策 #5 login UI 未实施;已拆为 1h-ui 新切片 |
+| 1i 反爬虫 | 🟢 | A 阶段升级:BehaviorTracker 接线 + Go 单测覆盖深度 + e2e 真查 PG fingerprint |
+| 1j i18n + 部署 + CI | 🟢 | A 阶段升级:硬编码抽 key + 语言切换按钮 + 4 个真 e2e + 修 Dockerfile go 版本 bug |
 
 > **分布会变化**:本节 snapshot 可能滞后。永远以 `docs/project-status.md` §5 为准。
+
+> **新警示(2026-06-18)**:reality check 验证测试存在,但 **spec vs 实施对照**才发现 1h/1i/1j 三处重大 gap。深度判定**必须**包含 spec 决策点逐项验证,不只是测试通过。
 
 ## 4. 与完成报告的关系
 

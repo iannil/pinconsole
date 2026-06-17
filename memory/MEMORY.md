@@ -40,9 +40,9 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 全切片代码已交付 + reality check 完成(2026-06-18)**。深度分布 🟢×7 / 🟡×2 / 🔴×1。详见 [`docs/project-status.md`](../docs/project-status.md) §5。
+**v1 切片 1a-1g + 1i + 1j 已深度验证(🟢);1h 拆为 1h-backend(🔴 spec partial) + 1h-ui(⏳ 未启动)**。深度分布 🟢×9 / 🔴×1 + ⏳×1。详见 [`docs/project-status.md`](../docs/project-status.md) §5。
 
-下一步优先级:**B 文档对齐(进行中) → A 浅测补深 → C 设计漏洞**。
+下一步优先级:**B 文档对齐(✅)→ A 浅测补深 + 实施补全(✅)→ C 设计漏洞(待启动)**。
 
 ### 范围边界
 - **不做**：多租户 SaaS、计费、注册流、营销页
@@ -130,6 +130,35 @@
 - 测试名说"端到端"但实际只调 `request.post('/api/...')`(无 UI 流)
 - 测试名说"中间件存在"但只 GET `/healthz`(没触发中间件逻辑)
 - 安全/边界类切片(认证/反爬/跳转)缺负向测试(没测 401/403/429)
+
+### Reality check 必须含 spec vs 实施对照(2026-06-18 升级)
+
+**Why**:2026-06-18 spec 对照发现 1h/1i/1j 三处重大 gap——
+- 1h: spec 决策 #5 "登录 UI + Vue Router 守卫" **完全未实施**(后端做完了,前端 0%)
+- 1i: spec 决策 #3 "行为分析" `BehaviorTracker` 代码完整但 **server/ 零调用方**(死代码)
+- 1j: spec 决策 #1 "i18n 全部" 主视图用 key,**子组件仍硬编码中文**
+
+测试 39/39 通过掩盖了这些 gap,因为测试不验证 spec 决策点是否满足。
+
+**How to apply**:reality check 流程从 6 步升级为 7 步,**新增第 7 步 spec 对照**:
+1. 静态(`go vet` + `go build` + `pnpm typecheck` + `pnpm lint`)
+2. 单测(`go test ./...` + `pnpm test`)
+3. e2e(启动 infra + 跑 Playwright)
+4. 手测最小链路
+5. 看测试是否真验证(读断言、找静默跳过)
+6. 看文档是否内部一致
+7. **新增:逐切片读 spec 决策表 → 逐项 grep 代码 → 标注未实施/未接线/部分实施**
+
+特别警惕:
+- 代码定义完整但**无调用方**(死代码)
+- spec 要求的 UI/view **完全缺失**
+- spec 要求"全部 X"但实际只是"主路径走 X,边缘仍 Y"
+
+### 完成报告 ✅ 不等于 spec 全部 acceptance 满足
+
+**Why**:1h 完成报告写 "completed" 但 spec 验收 "admin /admin/login 页 + 路由守卫" 未满足。LLM 倾向把决策表逐项打勾而不验证代码路径。
+
+**How to apply**:读完成报告时,**对照原 spec 的 acceptance** 而不是看报告自评状态。spec 是 source of truth,报告只是叙述。
 
 ---
 

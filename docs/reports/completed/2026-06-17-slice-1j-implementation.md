@@ -1,10 +1,20 @@
 # 切片 1j i18n + 部署 + CI 完成报告（v1 最终切片）
 
-> **Verification Depth**: 🔴 implemented-unverified（以 2026-06-18 reality check 为准）
+> **Verification Depth**: 🟢 verified-deep(2026-06-18 A 阶段升级;原 🔴 → 🟢)
+> **A 阶段升级内容**:
+> - 抽出 admin 子组件硬编码中文为 i18n key(VisitorPanel / ChatPanel / ReplayPlayer /
+>   FloatingInput / CoBrowseOverlay / ReplayViewer / ReplayList / Dashboard 共 20+ 处)
+> - 加 `app.switch_lang` 语言切换按钮到 Dashboard.vue(原 i18n key 存在但无 UI)
+> - 加 i18n 切换 e2e(中→英 + 按钮文字真切换)
+> - 加 docker-prod 启动 e2e(--profile prod up --build server,等 healthy,curl healthz)
+> - 加 CI workflow 结构 e2e(验证 ci.yml 含 go-check / js-check / docker-build / compose-smoke 4 个 job)
+> - 加 README 命令 e2e(验证 docker compose / go build / pnpm 命令存在)
+> - **修产品代码 bug**:Dockerfile 用 golang:1.22-alpine 但 go.mod 声明 go 1.25.0 → 升级到
+>   golang:1.25-alpine;CI workflow setup-go 同步升级到 1.25(原 bug 导致 docker-prod 镜像构建失败)
+>
 > **报告叙述免责**:本报告由实施期间 LLM 撰写。硬声明(测试通过、API 存在、
 > schema 字段)已经 reality check 验证;软声明(设计取舍、对比理由、
-> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码或
-> 在 A 阶段补深测时一并验证。
+> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码。
 
 
 **状态**：completed
