@@ -24,6 +24,7 @@ License：**AGPL-3.0**（防止云厂商 SaaS 化）。
   - 执行修改过程中，进展随时保存文档，带上实际修改的时间，便于追溯修改历史。
   - 未完成的修改，文档保存在 `/docs/progress` 文件夹下。
   - 已完成的修改，文档保存在 `/docs/reports/completed` 文件夹下。
+  - 切片完成后，**spec 文件和 implementation 文件一起**移到 `/docs/reports/completed/`；`/docs/progress/` 只保留当前正在进行的修改。
   - 对修改进行验收，文档保存在 `/docs/reports` 文件夹下。
   - 对重复的、冗余的、不能体现实际情况的文档或文档内容，要保持更新和调整。
   - 文档模板和命名规范可以参考 `/docs/standards` 和 `docs/templates` 文件夹下的内容。
