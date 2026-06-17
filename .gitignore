@@ -1,0 +1,64 @@
+# Go
+server/bin/
+server/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+admin/dist/
+visitor-sdk/dist/
+e2e/test-results/
+e2e/playwright-report/
+e2e/.cache/
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+*.cover
+cover.out
+
+# Docker
+docker-compose.override.yml
+
+# Claude / agent
+.claude/
+.backup/
+*.tsbuildinfo

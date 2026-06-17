@@ -1,0 +1,9 @@
+node_modules/
+.git/
+server/
+admin/
+visitor-sdk/
+e2e/
+docs/standards/
+docs/templates/
+CHANGELOG.md

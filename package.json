@@ -1,0 +1,39 @@
+{
+  "name": "marketing-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source alternative for real-time visitor monitoring + operator engagement + session replay",
+  "license": "AGPL-3.0-or-later",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,admin,sdk -c blue,green,magenta \"pnpm:dev:server\" \"pnpm:dev:admin\" \"pnpm:dev:sdk\"",
+    "dev:server": "make dev-server",
+    "dev:admin": "pnpm --filter @marketing-monitor/admin dev",
+    "dev:sdk": "pnpm --filter @marketing-monitor/visitor-sdk dev",
+    "build": "pnpm build:admin && pnpm build:sdk && pnpm build:server",
+    "build:admin": "pnpm --filter @marketing-monitor/admin build",
+    "build:sdk": "pnpm --filter @marketing-monitor/visitor-sdk build",
+    "build:server": "make build-server",
+    "test": "pnpm test:go && pnpm test:js && pnpm test:e2e",
+    "test:go": "make test-go",
+    "test:js": "pnpm --filter '@marketing-monitor/admin' --filter '@marketing-monitor/visitor-sdk' --if-present test",
+    "test:e2e": "pnpm --filter @marketing-monitor/e2e test",
+    "lint": "pnpm lint:md && pnpm lint:js && make lint-go",
+    "lint:md": "markdownlint '**/*.md' '#node_modules' '#.git' '#server' '#admin' '#visitor-sdk' '#docs/standards' '#docs/templates'",
+    "lint:js": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix && markdownlint --fix '**/*.md' '#node_modules' '#.git' '#server' '#admin' '#visitor-sdk'",
+    "format": "pnpm -r --if-present format",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "concurrently": "^9.0.1",
+    "husky": "^9.1.6",
+    "markdownlint-cli": "^0.42.0"
+  }
+}

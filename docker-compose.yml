@@ -1,0 +1,111 @@
+# docker-compose for marketing-monitor
+#
+# 默认（dev）profile 仅启动基础设施（PG + Redis + MinIO）。
+# 启动：docker compose up -d
+#
+# prod profile 额外启动 server 容器（从 Dockerfile 构建）。
+# 启动：docker compose --profile prod up -d --build
+#
+# 详见 docs/progress/2026-06-17-slice-1a-spec.md §docker-compose 结构
+
+name: marketing-monitor
+
+networks:
+  mm-net:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER:-mm}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-mm_dev}
+      POSTGRES_DB: ${PG_DB:-marketing_monitor}
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-mm} -d ${PG_DB:-marketing_monitor}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [mm-net]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [mm-net]
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-mm_dev}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-mm_dev_secret}
+    ports:
+      - "${MINIO_PORT_DOCKER:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [mm-net]
+
+  # 仅 prod profile 启动
+  server:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8080"
+      SERVER_ENV: "prod"
+      LOG_LEVEL: "info"
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_USER: ${PG_USER:-mm}
+      PG_PASSWORD: ${PG_PASSWORD:-mm_dev}
+      PG_DB: ${PG_DB:-marketing_monitor}
+      REDIS_ADDR: redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-mm_dev}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-mm_dev_secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-marketing-monitor}
+      MINIO_USE_SSL: "false"
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [mm-net]
+
+volumes:
+  pg-data:
+  redis-data:
+  minio-data:

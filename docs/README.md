@@ -15,8 +15,8 @@
 | 路径 | 用途 | 当前内容 |
 |---|---|---|
 | [`project-status.md`](./project-status.md) | rolling 项目状态（LLM 友好） | 2026-06-17 初始版 |
-| [`progress/`](./progress/) | 进行中或已开始的修改单元（一改一文） | [`2026-06-17-v1-slice-plan.md`](./progress/2026-06-17-v1-slice-plan.md) |
-| [`reports/completed/`](./reports/completed/) | 已完成的修改报告 + 验收证据 | [`2026-06-17-v1-slice-plan.md`](./reports/completed/2026-06-17-v1-slice-plan.md) |
+| [`progress/`](./progress/) | 进行中或已开始的修改单元（一改一文） | [`2026-06-17-v1-slice-plan.md`](./progress/2026-06-17-v1-slice-plan.md)、[`2026-06-17-slice-1a-spec.md`](./progress/2026-06-17-slice-1a-spec.md)、[`2026-06-17-slice-1a-implementation.md`](./progress/2026-06-17-slice-1a-implementation.md)、[`2026-06-17-slice-1b-spec.md`](./progress/2026-06-17-slice-1b-spec.md) |
+| [`reports/completed/`](./reports/completed/) | 已完成的修改报告 + 验收证据 | [`2026-06-17-v1-slice-plan.md`](./reports/completed/2026-06-17-v1-slice-plan.md)、[`2026-06-17-slice-1a-implementation.md`](./reports/completed/2026-06-17-slice-1a-implementation.md) |
 | [`audits/`](./audits/) | 审计发现（冗余/过期/错误梳理） | [`2026-06-17-initial-cleanup.md`](./audits/2026-06-17-initial-cleanup.md) |
 | [`standards/`](./standards/) | 规范（命名、结构、流程） | [`doc-structure.md`](./standards/doc-structure.md)、[`naming-conventions.md`](./standards/naming-conventions.md) |
 | [`templates/`](./templates/) | 各类文档模板 | [`progress.md`](./templates/progress.md)、[`report.md`](./templates/report.md) |

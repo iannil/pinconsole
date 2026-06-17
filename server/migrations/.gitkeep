@@ -1,0 +1,3 @@
+# 此目录用于存放 golang-migrate SQL 文件
+# 创建迁移：make migrate-new NAME=add_users
+# 应用迁移：make migrate-up

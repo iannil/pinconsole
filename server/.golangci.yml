@@ -1,0 +1,46 @@
+run:
+  timeout: 5m
+  go: "1.22"
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+    - misspell
+    - revive
+    - gofmt
+    - goimports
+    - gocritic
+    - nakedret
+    - prealloc
+    - typecheck
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/iannil/marketing-monitor
+  revive:
+    rules:
+      - name: exported
+        disabled: true  # 简化命名约束
+  gosec:
+    excludes:
+      - G104  # unhandled errors（在 errcheck 已覆盖）
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - goconst
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  formats:
+    - format: colored-line-number
+  sort-results: true

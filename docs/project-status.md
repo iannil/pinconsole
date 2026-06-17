@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**：2026-06-17
+**最后更新**：2026-06-17（切片 1b 规格已定，待实施）
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 2. 当前阶段
 
-**Pre-code（规划完成，代码未启动）**
+**Slice 1a 已交付，Slice 1b 规格已定**
 
 | 项 | 状态 |
 |---|---|
@@ -28,7 +28,8 @@
 | 文档规范 | ✅ [`docs/standards/`](./standards/) |
 | LICENSE | ✅ AGPL-3.0 |
 | README | ✅ |
-| 切片 1a（仓库骨架） | ⏳ 未启动 |
+| 切片 1a（仓库骨架） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1a-implementation.md) |
+| 切片 1b（单向最小） | 📋 [规格](./progress/2026-06-17-slice-1b-spec.md)，待实施 |
 
 ## 3. 事实来源优先级（冲突时按此解析）
 
@@ -76,8 +77,8 @@
 
 | 子切片 | 内容 | 状态 |
 |---|---|---|
-| [1a](../PLAN.md) | 仓库骨架（Go + admin SPA + SDK hello world + docker-compose） | ⏳ pending |
-| 1b | 单向最小（SDK 鼠标 → WS → admin 实时显示） | ⏳ pending |
+| [1a](./reports/completed/2026-06-17-slice-1a-implementation.md) | 仓库骨架（Go + admin SPA + SDK hello world + docker-compose） | ✅ completed |
+| 1b | 单向最小（SDK 鼠标 → WS → admin 实时显示） | 📋 已规格化（[spec](./progress/2026-06-17-slice-1b-spec.md)），待实施 |
 | 1c | rrweb 接入（全量采集 + 实时回放） | ⏳ pending |
 | 1d | 录像归档（MinIO + PG 元数据 + 历史回放） | ⏳ pending |
 | 1e | 双向通道（admin overlay → 命令 → SDK 执行） | ⏳ pending |
@@ -100,21 +101,29 @@
 
 ## 7. 下一步动作
 
-**立即可执行**：启动切片 1a（仓库骨架）
+**立即可执行**：启动切片 1b 实施（规格已定，见 [`progress/2026-06-17-slice-1b-spec.md`](./progress/2026-06-17-slice-1b-spec.md)）
 
-具体步骤（参考 [`PLAN.md`](../PLAN.md) §6 仓库布局）：
+具体步骤：
 
-1. 初始化 Go module（`server/`）
-2. 初始化 Vue3 + Vite + TypeScript（`admin/`）
-3. 初始化 TypeScript SDK（`visitor-sdk/`）
-4. 创建 `docker-compose.yml`（PostgreSQL + Redis + MinIO）
-5. 创建 `Makefile` 或顶层脚本（dev / build / test）
-6. 打通 hello world 端到端：访客 SDK 加载 + admin SPA 加载 + 后端启动
-7. 完成 1a 后：
-   - 新建 `docs/progress/{date}-slice-1a-skeleton.md`
-   - 更新本文件 §5 切片状态表（1a → completed）
-   - 新建 `docs/reports/completed/{date}-slice-1a-skeleton.md`
-   - 写当日的 `memory/daily/{date}.md`
+1. 写 3 表 migration（visitors + sessions + event_blobs）
+2. 配置 sqlc，写 queries.sql 生成类型安全查询
+3. 实现 hub + WS handler（`/ws/visitor` + `/ws/operator`）+ MessagePack envelope
+4. SDK 实现 4 类采集器 + transport + 重连
+5. admin 实现 Pinia store + useWs + 两栏 UI
+6. Redis Stream flusher + MinIO 快照
+7. testcontainers 集成测试 + Playwright e2e
+8. 验证 4 个验收场景
+
+切片 1a 已完成（[完成报告](./reports/completed/2026-06-17-slice-1a-implementation.md)）。
+
+可立即开工的日常命令：
+
+```bash
+docker compose up -d      # 启动 infra（PG + Redis + MinIO）
+make install-tools        # 安装 air / golangci-lint / golang-migrate（一次性）
+pnpm dev                  # 启动 Go + admin + SDK playground（热重载）
+make build                # release 单二进制
+```
 
 ## 8. LLM 协作提示
 

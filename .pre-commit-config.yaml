@@ -1,0 +1,59 @@
+# pre-commit 钩子配置
+# 安装：pip install pre-commit && pre-commit install
+# 或：brew install pre-commit && pre-commit install
+# 详细约定见 docs/standards/naming-conventions.md
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.md$'
+      - id: check-yaml
+      - id: check-json
+        exclude: '\.vscode/'
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.42.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', 'markdownlint.json']
+
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        entry: bash -c 'cd server && go fmt ./...'
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+
+      - id: go-vet
+        name: go vet
+        entry: bash -c 'cd server && go vet ./...'
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+
+      - id: golangci-lint
+        name: golangci-lint
+        entry: bash -c 'cd server && golangci-lint run ./...'
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: commitlint
+        name: commitlint
+        entry: pnpm exec commitlint --edit
+        language: system
+        stages: [commit-msg]
+        pass_filenames: false

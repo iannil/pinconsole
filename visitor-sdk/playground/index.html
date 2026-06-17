@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SDK playground</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 4rem auto;
+        padding: 0 1.5rem;
+        line-height: 1.6;
+      }
+      .hint {
+        padding: 1rem;
+        background: #f5f7fa;
+        border-left: 4px solid #409eff;
+        font-family: ui-monospace, monospace;
+        font-size: 0.9rem;
+      }
+      input {
+        padding: 0.5rem;
+        font-size: 1rem;
+        margin: 0.5rem 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SDK playground</h1>
+    <p>切片 1a 的本地开发页。SDK 加载后会在 console 打印一条日志。</p>
+    <div class="hint">
+      打开 DevTools Console 查看：<br />
+      <code>[marketing-monitor] SDK loaded { version: '0.1.0', ... }</code>
+    </div>
+    <h2>表单（占位，1b 起接入事件采集）</h2>
+    <form onsubmit="event.preventDefault()">
+      <label>姓名：<input type="text" placeholder="test" /></label>
+      <label>邮箱：<input type="email" placeholder="test@example.com" /></label>
+      <button type="submit">提交</button>
+    </form>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

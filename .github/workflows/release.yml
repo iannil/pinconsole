@@ -1,0 +1,155 @@
+name: Release
+
+# 触发条件：推送 v*.*.* 格式的 tag
+# 注意：不使用任何不可信输入（issue/PR 内容等），所有变量来自 git ref
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    name: Build artifacts + Docker + GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ===== Go 跨平台构建 =====
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: server/go.sum
+
+      # ===== 前端构建（先于 Go release build，因为要 embed） =====
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install JS deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build admin + SDK
+        run: |
+          pnpm --filter @marketing-monitor/admin build
+          pnpm --filter @marketing-monitor/visitor-sdk build
+
+      - name: Stage frontend into embed path
+        run: |
+          mkdir -p server/cmd/server/embedded/admin
+          mkdir -p server/cmd/server/embedded/sdk
+          mkdir -p server/cmd/server/embedded/landing
+          cp -r admin/dist/. server/cmd/server/embedded/admin/
+          cp -r visitor-sdk/dist/. server/cmd/server/embedded/sdk/
+          cp -r landing/. server/cmd/server/embedded/landing/
+
+      - name: Extract version from tag
+        id: version
+        # GITHUB_REF 是 git ref，非不可信内容（由仓库维护者推送）
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Linux amd64
+        working-directory: server
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          go build \
+            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -tags release \
+            -o ../dist/marketing-monitor-linux-amd64 \
+            ./cmd/server
+
+      - name: Build Linux arm64
+        working-directory: server
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          go build \
+            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -tags release \
+            -o ../dist/marketing-monitor-linux-arm64 \
+            ./cmd/server
+
+      - name: Build macOS arm64
+        working-directory: server
+        env:
+          CGO_ENABLED: '0'
+          GOOS: darwin
+          GOARCH: arm64
+        run: |
+          go build \
+            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -tags release \
+            -o ../dist/marketing-monitor-darwin-arm64 \
+            ./cmd/server
+
+      # ===== 压缩二进制 =====
+      - name: Archive binaries
+        run: |
+          cd dist
+          for f in marketing-monitor-*; do
+            tar -czf "$f.tar.gz" "$f"
+            sha256sum "$f" > "$f.sha256"
+            sha256sum "$f.tar.gz" > "$f.tar.gz.sha256"
+          done
+
+      # ===== GitHub Release =====
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/marketing-monitor-linux-amd64
+            dist/marketing-monitor-linux-amd64.tar.gz
+            dist/marketing-monitor-linux-amd64.sha256
+            dist/marketing-monitor-linux-arm64
+            dist/marketing-monitor-linux-arm64.tar.gz
+            dist/marketing-monitor-linux-arm64.sha256
+            dist/marketing-monitor-darwin-arm64
+            dist/marketing-monitor-darwin-arm64.tar.gz
+            dist/marketing-monitor-darwin-arm64.sha256
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+      # ===== Docker 镜像 =====
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

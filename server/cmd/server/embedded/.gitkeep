@@ -1,0 +1,3 @@
+# 此目录由 build 流程填充（admin/dist + visitor-sdk/dist + landing）
+# release 构建时不能为空（go:embed 要求存在），所以 .gitkeep 不会被嵌入
+# 实际构建时 Makefile/Dockerfile 会先 rm -rf 此目录再复制新内容

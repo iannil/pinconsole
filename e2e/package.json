@@ -1,0 +1,18 @@
+{
+  "name": "@marketing-monitor/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "PWDEBUG=1 playwright test",
+    "report": "playwright show-report",
+    "install-browsers": "playwright install chromium",
+    "lint": "echo 'e2e: lint skipped'"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.7.5"
+  }
+}
