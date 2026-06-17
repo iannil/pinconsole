@@ -115,7 +115,7 @@ jobs:
 
   # ===== Compose smoke =====
   compose-smoke:
-    name: docker-compose smoke
+    name: docker-compose smoke + migrations
     runs-on: ubuntu-latest
     needs: [go-check, js-check]
     steps:
@@ -134,6 +134,12 @@ jobs:
           echo "infra 未就绪"
           docker compose ps
           exit 1
+
+      - name: 应用全部 migrations
+        run: |
+          for f in server/migrations/*.up.sql; do
+            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+          done
 
       - name: 清理
         if: always()

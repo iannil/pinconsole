@@ -1,81 +1,89 @@
 # marketing-monitor
 
-> 构建一款 ToB 实时访客监控 + 运营互动 + 录像回放工具的**开源替代品**，对标某商业竞品。
-> 不考虑客户获取与销售（不做计费、注册、营销页），专注技术核心。
+> 开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。
+> 对标某商业竞品，AGPL-3.0 license，支持自托管。
 
-## 当前状态
+## 项目状态
 
-**Pre-code（规划完成，代码未启动）**
+**v1 已完成** — 全部 10 个切片交付（1a-1j），39 个 e2e + 9 个 Go 单元测试通过。
 
-- ✅ 产品需求：[`START.md`](./START.md)
-- ✅ 架构设计：[`PLAN.md`](./PLAN.md)
-- ✅ 工作指南：[`CLAUDE.md`](./CLAUDE.md)
-- ✅ 项目状态快照：[`docs/project-status.md`](./docs/project-status.md)
-- ⏳ 代码：待启动切片 1a（仓库骨架）
-
-License：**AGPL-3.0**（详见 [`LICENSE`](./LICENSE)）
+| 能力 | 状态 |
+|---|---|
+| 实时访客监控（rrweb 全量采集） | ✅ |
+| 运营 Web admin（Vue3 + Element Plus） | ✅ |
+| co-browsing 双向控制（cursor/click/scroll/fill/navigate） | ✅ |
+| 录像归档 + 历史回放（MinIO + rrweb-player） | ✅ |
+| 弹窗推送 + 双向即时聊天 | ✅ |
+| 认证 + 多运营 claim/release 锁 | ✅ |
+| 反爬虫（rate limit + UA 黑名单 + 行为分析 + fingerprint） | ✅ |
+| 中英双语 i18n | ✅ |
+| Docker Compose 一键部署 | ✅ |
+| GitHub Actions CI/CD | ✅ |
 
 ## 快速开始
 
-> ⚠️ Pre-code 阶段，无 build / test / run 命令。以下占位待切片 1a 启动后填充。
+```bash
+git clone https://github.com/iannil/marketing-monitor
+cd marketing-monitor
+
+# 1. 复制环境配置
+cp .env.example .env
+
+# 2. 启动基础设施
+docker compose up -d
+
+# 3. 应用数据库 migration
+for f in server/migrations/*.up.sql; do
+  docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+done
+
+# 4. 安装前端依赖 + 构建嵌入
+pnpm install
+pnpm --filter @marketing-monitor/admin build
+pnpm --filter @marketing-monitor/visitor-sdk build
+
+# 5. 构建 + 启动 release 单二进制
+mkdir -p server/cmd/server/embedded/{admin,sdk,landing}
+cp -r admin/dist/. server/cmd/server/embedded/admin/
+cp -r visitor-sdk/dist/. server/cmd/server/embedded/sdk/
+cp -r landing/. server/cmd/server/embedded/landing/
+cd server && go build -tags release -o bin/server ./cmd/server
+./bin/server
+
+# 6. 访问
+# 访客落地页：http://localhost:8080/
+# 运营后台：http://localhost:8080/admin
+```
+
+## 生产部署
 
 ```bash
-# 待切片 1a 完成：
-# git clone https://github.com/<owner>/marketing-monitor
-# cd marketing-monitor
-# docker compose up -d           # 起 PG + Redis + MinIO
-# make dev                      # 起后端 + admin SPA + SDK dev server
+# docker compose 完整堆栈（含 server 容器）
+docker compose --profile prod up -d --build
 ```
+
+默认 admin 凭据（env var 可配）：
+- Email: `admin@marketing-monitor.local`
+- Password: `changeme123`
 
 ## 文档导航
 
-### 事实来源（仓库根）
-
-| 文档 | 角色 |
+| 文档 | 用途 |
 |---|---|
-| [`CLAUDE.md`](./CLAUDE.md) | Claude 工作指南（含文档/记忆/可观测性约定） |
-| [`PLAN.md`](./PLAN.md) | v1 架构与切片事实来源 |
-| [`START.md`](./START.md) | 产品需求与竞品分析 |
+| [`CLAUDE.md`](./CLAUDE.md) | Claude 工作指南 + 锁定决策 |
+| [`PLAN.md`](./PLAN.md) | v1 架构 + 切片拆分（事实来源） |
+| [`START.md`](./START.md) | 产品需求 + 竞品分析 |
+| [`docs/project-status.md`](./docs/project-status.md) | 当前项目状态快照 |
+| [`docs/reports/completed/`](./docs/reports/completed/) | 全部切片完成报告 |
 
-### 工作文档（`docs/`）
+## 技术栈
 
-| 路径 | 用途 |
-|---|---|
-| [`docs/project-status.md`](./docs/project-status.md) | **必读**——项目当前状态、决策清单、下一步动作 |
-| [`docs/README.md`](./docs/README.md) | 文档索引 |
-| [`docs/progress/`](./docs/progress/) | 进行中的修改单元 |
-| [`docs/reports/completed/`](./docs/reports/completed/) | 已完成的修改报告 |
-| [`docs/audits/`](./docs/audits/) | 审计发现 |
-| [`docs/standards/`](./docs/standards/) | 文档/命名规范 |
-| [`docs/templates/`](./docs/templates/) | 文档模板 |
-
-### 记忆（`memory/`）
-
-| 路径 | 用途 |
-|---|---|
-| [`memory/MEMORY.md`](./memory/MEMORY.md) | 长期记忆（沉积层） |
-| [`memory/daily/`](./memory/daily/) | 每日笔记（流层） |
-
-## v1 切片路线（详见 [`PLAN.md`](./PLAN.md) §7）
-
-```
-1a 仓库骨架 → 1b 单向最小 → 1c rrweb 接入 → 1d 录像归档
-→ 1e 双向通道 → 1f 表单+跳转 → 1g 弹窗+聊天 → 1h 认证+多运营
-→ 1i 反爬虫 → 1j i18n+部署+CI
-```
-
-v1 估时：solo 全职 14-17 周（3.5-4 个月）；业余 9-12 个月。
-
-v1 之后：页面编辑器、Tauri、自定义域名、反爬加固、SSO、分析仪表盘。
-
-## 给 LLM 的提示
-
-第一次进入此项目时，**先读 [`docs/project-status.md`](./docs/project-status.md)**——它会在 60 秒内告诉你项目做什么、当前进展、下一步、哪些决策不能动。
+- **后端**：Go 1.22+ / Gin / coder/websocket / pgx / Redis / MinIO
+- **前端**：Vue 3 / TypeScript / Vite / Pinia / Element Plus / Vue I18n / rrweb
+- **SDK**：TypeScript / rrweb / MessagePack
+- **存储**：PostgreSQL 16 / Redis 7 / MinIO
+- **部署**：Docker / docker-compose / GitHub Actions
 
 ## License
 
-Copyright (C) 2026 marketing-monitor contributors.
-
-本程序是自由软件：你可以依据 Free Software Foundation 发布的 GNU Affero General Public License（v3 或更新版本）条款重新分发或修改它。
-
-我们分发此程序的目的是希望它有用，但**不提供任何担保**；甚至没有**适销性**或**特定用途适用性**的隐含担保。详见 [`LICENSE`](./LICENSE)。
+AGPL-3.0 — 详见 [`LICENSE`](./LICENSE)

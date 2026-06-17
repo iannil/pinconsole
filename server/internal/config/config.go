@@ -18,6 +18,14 @@ type Config struct {
 	ServerPort string `env:"SERVER_PORT" envDefault:"8080"`
 	Env        string `env:"SERVER_ENV" envDefault:"dev"`
 	LogLevel   string `env:"LOG_LEVEL" envDefault:"info"`
+	// 1f：navigate 命令允许的额外域名（逗号分隔）
+	NavigateAllowedDomains string `env:"NAVIGATE_ALLOWED_DOMAINS" envDefault:""`
+	// 1h：初始 admin 用户
+	AdminEmail    string `env:"ADMIN_EMAIL" envDefault:"admin@marketing-monitor.local"`
+	AdminPassword string `env:"ADMIN_PASSWORD" envDefault:"changeme123"`
+	// 1i：反爬虫
+	RateLimitPerMin int    `env:"RATE_LIMIT_PER_MIN" envDefault:"60"`
+	BannedUAs       string `env:"BANNED_UAS" envDefault:""`
 
 	Postgres  PostgresConfig
 	Redis     RedisConfig

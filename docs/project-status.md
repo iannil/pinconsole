@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**：2026-06-17（切片 1b 规格已定，待实施）
+**最后更新**：2026-06-17（v1 全部完成 🎉）
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 2. 当前阶段
 
-**Slice 1a 已交付，Slice 1b 规格已定**
+**Slice 1a + 1b + 1c + 1d + 1e 已交付，Slice 1f 待启动**
 
 | 项 | 状态 |
 |---|---|
@@ -29,7 +29,11 @@
 | LICENSE | ✅ AGPL-3.0 |
 | README | ✅ |
 | 切片 1a（仓库骨架） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1a-implementation.md) |
-| 切片 1b（单向最小） | 📋 [规格](./progress/2026-06-17-slice-1b-spec.md)，待实施 |
+| 切片 1b（单向最小：SDK→WS→admin 实时） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1b-implementation.md) |
+| 切片 1c（rrweb 接入：实时回放） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1c-implementation.md) |
+| 切片 1d（录像归档 + 历史回放） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1d-implementation.md) |
+| 切片 1e（双向通道：co-browsing） | ✅ [完成报告](./reports/completed/2026-06-17-slice-1e-implementation.md) |
+| 切片 1f（表单 + 跳转：精细化 co-browsing） | ⏳ 未启动 |
 
 ## 3. 事实来源优先级（冲突时按此解析）
 
@@ -78,15 +82,15 @@
 | 子切片 | 内容 | 状态 |
 |---|---|---|
 | [1a](./reports/completed/2026-06-17-slice-1a-implementation.md) | 仓库骨架（Go + admin SPA + SDK hello world + docker-compose） | ✅ completed |
-| 1b | 单向最小（SDK 鼠标 → WS → admin 实时显示） | 📋 已规格化（[spec](./progress/2026-06-17-slice-1b-spec.md)），待实施 |
-| 1c | rrweb 接入（全量采集 + 实时回放） | ⏳ pending |
-| 1d | 录像归档（MinIO + PG 元数据 + 历史回放） | ⏳ pending |
-| 1e | 双向通道（admin overlay → 命令 → SDK 执行） | ⏳ pending |
-| 1f | 表单 + 跳转（代填 + 跳转接管 + 跨页面会话续接） | ⏳ pending |
-| 1g | 弹窗 + 聊天 | ⏳ pending |
-| 1h | 认证 + 多运营（login + claim/release） | ⏳ pending |
-| 1i | 反爬虫（rate limit + UA + fingerprint） | ⏳ pending |
-| 1j | i18n + 部署 + CI（中英双语 + docker-compose 完善 + GitHub Actions） | ⏳ pending |
+| 1b | 单向最小（SDK 鼠标 → WS → admin 实时显示） | ✅ [completed](./reports/completed/2026-06-17-slice-1b-implementation.md) |
+| 1c | rrweb 接入（全量采集 + 实时回放） | ✅ [completed](./reports/completed/2026-06-17-slice-1c-implementation.md) |
+| 1d | 录像归档（MinIO + PG 元数据 + 历史回放） | ✅ [completed](./reports/completed/2026-06-17-slice-1d-implementation.md) |
+| 1e | 双向通道（admin overlay → 命令 → SDK 执行） | ✅ [completed](./reports/completed/2026-06-17-slice-1e-implementation.md) |
+| 1f | 表单 + 跳转（代填 + 跳转接管 + 跨页面会话续接） | ✅ [completed](./reports/completed/2026-06-17-slice-1f-implementation.md) |
+| 1g | 弹窗 + 聊天 | ✅ [completed](./reports/completed/2026-06-17-slice-1g-implementation.md) |
+| 1h | 认证 + 多运营（login + claim/release） | ✅ [completed](./reports/completed/2026-06-17-slice-1h-implementation.md) |
+| 1i | 反爬虫（rate limit + UA + fingerprint） | ✅ [completed](./reports/completed/2026-06-17-slice-1i-implementation.md) |
+| 1j | i18n + 部署 + CI（中英双语 + docker-compose 完善 + GitHub Actions） | ✅ [completed](./reports/completed/2026-06-17-slice-1j-implementation.md) |
 
 **累计估时**：solo 全职约 14-17 周（3.5-4 个月）；业余约 9-12 个月。
 
@@ -101,28 +105,28 @@
 
 ## 7. 下一步动作
 
-**立即可执行**：启动切片 1b 实施（规格已定，见 [`progress/2026-06-17-slice-1b-spec.md`](./progress/2026-06-17-slice-1b-spec.md)）
+**立即可执行**：启动切片 1d（录像归档 + 历史回放）
 
 具体步骤：
+1. 后端从 Redis Stream + MinIO event_blobs 重建会话事件流
+2. 实现 GET /api/sessions/:id/replay 端点（返回完整事件流）
+3. admin 加历史会话列表 + 回放页（rrweb-player + 倍速控制）
+4. 验证：会话结束后能完整回放（含全部 full snapshot + incremental）
 
-1. 写 3 表 migration（visitors + sessions + event_blobs）
-2. 配置 sqlc，写 queries.sql 生成类型安全查询
-3. 实现 hub + WS handler（`/ws/visitor` + `/ws/operator`）+ MessagePack envelope
-4. SDK 实现 4 类采集器 + transport + 重连
-5. admin 实现 Pinia store + useWs + 两栏 UI
-6. Redis Stream flusher + MinIO 快照
-7. testcontainers 集成测试 + Playwright e2e
-8. 验证 4 个验收场景
-
-切片 1a 已完成（[完成报告](./reports/completed/2026-06-17-slice-1a-implementation.md)）。
+切片 1a 完成（[报告](./reports/completed/2026-06-17-slice-1a-implementation.md)）。
+切片 1b 完成（[报告](./reports/completed/2026-06-17-slice-1b-implementation.md)）。
+切片 1c 完成（[报告](./reports/completed/2026-06-17-slice-1c-implementation.md)）。
 
 可立即开工的日常命令：
 
 ```bash
 docker compose up -d      # 启动 infra（PG + Redis + MinIO）
+docker compose exec postgres psql -U mm -d marketing_monitor \
+  -f /dev/stdin < server/migrations/000001_init.up.sql  # 应用 schema
 make install-tools        # 安装 air / golangci-lint / golang-migrate（一次性）
-pnpm dev                  # 启动 Go + admin + SDK playground（热重载）
-make build                # release 单二进制
+make build                # release 单二进制（含前端 embed）
+./server/bin/server       # 启动 server
+pnpm --filter @marketing-monitor/e2e test   # 跑 e2e（13 个测试）
 ```
 
 ## 8. LLM 协作提示

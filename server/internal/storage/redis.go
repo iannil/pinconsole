@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/iannil/marketing-monitor/internal/config"
 	"github.com/redis/go-redis/v9"
@@ -39,4 +40,26 @@ func (r *Redis) Close() {
 	if r.Client != nil {
 		_ = r.Client.Close()
 	}
+}
+
+// Set 设置 KV，支持 TTL（0 = 永久）。
+func (r *Redis) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	return r.Client.Set(ctx, key, value, ttl).Err()
+}
+
+// Get 取 KV。key 不存在返回 nil + nil error。
+func (r *Redis) Get(ctx context.Context, key string) ([]byte, error) {
+	val, err := r.Client.Get(ctx, key).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get %s: %w", key, err)
+	}
+	return val, nil
+}
+
+// Del 删除 key。
+func (r *Redis) Del(ctx context.Context, key string) error {
+	return r.Client.Del(ctx, key).Err()
 }

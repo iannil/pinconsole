@@ -26,12 +26,18 @@ importers:
 
   admin:
     dependencies:
+      '@msgpack/msgpack':
+        specifier: ^3.1.3
+        version: 3.1.3
       element-plus:
         specifier: ^2.8.4
         version: 2.14.2(vue@3.5.38(typescript@5.9.3))
       pinia:
         specifier: ^2.2.4
         version: 2.3.1(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3))
+      rrweb-player:
+        specifier: ^2.0.1
+        version: 2.0.1
       vue:
         specifier: ^3.5.12
         version: 3.5.38(typescript@5.9.3)
@@ -39,7 +45,7 @@ importers:
         specifier: ^10.0.4
         version: 10.0.8(vue@3.5.38(typescript@5.9.3))
       vue-router:
-        specifier: ^4.4.5
+        specifier: ^4
         version: 4.6.4(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@types/node':
@@ -96,6 +102,9 @@ importers:
 
   visitor-sdk:
     dependencies:
+      '@msgpack/msgpack':
+        specifier: ^3.1.3
+        version: 3.1.3
       rrweb:
         specifier: ^2.0.0-alpha.18
         version: 2.0.1
@@ -466,6 +475,10 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
+  '@msgpack/msgpack@3.1.3':
+    resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
+    engines: {node: '>= 18'}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -716,6 +729,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@rrweb/packer@2.0.1':
+    resolution: {integrity: sha512-2U8RkVe+ZK3gTtmKjJKjoh6QL1Q6wIlt3sBTJeCPERLr9e0JIimNrZ1+bog1L30CTVP3ULuDf5Ba7RZO+QNcHg==}
+
+  '@rrweb/replay@2.0.1':
+    resolution: {integrity: sha512-UrZONirb8o4t0urg1aJ8aMSWhNHvJ3a2usuVbPJIm/edyFbwTvvY9sg/rrXccyXOntFhhp73R5nCretODRZcCw==}
+
   '@rrweb/types@2.0.1':
     resolution: {integrity: sha512-x8cNaKFxdvS0/5IfKOj1xG8Htnw1fUwqoPqgP61bOaWqZL6t9UtRPpO9ZlMB2z+FiTxg9zlFFL+Da4ZpFuhoiA==}
 
@@ -724,6 +743,9 @@ packages:
 
   '@sxzz/popperjs-es@2.11.8':
     resolution: {integrity: sha512-wOwESXvvED3S8xBmcPWHs2dUuzrE4XiZeFu7e1hROIJkm02a49N120pmOXxY33sBb6hArItm5W5tcg1cBtV+HQ==}
+
+  '@tsconfig/svelte@1.0.13':
+    resolution: {integrity: sha512-5lYJP45Xllo4yE/RUBccBT32eBlRDbqN8r1/MIvQbKxW3aFqaYPCNgm8D5V20X4ShHcwvYWNlKg3liDh1MlBoA==}
 
   '@types/conventional-commits-parser@5.0.2':
     resolution: {integrity: sha512-BgT2szDXnVypgpNxOK8aL5SGjUdaQbC++WZNjF1Qge3Og2+zhHj+RWhmehLhYyvQwqAmvezruVfOf8+3m74W+g==}
@@ -1328,6 +1350,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.4.8:
+    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
 
   file-entry-cache@6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
@@ -1946,6 +1971,9 @@ packages:
 
   rrweb-cssom@0.8.0:
     resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
+
+  rrweb-player@2.0.1:
+    resolution: {integrity: sha512-v8PVnOy7Q3kXqWriGuzZo4ndGEV06nCMRkH/jSHweJfTLwpLqb2evgMj0S5FwQLsN2X1VM+L2/i7QWGJfgj9zw==}
 
   rrweb-snapshot@2.0.1:
     resolution: {integrity: sha512-H8TA29ct2tpYtr5oaB0N+ksRY9bhEErfAYcKbce4+w8lqEUQChpKZd41HpBJLkp04b5QUfWUg4v6r9Okf8r7vA==}
@@ -2651,6 +2679,8 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
+  '@msgpack/msgpack@3.1.3': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -2808,11 +2838,23 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.62.0':
     optional: true
 
+  '@rrweb/packer@2.0.1':
+    dependencies:
+      '@rrweb/types': 2.0.1
+      fflate: 0.4.8
+
+  '@rrweb/replay@2.0.1':
+    dependencies:
+      '@rrweb/types': 2.0.1
+      rrweb: 2.0.1
+
   '@rrweb/types@2.0.1': {}
 
   '@rrweb/utils@2.0.1': {}
 
   '@sxzz/popperjs-es@2.11.8': {}
+
+  '@tsconfig/svelte@1.0.13': {}
 
   '@types/conventional-commits-parser@5.0.2':
     dependencies:
@@ -3512,6 +3554,8 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.4
 
+  fflate@0.4.8: {}
+
   file-entry-cache@6.0.1:
     dependencies:
       flat-cache: 3.2.0
@@ -4110,6 +4154,12 @@ snapshots:
   rrweb-cssom@0.7.1: {}
 
   rrweb-cssom@0.8.0: {}
+
+  rrweb-player@2.0.1:
+    dependencies:
+      '@rrweb/packer': 2.0.1
+      '@rrweb/replay': 2.0.1
+      '@tsconfig/svelte': 1.0.13
 
   rrweb-snapshot@2.0.1:
     dependencies:

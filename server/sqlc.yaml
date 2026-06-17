@@ -1,0 +1,21 @@
+version: "2"
+sql:
+  - schema: migrations
+    queries: internal/storage/queries.sql
+    engine: postgresql
+    gen:
+      go:
+        package: storage
+        out: internal/storage/sqlc
+        sql_package: pgx/v5
+        emit_json_tags: false
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_exact_table_names: false
+        emit_empty_slices: true
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"

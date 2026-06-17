@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -47,6 +48,32 @@ func ConnectMinIO(ctx context.Context, cfg config.MinIOConfig, logger *slog.Logg
 func (m *MinIO) Ping(ctx context.Context) error {
 	_, err := m.Client.ListBuckets(ctx)
 	return err
+}
+
+// PutBytes 上传字节数据到指定 object key。
+// contentType 默认 application/octet-stream。
+func (m *MinIO) PutBytes(ctx context.Context, objectKey string, data []byte) error {
+	_, err := m.Client.PutObject(ctx, m.Bucket, objectKey, bytes.NewReader(data), int64(len(data)), minio.PutObjectOptions{
+		ContentType: "application/octet-stream",
+	})
+	if err != nil {
+		return fmt.Errorf("put object %s: %w", objectKey, err)
+	}
+	return nil
+}
+
+// GetBytes 下载指定 object key 的全部内容。
+func (m *MinIO) GetBytes(ctx context.Context, objectKey string) ([]byte, error) {
+	obj, err := m.Client.GetObject(ctx, m.Bucket, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get object %s: %w", objectKey, err)
+	}
+	defer obj.Close()
+	buf := new(bytes.Buffer)
+	if _, err := buf.ReadFrom(obj); err != nil {
+		return nil, fmt.Errorf("read object %s: %w", objectKey, err)
+	}
+	return buf.Bytes(), nil
 }
 
 // Close 占位（minio-go 无显式 close）。
