@@ -10,6 +10,7 @@ import (
 	"github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/antiscrape"
 	"github.com/iannil/marketing-monitor/internal/hub"
 	"github.com/iannil/marketing-monitor/internal/logging"
 	"github.com/iannil/marketing-monitor/internal/proto"
@@ -188,6 +189,10 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 	logger := logging.FromContext(ctx, h.logger).With("session_id", sessionID, "visitor_id", visitorID)
 	logger.Info("visitor ws connected")
 
+	// 1i：行为分析 tracker，每 100 事件检查启发式并在 Redis 标记可疑 session
+	bt := antiscrape.NewBehaviorTracker(h.stores.Redis.Client, logger, sessionID.String())
+	var behaviorCounter int
+
 	// read loop
 	for {
 		msgType, msg, err := conn.Read(ctx)
@@ -233,6 +238,16 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 		// 3) 更新 PG session 元数据
 		eventCount := eventCountOf(env)
 		_ = h.stores.PG.TouchSessionEvent(ctx, sessionID, int32(eventCount))
+
+		// 4) 1i：行为分析 — 逐事件 Observe，每 100 事件 CheckAndFlag
+		forEachEventPayload(env, func(ep proto.EventPayload) {
+			bt.Observe(ep)
+			behaviorCounter++
+		})
+		if behaviorCounter >= 100 {
+			bt.CheckAndFlag(ctx)
+			behaviorCounter = 0
+		}
 	}
 }
 
@@ -492,4 +507,23 @@ func eventCountOf(env proto.Envelope) int {
 		return 1
 	}
 	return 0
+}
+
+// forEachEventPayload 解码 envelope（支持 single 和 batch 模式）并对每个 EventPayload 调用 fn。
+// 用于 1i 行为分析等需要逐事件处理的场景。
+func forEachEventPayload(env proto.Envelope, fn func(proto.EventPayload)) {
+	if env.Type != proto.MsgEvent {
+		return
+	}
+	var arr []proto.EventPayload
+	if err := proto.DecodePayload(env.Payload, &arr); err == nil {
+		for _, ep := range arr {
+			fn(ep)
+		}
+		return
+	}
+	var single proto.EventPayload
+	if err := proto.DecodePayload(env.Payload, &single); err == nil {
+		fn(single)
+	}
 }

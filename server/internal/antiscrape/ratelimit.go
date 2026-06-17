@@ -73,15 +73,33 @@ func max(a, b int) int {
 	return b
 }
 
-// 内置爬虫 UA 片段
+// 内置爬虫/自动化 UA 片段（substring 匹配，case-insensitive）
+//
+// 注意:UA 黑名单是浅层防御,只能挡低水平爬虫。
+// 现代自动化工具(Puppeteer/Playwright + headless=new)UA 与真实浏览器
+// 几乎一致,无法仅靠 UA 识别。真正的纵深防御在 SDK hello fingerprint
+// (canvas/WebGL) + BehaviorTracker 启发式 + rate limit。
 var builtinBannedUAs = []string{
+	// 命令行 HTTP 工具
 	"curl/",
 	"wget/",
+	// 编程语言 HTTP 库
 	"python-requests/",
-	"scrapy",
+	"aiohttp/",
+	"httpx/",
 	"Go-http-client/",
-	"HeadlessChrome",
+	"okhttp/",
+	"Java/",
+	"Apache-HttpClient/",
+	"node-fetch/",
+	"axios/",
+	"got/",
+	// 爬虫框架
+	"scrapy",
+	// 老式 headless 浏览器(UA 明确标记)
+	"HeadlessChrome", // 仅对老式 headless Chrome 有效;现代 Playwright 用 Chrome/... 绕过
 	"PhantomJS",
+	// 通用爬虫标识
 	"bot",
 	"crawler",
 	"spider",
