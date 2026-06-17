@@ -1,10 +1,20 @@
 # 切片 1i 反爬虫完成报告
 
-> **Verification Depth**: 🟡 verified-shallow（以 2026-06-18 reality check 为准）
+> **Verification Depth**: 🟢 verified-deep(2026-06-18 A 阶段升级;原 🟡 → 🟢)
+> **A 阶段升级内容**:
+> - 接线 `BehaviorTracker` 到 ws.go visitor read loop(原死代码,现已生效)
+> - 加 Go 单测 `TestRateLimitMiddleware_Triggers429`(真实 429 触发)
+> - 加 Go 单测 `TestBehaviorTracker_NoMouseEvents` / `TestBehaviorTracker_RepetitiveClicks` /
+>   `TestBehaviorTracker_NoFlagForNormalTraffic`(3 个启发式真触发 + 正常流量不误报)
+> - 加 Go 单测 `TestUABlockMiddleware_BansListedUA`(7 个 UA case 验证)
+> - 修 `builtinBannedUAs`:扩展 8 个现代 bot UA + 加注释说明 HeadlessChrome 死代码原因
+>   (现代 Playwright chromium UA 是 Chrome/... 不含 HeadlessChrome)
+> - e2e 场景3 真查 PG visitors.fingerprint 持久化(用 execFileSync + arg array 避免 shell 注入)
+> - e2e 场景4 验证 BehaviorTracker 接线后 120+ 事件流量不崩
+>
 > **报告叙述免责**:本报告由实施期间 LLM 撰写。硬声明(测试通过、API 存在、
 > schema 字段)已经 reality check 验证;软声明(设计取舍、对比理由、
-> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码或
-> 在 A 阶段补深测时一并验证。
+> "优于 X"类断言)未独立 audit。如需引用具体设计结论,请对照源码。
 
 
 **状态**：completed
