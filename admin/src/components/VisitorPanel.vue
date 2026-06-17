@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useVisitorsStore } from '../stores/visitors';
 import ReplayPlayer from './ReplayPlayer.vue';
 import ChatPanel from './ChatPanel.vue';
 import { sendCommand } from '../api/sessions';
+
+const { t } = useI18n();
 
 const store = useVisitorsStore();
 
@@ -46,7 +49,7 @@ async function sendPopup() {
 <template>
   <div class="visitor-panel">
     <div v-if="!store.selectedVisitor" class="placeholder">
-      <p>从左侧选择一个访客</p>
+      <p>{{ t('dashboard.select_visitor') }}</p>
     </div>
     <template v-else>
       <div class="header">
@@ -65,29 +68,29 @@ async function sendPopup() {
 
       <div class="events-area">
         <section>
-          <h3>累计事件：{{ selectedEvents.length }}</h3>
-          <p class="hint">最近 full snapshot 后增量事件数：{{ incrementalCount }}</p>
+          <h3>{{ t('visitor.events_total', { count: selectedEvents.length }) }}</h3>
+          <p class="hint">{{ t('visitor.incremental_count', { count: incrementalCount }) }}</p>
         </section>
         <section>
-          <h3>最近表单提交（{{ recentFormSubmits.length }}）</h3>
+          <h3>{{ t('visitor.recent_form_submits', { count: recentFormSubmits.length }) }}</h3>
           <ul>
             <li v-for="(f, idx) in recentFormSubmits" :key="idx">
               <code>{{ f.form_submit!.form_id || '(no id)' }}</code>
-              <span>{{ Object.keys(f.form_submit!.fields).length }} 个字段</span>
+              <span>{{ t('visitor.field_count', { count: Object.keys(f.form_submit!.fields).length }) }}</span>
             </li>
-            <li v-if="recentFormSubmits.length === 0" class="empty">无</li>
+            <li v-if="recentFormSubmits.length === 0" class="empty">{{ t('visitor.no_form_submits') }}</li>
           </ul>
         </section>
       </div>
 
       <!-- 1g：弹窗推送 -->
       <div class="popup-sender">
-        <h3>推送弹窗</h3>
-        <input v-model="popupTitle" placeholder="标题" class="popup-input" />
-        <input v-model="popupBody" placeholder="正文" class="popup-input" />
-        <input v-model="popupActionLabel" placeholder="按钮文字（可选）" class="popup-input" />
-        <input v-model="popupActionUrl" placeholder="按钮链接（可选）" class="popup-input" />
-        <button @click="sendPopup" :disabled="!popupTitle.trim()">发送弹窗</button>
+        <h3>{{ t('visitor.popup_title') }}</h3>
+        <input v-model="popupTitle" :placeholder="t('visitor.popup_title_ph')" class="popup-input" />
+        <input v-model="popupBody" :placeholder="t('visitor.popup_body_ph')" class="popup-input" />
+        <input v-model="popupActionLabel" :placeholder="t('visitor.popup_action_ph')" class="popup-input" />
+        <input v-model="popupActionUrl" :placeholder="t('visitor.popup_url_ph')" class="popup-input" />
+        <button @click="sendPopup" :disabled="!popupTitle.trim()">{{ t('visitor.send_popup') }}</button>
       </div>
 
       <!-- 1g：聊天面板 -->

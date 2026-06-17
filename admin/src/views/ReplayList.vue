@@ -61,11 +61,11 @@ onMounted(refresh);
     <table v-else class="sessions-table">
       <thead>
         <tr>
-          <th>访客</th>
-          <th>开始</th>
-          <th>时长</th>
-          <th>事件数</th>
-          <th>UA</th>
+          <th>{{ t('replay.th_visitor') }}</th>
+          <th>{{ t('replay.th_started') }}</th>
+          <th>{{ t('replay.th_duration') }}</th>
+          <th>{{ t('replay.th_events') }}</th>
+          <th>{{ t('replay.th_ua') }}</th>
           <th></th>
         </tr>
       </thead>

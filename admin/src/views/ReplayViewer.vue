@@ -4,8 +4,10 @@
 
 import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { getSessionReplay, type RRWebEvent } from '../api/sessions';
 
+const { t } = useI18n();
 const route = useRoute();
 
 const sessionId = ref<string>(String(route.params.session_id ?? ''));
@@ -80,7 +82,7 @@ async function initPlayer() {
     });
   } catch (e) {
     console.error('rrweb-player init failed', e);
-    error.value = '播放器加载失败';
+    error.value = t('replay.play_failed');
   }
 }
 
@@ -113,17 +115,17 @@ watch(() => route.params.session_id, (newId) => {
 <template>
   <div class="replay-viewer">
     <header class="header">
-      <RouterLink to="/replay" class="back">← 返回列表</RouterLink>
+      <RouterLink to="/replay" class="back">{{ t('replay.back') }}</RouterLink>
       <span class="session-info">
-        session: <code>{{ sessionId }}</code>
-        | 事件数: {{ total }}
-        <span v-if="loadingMore" class="loading-more">（加载中...）</span>
+        {{ t('replay.session_label') }} <code>{{ sessionId }}</code>
+        | {{ t('replay.events_label') }} {{ total }}
+        <span v-if="loadingMore" class="loading-more">{{ t('replay.loading_more') }}</span>
       </span>
     </header>
 
-    <div v-if="loading" class="placeholder">加载事件...</div>
+    <div v-if="loading" class="placeholder">{{ t('replay.loading') }}</div>
     <div v-else-if="error" class="placeholder error">{{ error }}</div>
-    <div v-else-if="events.length === 0" class="placeholder">无事件可回放</div>
+    <div v-else-if="events.length === 0" class="placeholder">{{ t('replay.no_events') }}</div>
 
     <div ref="playerContainer" class="player-container"></div>
   </div>

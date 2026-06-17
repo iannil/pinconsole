@@ -3,7 +3,10 @@
 // 详见 docs/progress/2026-06-17-slice-1c-spec.md §Admin 实时回放
 
 import { ref, watch, onUnmounted, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { EventPayload } from '../proto/events';
+
+const { t } = useI18n();
 
 // rrweb-player 的类型定义在 alpha 版不完整，使用 unknown 透传
 type RRWebPlayerInstance = { append: (events: unknown[]) => void } & Record<string, unknown>;
@@ -148,8 +151,8 @@ defineExpose({ appendEvents });
 
 <template>
   <div class="replay-player">
-    <div v-if="loading" class="loading">加载 rrweb-player...</div>
-    <div v-else-if="errorMsg" class="error">回放失败: {{ errorMsg }}</div>
+    <div v-if="loading" class="loading">{{ t('replay.loading') }}</div>
+    <div v-else-if="errorMsg" class="error">{{ t('replay.play_failed') }}: {{ errorMsg }}</div>
     <div ref="containerRef" class="player-container"></div>
   </div>
 </template>

@@ -3,6 +3,9 @@
 // 详见 docs/progress/2026-06-17-slice-1f-spec.md §浮动输入框
 
 import { ref, watch, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   /** 输入框位置（视口坐标） */
@@ -61,11 +64,11 @@ function onKeydown(e: KeyboardEvent) {
       ref="inputEl"
       v-model="value"
       type="text"
-      :placeholder="fieldName || '输入代填值'"
+      :placeholder="fieldName || t('floating_input.placeholder_default')"
       @blur="onBlur"
       @keydown="onKeydown"
     />
-    <div class="hint">Enter 确认 · Esc 取消</div>
+    <div class="hint">{{ t('floating_input.hint') }}</div>
   </div>
 </template>
 

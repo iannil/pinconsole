@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // ChatPanel：嵌入 VisitorPanel 下方的聊天面板
 import { ref, watch, onMounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { listMessages, sendMessage, type ChatMessageItem } from '../api/sessions';
 
+const { t } = useI18n();
 const props = defineProps<{ sessionId: string | null }>();
 
 const messages = ref<ChatMessageItem[]>([]);
@@ -67,20 +69,20 @@ onUnmounted(() => {
   <div class="chat-panel">
     <div ref="listEl" class="message-list">
       <div v-for="m in messages" :key="m.id" :class="['msg', m.sender]">
-        <span class="sender">{{ m.sender === 'operator' ? '运营' : '访客' }}</span>
+        <span class="sender">{{ m.sender === 'operator' ? t('chat.operator') : t('chat.visitor') }}</span>
         <span class="content">{{ m.content }}</span>
       </div>
-      <div v-if="messages.length === 0" class="empty">暂无消息</div>
+      <div v-if="messages.length === 0" class="empty">{{ t('chat.empty') }}</div>
     </div>
     <div class="input-bar">
       <input
         v-model="input"
         type="text"
-        placeholder="输入消息..."
+        :placeholder="t('chat.placeholder')"
         @keydown.enter="send"
         :disabled="!sessionId"
       />
-      <button @click="send" :disabled="!sessionId || !input.trim()">发送</button>
+      <button @click="send" :disabled="!sessionId || !input.trim()">{{ t('chat.send') }}</button>
     </div>
   </div>
 </template>

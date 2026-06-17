@@ -27,6 +27,7 @@ export default {
     incremental_count: '最近 full snapshot 后增量事件数：{count}',
     recent_form_submits: '最近表单提交（{count}）',
     no_form_submits: '无',
+    field_count: '{count} 个字段',
     popup_title: '推送弹窗',
     popup_title_ph: '标题',
     popup_body_ph: '正文',
@@ -64,6 +65,10 @@ export default {
   },
   cobrowse: {
     active_badge: 'co-browsing 已启用 · {count} 命令已发',
+  },
+  floating_input: {
+    placeholder_default: '输入代填值',
+    hint: 'Enter 确认 · Esc 取消',
   },
   status: {
     connecting: 'connecting',

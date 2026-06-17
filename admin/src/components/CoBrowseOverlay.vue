@@ -4,7 +4,10 @@
 // 详见 docs/progress/2026-06-17-slice-1e-spec.md §Overlay 实现
 
 import { ref, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { sendCommand, type CommandType } from '../api/sessions';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   /** 当前订阅的 session ID */
@@ -65,7 +68,7 @@ async function sendCursorHighlight(x: number, y: number) {
     await sendCommand(props.sessionId, 'cursor_highlight', {
       x,
       y,
-      name: props.operatorName ?? '运营',
+      name: props.operatorName ?? t('chat.operator'),
     });
     commandCount.value++;
     emit('command-sent', 'cursor_highlight', commandCount.value);
@@ -179,7 +182,7 @@ defineExpose({ fillInput, releaseControl });
     @click="onClick"
     @wheel="onWheel"
   >
-    <div class="badge">co-browsing 已启用 · {{ commandCount }} 命令已发</div>
+    <div class="badge">{{ t('cobrowse.active_badge', { count: commandCount }) }}</div>
   </div>
 </template>
 

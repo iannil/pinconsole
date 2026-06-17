@@ -7,8 +7,15 @@ import VisitorPanel from '../components/VisitorPanel.vue';
 import CoBrowseOverlay from '../components/CoBrowseOverlay.vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale, availableLocales } = useI18n();
 const store = useVisitorsStore();
+
+// 1j:语言切换按钮 - 在中英之间 toggle
+function toggleLocale() {
+  const currentIdx = availableLocales.indexOf(locale.value);
+  const nextIdx = (currentIdx + 1) % availableLocales.length;
+  locale.value = availableLocales[nextIdx];
+}
 
 // 1e：co-browsing 控制状态
 const coBrowsingActive = ref(false);
@@ -101,6 +108,7 @@ function statusBadgeClass(s: WsStatus): string {
       <span class="title">{{ t('app.title') }}</span>
       <span :class="statusBadgeClass(status)">{{ status }}</span>
       <RouterLink to="/replay" class="nav-link">{{ t('nav.replay') }}</RouterLink>
+      <button class="lang-switch" @click="toggleLocale">{{ t('app.switch_lang') }}</button>
     </header>
     <main class="main">
       <VisitorList />
@@ -111,7 +119,7 @@ function statusBadgeClass(s: WsStatus): string {
           v-if="store.selectedSessionId"
           :session-id="store.selectedSessionId"
           :active="coBrowsingActive"
-          operator-name="运营"
+          :operator-name="t('chat.operator')"
         />
         <div v-if="store.selectedSessionId" class="subscribe-bar">
           <button @click="subscribe(store.selectedSessionId!)">{{ t('dashboard.subscribe') }}</button>

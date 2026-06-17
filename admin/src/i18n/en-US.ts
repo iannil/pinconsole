@@ -27,6 +27,7 @@ export default {
     incremental_count: 'Incremental events since last full snapshot: {count}',
     recent_form_submits: 'Recent form submissions ({count})',
     no_form_submits: 'None',
+    field_count: '{count} fields',
     popup_title: 'Push Popup',
     popup_title_ph: 'Title',
     popup_body_ph: 'Body',
@@ -64,6 +65,10 @@ export default {
   },
   cobrowse: {
     active_badge: 'co-browsing active · {count} commands sent',
+  },
+  floating_input: {
+    placeholder_default: 'Enter fill value',
+    hint: 'Enter to confirm · Esc to cancel',
   },
   status: {
     connecting: 'connecting',
