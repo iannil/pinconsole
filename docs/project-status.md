@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**：2026-06-18（A 阶段 1i + 1j 升级 🟢;1h 拆为 1h-ui 待启动）
+**最后更新**：2026-06-18(全栈深度审计 → 1k-security-blockers 🟢 修复 T0;1l-privacy-gdpr 待启动)
 
 ---
 
@@ -18,13 +18,23 @@
 
 ## 2. 当前阶段
 
-**v1 切片 1a-1g + 1i + 1j 已深度验证(🟢);1h 拆为 1h-backend(🔴 spec partial) + 1h-ui(⏳ 未启动)**
+**v1 主干已交付:T0 安全栈已修复(1k 🟢),T1+ 部分待补**
 
-A 阶段成果(2026-06-18):
+最新进展(2026-06-18):
 
-- 🟢 verified-deep ×9(1a-1g + 1i + 1j)
-- 🔴 implemented-unverified ×1(1h-backend,登录 UI 未实施)
-- ⏳ 未启动 ×1(1h-ui,拆出新切片)
+- ✅ 全栈深度审计完成 → [`docs/audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)(80 条发现,P0:13)
+- ✅ 1k-security-blockers 🟢 verified-deep:修 8 个 P0(silent defaults 全套 fail-secure + command/chat/claim 授权 + claim TOCTOU/Lua + popup URL 白名单 + migrations embed + auto up)
+- ⚠️ 审计 badge 复核:7 切片原 🟢 实际 🟡(1a/1b/1c/1e/1f/1g/1i),仅 1d/1j 真到 🟢;**未修改 project-status.md §5 的 badge 表**(留给 1n-test-depth 切片统一处理)
+- ⏳ 1l-privacy-gdpr 待启动(GDPR consent + erasure;**部署到欧盟/加州前阻断项**)
+- ⏳ 1h-ui 待启动(admin LoginView + Vue Router 守卫)
+- ⏳ 1m-observability / 1n-test-depth 待启动
+
+切片深度分布(v1 主干,基于审计实测):
+
+- 🟢 verified-deep ×3(1d, 1j, **1k**)
+- 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)— 审计建议降级,待 1n 切片统一处理
+- 🔴 implemented-unverified ×1(1h-backend)
+- ⏳ 未启动 ×3(1h-ui, 1l-privacy-gdpr, 1m/1n)
 
 A 阶段升级详情:
 
@@ -113,24 +123,38 @@ A 阶段升级详情:
 | [1h](./reports/completed/2026-06-17-slice-1h-implementation.md) | 认证 + 多运营(后端) | 🔴 | spec 决策 #5 login UI 未实施;已拆为 1h-backend(本报告) + 1h-ui(待启动) |
 | [1i](./reports/completed/2026-06-17-slice-1i-implementation.md) | 反爬虫 | 🟢 | A 阶段升级:BehaviorTracker 接线 + Go 单测覆盖深度逻辑 + e2e 真查 PG fingerprint |
 | [1j](./reports/completed/2026-06-17-slice-1j-implementation.md) | i18n + 部署 + CI | 🟢 | A 阶段升级:硬编码中文抽 key + 语言切换按钮 + 4 个真 e2e + 修 Dockerfile go 版本 bug |
+| [1k](./reports/completed/2026-06-18-slice-1k-implementation.md) | 安全阻断栈 | 🟢 | 修审计 T0:8 个 P0;silent defaults 全套 fail-secure + command/chat/claim 授权 + claim TOCTOU/Lua + popup URL 白名单 + migrations embed + auto up |
+
+> ⚠️ **审计 badge 复核**(2026-06-18):全栈深度审计 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md) §5 建议 7 切片(1a/1b/1c/1e/1f/1g/1i)的 🟢 应降级 🟡。**本表 badge 暂未修改**,留给 1n-test-depth 切片统一处理(避免历史 badge 反复抖动)。深度细节见审计报告。
 
 **累计估时**：solo 全职约 14-17 周（3.5-4 个月）；业余约 9-12 个月。
 
 ## 6. 已识别风险
 
-详见 [`PLAN.md`](../PLAN.md) §10 + 2026-06-18 reality check 发现：
+详见 [`PLAN.md`](../PLAN.md) §10 + [2026-06-18 全栈深度审计](./audits/2026-06-18-deep-audit.md)(80 条发现,P0:13/P1:27/P2:26/P3:14):
 
-- **GDPR / CCPA 合规**：提交前按键监听属敏感处理，需明确访客同意流程
-- **co-browsing 接管跳转可能被滥用**：需审计日志 + 访客"紧急退出"
-- **rrweb 在动态 SPA 下节点 ID 不稳定**：测试矩阵需覆盖主流框架
-- **AGPL 可能劝退部分企业采用**：双 license 路径预留
-- **🔴 1h 登录 UI 完全未实施**:spec 决策 #5 "登录 UI + Vue Router 守卫"未做。admin SPA 无 LoginView、无路由守卫。已拆为新切片 1h-ui
-- **🔴 1i `BehaviorTracker` 死代码**:`antiscrape/behavior.go` 完整实现 3 个启发式 + FlagSession 调用,但 server/ 中零调用方。1i "行为分析"功能从未运行
-- **🔴 1j i18n 子组件未装**:主视图 29 个 `t()` 调用,但 VisitorPanel/Dashboard 仍有硬编码中文(`"运营"` / `"从左侧选择一个访客"` / `"累计事件："` 等)
-- **🟡 1h 浅测**:登录/登出/Claim 测试只验证 API 端点存在,未验证 cookie 真设置/真清除/受保护端点真拒绝匿名
-- **🟡 1i 浅测**:rate limit 在 prod 模式才生效,e2e 在 dev 模式跑只验证 middleware 注册,未验证 429 真触发
-- **🟡 HeadlessChrome UA ban 是死代码**:新版 Playwright chromium UA 是 `Chrome/...` 不含 `HeadlessChrome`,实际绕过
-- **migrations 未通过 `migrate` CLI 应用**:`schema_migrations` 表缺失,推测用 `psql -f` 直接应用。`make migrate-down && make migrate-up` 是否干净循环未验证
+- **🔴 P0 GDPR 不合规**(部署阻断):按键监听无 consent flow(P0-5);无 erasure 接口 + GC 只清 1/5 表(P0-6)→ **1l-privacy-gdpr 切片**
+- **🔴 P0 文档虚标**:README/docs/README/1j 报告 三处独立虚标 v1 已完成(P0-10/11/12)→ 待文档对齐批次
+- **🔴 P0 1i 测试 flaky**:`TestRateLimitMiddleware_Triggers429` 包内跑时 FAIL(P0-9)→ 1n-test-depth 切片
+- **🟡 P1 7 切片 badge 虚标**:1a/1b/1c/1e/1f/1g/1i 实际 🟡 但 §5 标 🟢 → 1n-test-depth 切片
+- **🟡 P1 可观测性合规度 ~25%**:无 LifecycleTracker、event_type 未实现、trace_id 在 WS 链路断裂(P1-15/16)→ 1m-observability 切片
+- **🟡 P1 LLM Friendly 欠债**:`IMPLEMENTATION_PLAN.md` 缺失、三方 proto 手写无 codegen、变更安全策略零落地 → 1m 或独立切片
+- **GDPR / CCPA 合规**:提交前按键监听属敏感处理,需明确访客同意流程(同上 P0-5)
+- **rrweb 在动态 SPA 下节点 ID 不稳定**:测试矩阵需覆盖主流框架
+- **AGPL 可能劝退部分企业采用**:双 license 路径预留
+
+**已修复(1k-security-blockers 🟢,2026-06-18)**:
+- ~~P0-1 SERVER_ENV=dev 默认 + AuthMiddleware dev bypass~~ → 默认改 prod + 编译 tag 隔离
+- ~~P0-2 默认 admin changeme123~~ → AdminPassword required + prod 拒绝 changeme123
+- ~~P0-3 command/chat/claim 无 user_id 授权~~ → handler 层 requireClaimOwnership
+- ~~P0-4 claim TOCTOU race + UUID parse~~ → SET NX + uuid.Parse + Lua release
+- ~~P0-7 docker-compose prod 回退 dev 凭证~~ → `${VAR:?required}` 必填
+- ~~P0-8 popup action_url javascript: 注入~~ → 双重 scheme 白名单
+- ~~P0-13 migrate-down 无保护~~ → prompt + 5s 倒计时 + 逃生门
+- ~~P0-14 schema_migrations 未在部署路径使用~~ → embed + auto up + advisory lock
+- ~~P1-1 bcrypt cost 10 < 12~~ → BCRYPT_COST 默认 12
+- ~~P1-2 session cookie Secure=false~~ → prod 模式 Secure=true
+- ~~P1-9 PG sslmode=disable 硬编码~~ → PG_SSLMODE env(默认 prefer)
 
 ## 7. 下一步动作
 
