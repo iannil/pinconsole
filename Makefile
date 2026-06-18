@@ -124,17 +124,33 @@ docker-logs: ## 跟踪容器日志
 	$(COMPOSE) logs -f
 
 # ============================================================
-# DB Migration（golang-migrate）
+# DB Migration
 # ============================================================
+# 1v:server 启动时自动跑内嵌 migrator（migrations.go），
+# 单一事实源 + schema_migrations 表 + pg_advisory_lock。
+# 不再用 golang-migrate CLI（其 schema_migrations 形状 version+dirty 与 server 不兼容）。
+# 详见 docs/audits/2026-06-18-1k-1u-regression.md §4 新-2。
 
 PG_URL ?= postgres://mm:mm_dev@localhost:5432/marketing_monitor?sslmode=disable
 
-migrate-up: ## 应用所有迁移（与 server 启动时自动执行相同逻辑；一般无需手动跑）
+migrate-up: ## [DEPRECATED] 由 server 启动时自动跑；保留入口仅为兼容
+	@echo "$(C_YELLOW)⚠️  migrate-up 已废弃：server 启动时自动应用 migrations。$(C_RESET)"
+	@echo "  正确做法：./ops.sh start  或  ./ops.sh restart"
+	@echo "  强制用 golang-migrate CLI：make migrate-up-legacy"
+	@exit 1
+
+migrate-up-legacy: ## [INTERNAL] 强制用 golang-migrate CLI（与 server 内嵌 migrator 不兼容）
 	$(MIGRATE) -path $(SERVER_DIR)/migrations -database "$(PG_URL)" up
 
-migrate-down: ## 回滚最后一个迁移（破坏性！1k P0-13 加保护）
+migrate-down: ## [DEPRECATED] 由 server 启动时自动跑；破坏性，需逃生门
+	@echo "$(C_YELLOW)⚠️  migrate-down 已废弃：破坏性操作。$(C_RESET)"
+	@echo "  重置 dev DB：./ops.sh reset  （DROP + server 自动 re-migrate）"
+	@echo "  强制用 golang-migrate CLI down：make migrate-down-legacy MM_ALLOW_DESTRUCTIVE_MIGRATE=1"
+	@exit 1
+
+migrate-down-legacy: ## [INTERNAL] 强制用 golang-migrate CLI down（破坏性！）
 	@if [ "$$MM_ALLOW_DESTRUCTIVE_MIGRATE" != "1" ]; then \
-		echo "$(C_YELLOW)⚠️  migrate-down 会 DROP TABLE 并丢失数据！$(C_RESET)"; \
+		echo "$(C_YELLOW)⚠️  migrate-down-legacy 会 DROP TABLE 并丢失数据！$(C_RESET)"; \
 		echo "5 秒内按 Ctrl+C 取消，或设 MM_ALLOW_DESTRUCTIVE_MIGRATE=1 跳过此提示。"; \
 		for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; \
 		echo ""; \

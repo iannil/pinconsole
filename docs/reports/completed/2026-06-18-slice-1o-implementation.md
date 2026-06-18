@@ -3,7 +3,7 @@
 **状态**:completed
 **完成时间**:2026-06-18
 **对应审计**:[2026-06-18-deep-audit.md](../audits/2026-06-18-deep-audit.md) P1-5/P1-6/P1-7/P1-8
-**深度 badge**:🟢 verified-deep
+**深度 badge**:🟡 verified-shallow(1v 修正:R2 rubric 真实集成 ⚠️ + 边界 ⚠️,原 🟢 通胀,详见 [1v 报告](./2026-06-18-slice-1v-implementation.md))
 
 ## Summary
 

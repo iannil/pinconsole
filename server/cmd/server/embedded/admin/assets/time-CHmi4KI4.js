@@ -1,0 +1,2 @@
+function a(n,t){const e=Date.now()-n;if(e<1e3)return t("time.just_now");if(e<6e4)return t("time.seconds_ago",{n:Math.round(e/1e3)});if(e<36e5)return t("time.minutes_ago",{n:Math.round(e/6e4)});if(e<864e5)return t("time.hours_ago",{n:Math.round(e/36e5)});const o=new Date(n);return t("time.fallback_date",{month:o.getMonth()+1,day:o.getDate()})}export{a as f};
+//# sourceMappingURL=time-CHmi4KI4.js.map

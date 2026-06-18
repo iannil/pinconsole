@@ -35,6 +35,7 @@
 ### 配置 / 部署(4 个文件改)
 
 - ✅ docker-compose prod profile 必填凭证 — `docker-compose.yml`:`${PG_PASSWORD:?required}` / `${MINIO_ACCESS_KEY:?required}` / `${MINIO_SECRET_KEY:?required}` / `${ADMIN_EMAIL:?required}` / `${ADMIN_PASSWORD:?required}` / `${PG_SSLMODE}`
+  > **1u 更新**(2026-06-18):`${VAR:?required}` 改回 `${VAR:-}`(空默认),理由:docker compose 在 parse 阶段校验所有服务 env,阻塞 `docker compose up -d postgres redis minio`(不启 server)也被阻塞。fail-fast 责任完全交给 Go `config.Load()` 的 `validate()`(覆盖 ADMIN_PASSWORD + BCryptCost + prod 模式下 PG/MINIO 全部)。详见 [1u 报告](./2026-06-18-slice-1u-implementation.md)。
 - ✅ Makefile migrate-down 保护 — `Makefile`:警告 + 5s 倒计时 + `MM_ALLOW_DESTRUCTIVE_MIGRATE=1` 逃生门
 - ✅ .env.example 显式列 ADMIN_EMAIL/ADMIN_PASSWORD/BCRYPT_COST/PG_SSLMODE + 1k fail-secure 提示
 - ✅ CI 加 release-tag 测试 + down/up 循环 + server 启动自动迁移验证 — `.github/workflows/ci.yml`

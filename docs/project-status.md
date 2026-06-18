@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**：2026-06-18(全栈审计 → 1k 安全 + 1l GDPR 合规已交付 🟢;1h-ui / 1m / 1n 待启动)
+**最后更新**：2026-06-18(1v-post-audit-fixes 已交付 🟢;修 [1k-1u 回归审计](./audits/2026-06-18-1k-1u-regression.md) 4 类问题)
 
 ---
 
@@ -125,16 +125,17 @@ A 阶段升级详情:
 | [1i](./reports/completed/2026-06-17-slice-1i-implementation.md) | 反爬虫 | 🟡 | 1n 降级:关键 Go 测试曾 flaky(已修)+ e2e 仅 dev 模式 |
 | [1j](./reports/completed/2026-06-17-slice-1j-implementation.md) | i18n + 部署 + CI | 🟢 | A 阶段升级真验证 |
 | [1k](./reports/completed/2026-06-18-slice-1k-implementation.md) | 安全阻断栈 | 🟢 | 修审计 T0:8 个 P0 |
-| [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟢 | 修 P0-5/P0-6 |
+| [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟡 | 1v 降级:GDPR DELETE 不存在 visitor 曾返 500(1v 已修);consent opt-in + erasure + IP 截断主体工作 |
 | [1m](./reports/completed/2026-06-18-slice-1m-implementation.md) | 可观测性 | 🟢 | LifecycleTracker + WS trace_id |
 | [1n](./reports/completed/2026-06-18-slice-1n-implementation.md) | 测试深度 + 文档虚标修复 | 🟢 | 修 P0-9/10/11/12 + 7 切片 badge 降级 + e2e 静默跳过改 strict assertion |
-| [1o](./reports/completed/2026-06-18-slice-1o-implementation.md) | 生产硬化 | 🟢 | 修 P1-5/6/7/8:TrustedProxies + WS WriteTimeout=0 + flushSession 补偿事务 + operatorWS goroutine 泄漏 |
+| [1o](./reports/completed/2026-06-18-slice-1o-implementation.md) | 生产硬化 | 🟡 | 1v 降级:R2 rubric 真实集成 + 边界 ⚠️(原 🟢 通胀)。修 P1-5/6/7/8:TrustedProxies + WS WriteTimeout=0 + flushSession 补偿事务 + operatorWS goroutine 泄漏 |
 | [1p](./reports/completed/2026-06-18-slice-1p-implementation.md) | LLM friendly | 🟢 | packages/proto 共享包 + IMPLEMENTATION_PLAN.md + change-safety.md + naming-conventions 语言惯例差异 |
 | [1q](./reports/completed/2026-06-18-slice-1q-implementation.md) | 死代码 + 重复清理 | 🟢 | 删 6 处死代码 + queries.sql + Element Plus(bundle -940KB)+ e2e/helpers + room.publish 加日志 |
 | [1r](./reports/completed/2026-06-18-slice-1r-implementation.md) | i18n + logger 迁移 | 🟢 | admin/utils/time.ts i18n + SDK 新建轻量 i18n 模块 + SDK 22 处 console.* → sdkLogger |
 | [1s](./reports/completed/2026-06-18-slice-1s-implementation.md) | 可观测性深化 | 🟢 | Lifecycle 接入 PostCommand/Claim/Release/PostMessage/FlushSession/GC + LogPoint 分支 + LogExternalCall MinIO/PG 边界 |
 | [1t](./reports/completed/2026-06-18-slice-1t-implementation.md) | 测试覆盖补全 | 🟢 | logging(9 tests)+ storage DSN(2)+ privacy handler(4)+ migrations(2),12 个 Go 包全有测试 |
 | [1u](./reports/completed/2026-06-18-slice-1u-implementation.md) | god files 拆分 | 🟢 | queries.go 771 LOC 拆 10 个 per-aggregate 文件;顺手修 docker-compose `:?` 阻塞 infra 启动 |
+| [1v](./reports/completed/2026-06-18-slice-1v-implementation.md) | 审计后续修复 | 🟢 | 修 [1k-1u 回归审计](./audits/2026-06-18-1k-1u-regression.md) 新-1/2/3/5/6/7/8:migrator 路径统一 + GDPR DELETE ErrNoRows + e2e webServer fixture + 文档对齐 |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 

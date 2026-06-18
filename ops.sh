@@ -13,6 +13,15 @@ LOG_FILE="/tmp/marketing-monitor-server.log"
 COMPOSE="docker compose"
 HEALTH_URL="http://localhost:${SERVER_PORT:-8080}/healthz"
 
+# 1k fail-secure 后 server 启动需要显式 env（ADMIN_PASSWORD 等）；
+# 自动 source 根目录 .env（若存在），让 ./ops.sh start 开箱即用。
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 # ===== 颜色 =====
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -60,20 +69,21 @@ cmd_infra_down() {
 }
 
 cmd_migrate() {
-    info "应用数据库 migrations..."
-    for f in server/migrations/*.up.sql; do
-        info "  -> $(basename "$f")"
-        $COMPOSE exec -T postgres psql -U "${PG_USER:-mm}" -d "${PG_DB:-marketing_monitor}" \
-            -f /dev/stdin < "$f" 2>/dev/null || true
-    done
-    info "migrations 完成"
+    # 1v:server 启动时自动跑内嵌 migrator（migrations.go + schema_migrations + advisory lock）。
+    # 此处不再用 psql -f 手动跑（曾导致 schema_migrations 表缺失 + 与 server migrator 冲突）。
+    # 详见 docs/audits/2026-06-18-1k-1u-regression.md §4 新-1 + 新-2。
+    warn "migrations 由 server 启动时自动执行（cmd_migrate 已废弃，保留为兼容入口）。"
+    warn "如需手动应用：./ops.sh restart（重启 server 即触发自动迁移）"
+    warn "如需重置 dev DB：./ops.sh reset"
 }
 
 cmd_migrate_reset() {
     warn "重置数据库（DROP ALL）..."
+    # 1v:加 visitor_consents（1l 表）+ schema_migrations（防 golang-migrate CLI 残留脏表）。
+    # 不再调 cmd_migrate；启动 server 时 server 自家 migrator 会在干净 DB 上跑全套。
     $COMPOSE exec -T postgres psql -U "${PG_USER:-mm}" -d "${PG_DB:-marketing_monitor}" \
-        -c "DROP TABLE IF EXISTS users, chat_messages, co_browsing_commands, event_blobs, sessions, visitors CASCADE;" 2>/dev/null || true
-    cmd_migrate
+        -c "DROP TABLE IF EXISTS visitor_consents, chat_messages, co_browsing_commands, event_blobs, users, sessions, visitors, schema_migrations CASCADE;" || true
+    info "数据库已清空。下次 ./ops.sh start 时 server 会自动跑全部 migrations。"
 }
 
 cmd_build() {
@@ -145,7 +155,8 @@ cmd_server_stop() {
 
 cmd_start() {
     cmd_infra_up
-    cmd_migrate 2>/dev/null || warn "migration 跳过（可能已应用）"
+    # 1v:不再调 cmd_migrate（已废弃，且与 server 内嵌 migrator 冲突）。
+    # server 启动时自动跑 migrations（migrations.go + advisory lock + schema_migrations）。
     if [ ! -f "$SERVER_BIN" ]; then
         warn "二进制不存在，自动构建..."
         cmd_build
@@ -219,7 +230,7 @@ cmd_logs() {
 cmd_dev() {
     info "启动开发模式（热重载）..."
     cmd_infra_up
-    cmd_migrate 2>/dev/null || warn "migration 跳过"
+    # 1v:不再调 cmd_migrate；air 重启 server 时自动跑 migrations。
     if [ ! -f "server/.air.toml" ]; then
         error "缺少 .air.toml，请先 make install-tools"
         return 1
