@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/iannil/marketing-monitor/internal/logging"
 	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/proto"
@@ -46,9 +47,16 @@ func (h *ChatHandler) listMessages(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	// 1k P0-3：校验调用方拥有 session claim
-	sessionID, _, ok := requireClaimOwnership(c, h.stores, h.logger, false)
-	if !ok {
+	// 只读历史消息:任何已认证 admin 都能看(不要求 claim)。
+	// claim 锁定只用于"写"操作(postMessage / postCommand),保护 1:1 控制语义。
+	// 原 1k P0-3 实现错误地对 listMessages 也 requireClaimOwnership,导致 admin
+	// 选中访客后无法看历史聊天(没 claim 就 403)。
+	//
+	// 仅校验 session_id 格式 + (可选)session 存在性,不查 Redis claim。
+	idStr := c.Param("id")
+	sessionID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
 		return
 	}
 

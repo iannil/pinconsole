@@ -7,6 +7,7 @@ import VisitorPanel from '../components/VisitorPanel.vue';
 import CoBrowseOverlay from '../components/CoBrowseOverlay.vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '../api/client';
+import { claimSession, releaseSession } from '../api/claim';
 
 const { t, locale, availableLocales } = useI18n();
 const store = useVisitorsStore();
@@ -20,11 +21,40 @@ function toggleLocale() {
 
 // 1e：co-browsing 控制状态
 const coBrowsingActive = ref(false);
+// claim 是否成功(用于错误提示 + UI 状态)
+const claimError = ref('');
 
-function toggleCoBrowsing() {
+async function toggleCoBrowsing() {
   if (!store.selectedSessionId) return;
-  coBrowsingActive.value = !coBrowsingActive.value;
+  if (!coBrowsingActive.value) {
+    // Start:先 claim,成功后才激活 overlay
+    try {
+      await claimSession(store.selectedSessionId);
+      coBrowsingActive.value = true;
+      claimError.value = '';
+    } catch (e) {
+      claimError.value = (e as Error).message;
+    }
+  } else {
+    // Stop:释放 claim + 关 overlay
+    try {
+      await releaseSession(store.selectedSessionId);
+    } finally {
+      coBrowsingActive.value = false;
+    }
+  }
 }
+
+// 切换访客时,先释放当前 claim
+watch(
+  () => store.selectedSessionId,
+  async (_newId, oldId) => {
+    if (oldId && coBrowsingActive.value) {
+      try { await releaseSession(oldId); } catch { /* 已结束/已 release */ }
+      coBrowsingActive.value = false;
+    }
+  },
+);
 
 const wsEndpoint = computed(() => {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
