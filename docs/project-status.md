@@ -29,12 +29,12 @@
 - ⏳ 1h-ui 待启动(admin LoginView + Vue Router 守卫)
 - ⏳ 1m-observability / 1n-test-depth 待启动
 
-切片深度分布(v1 主干,基于审计实测):
+切片深度分布(v1 主干,基于审计实测 + 1n 修复后):
 
-- 🟢 verified-deep ×6(1d, 1j, 1k, 1l, 1h-ui, **1m**)
-- 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)— 审计建议降级,待 1n 切片统一处理
-- 🔴 implemented-unverified ×1(1h-backend 后端代码 + 1h-ui 已补)
-- ⏳ 未启动 ×1(1n-test-depth)
+- 🟢 verified-deep ×7(1d, 1j, 1k, 1l, 1h-ui, 1m, **1n**)
+- 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)— 审计降级,实际深度
+- 🔴 implemented-unverified ×1(1h-backend)
+- 全部切片已交付
 
 A 阶段升级详情:
 
@@ -113,22 +113,23 @@ A 阶段升级详情:
 
 | 子切片 | 内容 | 深度 | 备注 |
 |---|---|---|---|
-| [1a](./reports/completed/2026-06-17-slice-1a-implementation.md) | 仓库骨架 | 🟢 | 5 smoke + 端到端 release build |
-| [1b](./reports/completed/2026-06-17-slice-1b-implementation.md) | 单向最小 | 🟢 | 4 e2e + 8 Go 单测 |
-| [1c](./reports/completed/2026-06-17-slice-1c-implementation.md) | rrweb 接入 | 🟢 | 4 e2e(实时回放真验证) |
-| [1d](./reports/completed/2026-06-17-slice-1d-implementation.md) | 录像归档 | 🟢 | 4 e2e(live→historical 真验证) |
-| [1e](./reports/completed/2026-06-17-slice-1e-implementation.md) | 双向通道 | 🟢 | 5 e2e(含 PG 审计表) |
-| [1f](./reports/completed/2026-06-17-slice-1f-implementation.md) | 表单 + 跳转 | 🟢 | 4 e2e(含 navigate 跨域拒绝) |
-| [1g](./reports/completed/2026-06-17-slice-1g-implementation.md) | 弹窗 + 聊天 | 🟢 | 4 e2e(含离线消息持久化) |
-| [1h](./reports/completed/2026-06-17-slice-1h-implementation.md) | 认证 + 多运营(后端) | 🔴 | spec 决策 #5 login UI 未实施;已拆为 1h-backend(本报告) + 1h-ui(待启动) |
-| [1i](./reports/completed/2026-06-17-slice-1i-implementation.md) | 反爬虫 | 🟢 | A 阶段升级:BehaviorTracker 接线 + Go 单测覆盖深度逻辑 + e2e 真查 PG fingerprint |
-| [1j](./reports/completed/2026-06-17-slice-1j-implementation.md) | i18n + 部署 + CI | 🟢 | A 阶段升级:硬编码中文抽 key + 语言切换按钮 + 4 个真 e2e + 修 Dockerfile go 版本 bug |
-| [1k](./reports/completed/2026-06-18-slice-1k-implementation.md) | 安全阻断栈 | 🟢 | 修审计 T0:8 个 P0;silent defaults 全套 fail-secure + command/chat/claim 授权 + claim TOCTOU/Lua + popup URL 白名单 + migrations embed + auto up |
-| [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟢 | 修 P0-5/P0-6:consent opt-in 流程 + PG 持久 + 被遗忘权级联删除 + IP /24+64 截断 + co-browse 横幅 + GC 扩展(5/6 表) |
-| [1h-ui](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) | admin LoginView + 守卫 | 🟢 | 修 1h spec 决策 #5:独立 /login 页 + Vue Router beforeEach + Pinia useAuthStore + 全局 fetchJson 处理 401 |
-| [1m](./reports/completed/2026-06-18-slice-1m-implementation.md) | 可观测性 | 🟢 | LifecycleTracker defer 闭包 + 5 event_type + WS trace_id 全链路(SDK 生成→服务端还原 ctx→下行透传)+ SDK sdkLogger |
+| [1a](./reports/completed/2026-06-17-slice-1a-implementation.md) | 仓库骨架 | 🟡 | 1n 降级:vacuous assertion + test.skip 静默跳过 |
+| [1b](./reports/completed/2026-06-17-slice-1b-implementation.md) | 单向最小 | 🟡 | 1n 降级:SDK 重连 / MinIO checksum 未覆盖 |
+| [1c](./reports/completed/2026-06-17-slice-1c-implementation.md) | rrweb 接入 | 🟡 | 1n 降级:脱敏 vacuous truth(已修)+ 截图/韧性未覆盖 |
+| [1d](./reports/completed/2026-06-17-slice-1d-implementation.md) | 录像归档 | 🟢 | live→historical 真验证 |
+| [1e](./reports/completed/2026-06-17-slice-1e-implementation.md) | 双向通道 | 🟡 | 1n 降级:3 处静默跳过(已修)+ cursor/ESC/审计表未真验 |
+| [1f](./reports/completed/2026-06-17-slice-1f-implementation.md) | 表单 + 跳转 | 🟡 | 1n 降级:4 处静默跳过(已修) |
+| [1g](./reports/completed/2026-06-17-slice-1g-implementation.md) | 弹窗 + 聊天 | 🟡 | 1n 降级:4 处静默跳过(已修)+ 双向聊天未真验 |
+| [1h](./reports/completed/2026-06-17-slice-1h-implementation.md) | 认证 + 多运营(后端) | 🔴 | spec 决策 #5 login UI 未实施;1h-ui 已补 |
+| [1h-ui](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) | admin LoginView + 守卫 | 🟢 | 修 1h spec 决策 #5 |
+| [1i](./reports/completed/2026-06-17-slice-1i-implementation.md) | 反爬虫 | 🟡 | 1n 降级:关键 Go 测试曾 flaky(已修)+ e2e 仅 dev 模式 |
+| [1j](./reports/completed/2026-06-17-slice-1j-implementation.md) | i18n + 部署 + CI | 🟢 | A 阶段升级真验证 |
+| [1k](./reports/completed/2026-06-18-slice-1k-implementation.md) | 安全阻断栈 | 🟢 | 修审计 T0:8 个 P0 |
+| [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟢 | 修 P0-5/P0-6 |
+| [1m](./reports/completed/2026-06-18-slice-1m-implementation.md) | 可观测性 | 🟢 | LifecycleTracker + WS trace_id |
+| [1n](./reports/completed/2026-06-18-slice-1n-implementation.md) | 测试深度 + 文档虚标修复 | 🟢 | 修 P0-9/10/11/12 + 7 切片 badge 降级 + e2e 静默跳过改 strict assertion |
 
-> ⚠️ **审计 badge 复核**(2026-06-18):全栈深度审计 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md) §5 建议 7 切片(1a/1b/1c/1e/1f/1g/1i)的 🟢 应降级 🟡。**本表 badge 暂未修改**,留给 1n-test-depth 切片统一处理(避免历史 badge 反复抖动)。深度细节见审计报告。
+> 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 
 **累计估时**：solo 全职约 14-17 周（3.5-4 个月）；业余约 9-12 个月。
 

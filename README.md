@@ -5,20 +5,23 @@
 
 ## 项目状态
 
-**v1 已完成** — 全部 10 个切片交付（1a-1j），39 个 e2e + 9 个 Go 单元测试通过。
+**v1 主干已交付**(2026-06-18 reality check + 全栈深度审计后):原 1a-1j 切片 + 收尾切片 1k/1l/1h-ui/1m 已完成,1n 进行中。深度分布详见 [`docs/project-status.md`](./docs/project-status.md) §5。
 
 | 能力 | 状态 |
 |---|---|
-| 实时访客监控（rrweb 全量采集） | ✅ |
-| 运营 Web admin（Vue3 + Element Plus） | ✅ |
-| co-browsing 双向控制（cursor/click/scroll/fill/navigate） | ✅ |
-| 录像归档 + 历史回放（MinIO + rrweb-player） | ✅ |
+| 实时访客监控(rrweb 全量采集) | ✅ |
+| 运营 Web admin(Vue3 + Element Plus + LoginView + Vue Router 守卫) | ✅ |
+| co-browsing 双向控制(cursor/click/scroll/fill/navigate) | ✅ |
+| 录像归档 + 历史回放(MinIO + rrweb-player) | ✅ |
 | 弹窗推送 + 双向即时聊天 | ✅ |
-| 认证 + 多运营 claim/release 锁 | ✅ |
-| 反爬虫（rate limit + UA 黑名单 + 行为分析 + fingerprint） | ✅ |
+| 认证 + 多运营 claim/release 锁(后端 claim SET NX + Lua release) | ✅ |
+| 反爬虫(rate limit + UA 黑名单 + 行为分析 + fingerprint) | ✅ |
 | 中英双语 i18n | ✅ |
-| Docker Compose 一键部署 | ✅ |
+| Docker Compose 一键部署(prod profile fail-secure 凭证) | ✅ |
 | GitHub Actions CI/CD | ✅ |
+| **安全栈**(silent defaults fail-secure + 命令授权 + popup URL 白名单) | ✅(1k) |
+| **GDPR 合规**(consent opt-in + 被遗忘权 + IP 截断 + co-browse 横幅) | ✅(1l) |
+| **可观测性**(LifecycleTracker + event_type + WS trace_id) | ✅(1m) |
 
 ## 快速开始
 

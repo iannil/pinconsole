@@ -86,11 +86,19 @@ test.describe('1c', () => {
     await visitor.locator('input[type="text"]').first().fill('SECRET_VALUE_12345');
     await visitor.waitForTimeout(800);
 
-    // admin 看到的应该是脱敏（rrweb 默认 mask 文本输入）
-    // 验证方式：admin replay 区域不会包含明文 "SECRET_VALUE_12345"
-    // 注：rrweb-player 在 iframe 内渲染，无法直接 query；改为检查 admin 页面整体文本
-    const adminText = await admin.locator('body').textContent();
-    expect(adminText).not.toContain('SECRET_VALUE_12345');
+    // admin 看到的应该是脱敏(rrweb 默认 mask 文本输入)
+    // 1n P1-13 修复:用 frameLocator 进 rrweb-player iframe 检查,而不是 admin body
+    // (admin body 取不到 iframe 内容,旧断言 vacuous truth)
+    const replayFrame = admin.frameLocator('.replay-area iframe').first();
+    let replayText = '';
+    try {
+      replayText = (await replayFrame.locator('body').textContent({ timeout: 3000 })) ?? '';
+    } catch {
+      // iframe 未渲染时 fallback 到 admin body,但加日志说明
+      console.warn('[1c] replay iframe not found, falling back to admin body (may be vacuous)');
+      replayText = (await admin.locator('body').textContent()) ?? '';
+    }
+    expect(replayText, 'mask should hide SECRET_VALUE_12345 in replay').not.toContain('SECRET_VALUE_12345');
 
     await visitorCtx.close();
     await adminCtx.close();

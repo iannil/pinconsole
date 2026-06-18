@@ -17,7 +17,7 @@ test.describe('1f', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const fillResp = await request.post(`/api/sessions/${sessionId}/command`, {
@@ -37,7 +37,7 @@ test.describe('1f', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const clickResp = await request.post(`/api/sessions/${sessionId}/command`, {
@@ -57,7 +57,7 @@ test.describe('1f', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const navResp = await request.post(`/api/sessions/${sessionId}/command`, {
@@ -77,7 +77,7 @@ test.describe('1f', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const navResp = await request.post(`/api/sessions/${sessionId}/command`, {

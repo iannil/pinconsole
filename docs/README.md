@@ -15,7 +15,7 @@
 | 路径 | 用途 | 当前内容 |
 |---|---|---|
 | [`project-status.md`](./project-status.md) | rolling 项目状态（LLM 友好） | 2026-06-18 reality check 后版本 |
-| [`progress/`](./progress/) | 当前正在进行的修改单元（一改一文） | 空（v1 全切片已完成） |
+| [`progress/`](./progress/) | 当前正在进行的修改单元（一改一文） | 空(无在进行的修改;1n-test-depth 收尾中,见 project-status §5) |
 | [`reports/completed/`](./reports/completed/) | 已完成的切片 spec + implementation 报告 | v1 切片 1a-1j 各含 spec + implementation 两文件 + [`v1-slice-plan.md`](./reports/completed/2026-06-17-v1-slice-plan.md) |
 | [`audits/`](./audits/) | 审计发现（冗余/过期/错误梳理） | [`2026-06-17-initial-cleanup.md`](./audits/2026-06-17-initial-cleanup.md) |
 | [`standards/`](./standards/) | 规范（命名、结构、流程、验证深度） | [`doc-structure.md`](./standards/doc-structure.md)、[`naming-conventions.md`](./standards/naming-conventions.md)、[`verification-depth.md`](./standards/verification-depth.md) |
@@ -27,16 +27,20 @@ v1 切片按顺序排列，每片含 spec（事前决策）+ implementation（�
 
 | 切片 | spec | implementation | 深度 |
 |---|---|---|---|
-| 1a 骨架 | [spec](./reports/completed/2026-06-17-slice-1a-spec.md) | [impl](./reports/completed/2026-06-17-slice-1a-implementation.md) | 🟢 |
-| 1b 单向最小 | [spec](./reports/completed/2026-06-17-slice-1b-spec.md) | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) | 🟢 |
-| 1c rrweb | [spec](./reports/completed/2026-06-17-slice-1c-spec.md) | [impl](./reports/completed/2026-06-17-slice-1c-implementation.md) | 🟢 |
+| 1a 骨架 | [spec](./reports/completed/2026-06-17-slice-1a-spec.md) | [impl](./reports/completed/2026-06-17-slice-1a-implementation.md) | 🟡 |
+| 1b 单向最小 | [spec](./reports/completed/2026-06-17-slice-1b-spec.md) | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) | 🟡 |
+| 1c rrweb | [spec](./reports/completed/2026-06-17-slice-1c-spec.md) | [impl](./reports/completed/2026-06-17-slice-1c-implementation.md) | 🟡 |
 | 1d 录像归档 | [spec](./reports/completed/2026-06-17-slice-1d-spec.md) | [impl](./reports/completed/2026-06-17-slice-1d-implementation.md) | 🟢 |
-| 1e 双向通道 | [spec](./reports/completed/2026-06-17-slice-1e-spec.md) | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) | 🟢 |
-| 1f 表单 + 跳转 | [spec](./reports/completed/2026-06-17-slice-1f-spec.md) | [impl](./reports/completed/2026-06-17-slice-1f-implementation.md) | 🟢 |
-| 1g 弹窗 + 聊天 | [spec](./reports/completed/2026-06-17-slice-1g-spec.md) | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) | 🟢 |
-| 1h 认证 + 多运营 | [spec](./reports/completed/2026-06-17-slice-1h-spec.md) | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) | 🟡 |
+| 1e 双向通道 | [spec](./reports/completed/2026-06-17-slice-1e-spec.md) | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) | 🟡 |
+| 1f 表单 + 跳转 | [spec](./reports/completed/2026-06-17-slice-1f-spec.md) | [impl](./reports/completed/2026-06-17-slice-1f-implementation.md) | 🟡 |
+| 1g 弹窗 + 聊天 | [spec](./reports/completed/2026-06-17-slice-1g-spec.md) | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) | 🟡 |
+| 1h 认证 + 多运营(后端) | [spec](./reports/completed/2026-06-17-slice-1h-spec.md) | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) | 🔴 |
+| 1h-ui LoginView + 守卫 | [spec](./reports/completed/2026-06-18-slice-1h-ui-spec.md) | [impl](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) | 🟢 |
 | 1i 反爬虫 | [spec](./reports/completed/2026-06-17-slice-1i-spec.md) | [impl](./reports/completed/2026-06-17-slice-1i-implementation.md) | 🟡 |
-| 1j i18n + 部署 + CI | [spec](./reports/completed/2026-06-17-slice-1j-spec.md) | [impl](./reports/completed/2026-06-17-slice-1j-implementation.md) | 🔴 |
+| 1j i18n + 部署 + CI | [spec](./reports/completed/2026-06-17-slice-1j-spec.md) | [impl](./reports/completed/2026-06-17-slice-1j-implementation.md) | 🟢 |
+| 1k 安全阻断栈 | [spec](./reports/completed/2026-06-18-slice-1k-spec.md) | [impl](./reports/completed/2026-06-18-slice-1k-implementation.md) | 🟢 |
+| 1l GDPR 合规 | [spec](./reports/completed/2026-06-18-slice-1l-spec.md) | [impl](./reports/completed/2026-06-18-slice-1l-implementation.md) | 🟢 |
+| 1m 可观测性 | [spec](./reports/completed/2026-06-18-slice-1m-spec.md) | [impl](./reports/completed/2026-06-18-slice-1m-implementation.md) | 🟢 |
 
 > **深度判定标准**:见 [`standards/verification-depth.md`](./standards/verification-depth.md)。深度 badge 含义:🟢 verified-deep / 🟡 verified-shallow / 🔴 implemented-unverified。
 

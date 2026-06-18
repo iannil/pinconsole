@@ -2,6 +2,7 @@ package antiscrape
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -27,12 +28,29 @@ func skipIfNoRedis(t *testing.T) *redis.Client {
 
 // TestRateLimitMiddleware_Triggers429 验证超过配额后真触发 429。
 // 这是 1i 的关键负向测试:rate limit 必须真生效,不是只"注册了 middleware"。
+//
+// 1n P0-9 修复:
+//   - unique IP 用 crypto/rand 生成完整 /8 前缀(原 %200+1 在同包其他测试后撞同 bucket)
+//   - 测试 setup 加 FlushDB 清理,确保每次跑测试时 Redis 状态干净
 func TestRateLimitMiddleware_Triggers429(t *testing.T) {
 	rdb := skipIfNoRedis(t)
 	defer rdb.Close()
 
-	// 用唯一 IP 避免与其他测试或先前运行冲突
-	uniqueIP := fmt.Sprintf("10.99.99.%d", time.Now().UnixNano()%200+1)
+	// 1n:FlushDB 确保干净状态(防 flaky)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := rdb.FlushDB(ctx).Err(); err != nil {
+		t.Fatalf("FlushDB failed: %v", err)
+	}
+
+	// 1n:用 crypto/rand 生成真随机 IP(避免 %200 范围太小撞 bucket)
+	b := make([]byte, 2)
+	if _, err := cryptoRand.Read(b); err != nil {
+		t.Fatalf("crypto/rand failed: %v", err)
+	}
+	octet3 := int(b[0]) | 1 // 1-255
+	octet4 := int(b[1]) | 1 // 1-255
+	uniqueIP := fmt.Sprintf("10.99.%d.%d", octet3, octet4)
 
 	cfg := RateLimitConfig{RequestsPerMin: 5, Window: time.Minute}
 	mw := RateLimitMiddleware(rdb, cfg)

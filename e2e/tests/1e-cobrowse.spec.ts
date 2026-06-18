@@ -61,7 +61,7 @@ test.describe('1e', () => {
     // 获取 active session
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     // 验证：click 命令能下发（不实际验证 DOM 点击，因 nodeID 0 = 坐标点击）
@@ -83,7 +83,7 @@ test.describe('1e', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const cmdResp = await request.post(`/api/sessions/${sessionId}/command`, {
@@ -128,7 +128,7 @@ test.describe('1e', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     // 发 cursor_highlight 命令

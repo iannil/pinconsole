@@ -17,7 +17,7 @@ test.describe('1g', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     const popupResp = await request.post(`/api/sessions/${sessionId}/command`, {
@@ -51,7 +51,7 @@ test.describe('1g', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     // admin → visitor 聊天消息
@@ -75,7 +75,7 @@ test.describe('1g', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     // 发两条消息
@@ -104,7 +104,7 @@ test.describe('1g', () => {
 
     const sessionsResp = await request.get('/api/sessions');
     const sessions = await sessionsResp.json();
-    if (!sessions.sessions.length) return;
+    expect(sessions.sessions.length, "expected ≥1 active session (e2e fixture missing)").toBeGreaterThan(0);
     const sessionId = sessions.sessions[0].session_id;
 
     // 访客关闭页面（离线）
