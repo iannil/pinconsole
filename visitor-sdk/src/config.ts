@@ -31,10 +31,25 @@ const DEFAULTS: VisitorConfig = {
   showCoBrowseBanner: true,
 };
 
+// 从对象中剔除值为 undefined 的字段。
+// 用于 readScriptData / readWindowConfig —— 避免显式 undefined 覆盖 DEFAULTS。
+// JS spread `{ ...DEFAULTS, ...{ x: undefined } }` 会把 x 设为 undefined,
+// 这不是我们想要的;不传 = 用默认值。
+function dropUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  const out: Partial<T> = {};
+  for (const k in obj) {
+    const v = obj[k];
+    if (v !== undefined) {
+      (out as Record<string, unknown>)[k] = v;
+    }
+  }
+  return out;
+}
+
 /** 从 <script data-*> 与 window.MM_CONFIG 合并配置。 */
 export function resolveConfig(): VisitorConfig {
-  const fromScript = readScriptData();
-  const fromWindow = readWindowConfig();
+  const fromScript = dropUndefined(readScriptData());
+  const fromWindow = dropUndefined(readWindowConfig());
   return { ...DEFAULTS, ...fromScript, ...fromWindow };
 }
 
