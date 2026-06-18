@@ -32,6 +32,8 @@ var configEnvKeys = []string{
 	"PG_HOST", "PG_PORT", "PG_USER", "PG_PASSWORD", "PG_DB", "PG_SSLMODE",
 	"REDIS_ADDR", "REDIS_PASSWORD",
 	"MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY", "MINIO_BUCKET", "MINIO_USE_SSL",
+	// 1ab P1-5
+	"TRUSTED_PROXIES", "BEHIND_REVERSE_PROXY",
 }
 
 func TestLoad_DefaultEnvIsProd(t *testing.T) {
@@ -354,5 +356,131 @@ func TestLoad_DevModeSkipsSSLValidations(t *testing.T) {
 	_, err := Load()
 	if err != nil {
 		t.Fatalf("Load in dev mode should skip SSL validations, got: %v", err)
+	}
+}
+
+// 1ab P1-5:TrustedProxies 配置一致性校验测试
+
+func TestLoad_DirectExposure_Default_NoTrustedProxies(t *testing.T) {
+	// 默认 BEHIND_REVERSE_PROXY=false + 空 TrustedProxies → OK(裸暴露部署)
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "dev")
+	t.Setenv("ADMIN_PASSWORD", "dev-password")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load should succeed for direct exposure default, got: %v", err)
+	}
+	if cfg.BehindReverseProxy != false {
+		t.Errorf("BehindReverseProxy default = true, want false")
+	}
+}
+
+func TestLoad_BehindProxy_RequiresTrustedProxies(t *testing.T) {
+	// BEHIND_REVERSE_PROXY=true 但 TrustedProxies 空 → REJECT
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "dev")
+	t.Setenv("ADMIN_PASSWORD", "dev-password")
+	t.Setenv("BEHIND_REVERSE_PROXY", "true")
+	// 不设 TRUSTED_PROXIES
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load should reject BEHIND_REVERSE_PROXY=true with empty TRUSTED_PROXIES")
+	}
+	if !strings.Contains(err.Error(), "TRUSTED_PROXIES") {
+		t.Errorf("error should mention TRUSTED_PROXIES, got: %v", err)
+	}
+}
+
+func TestLoad_BehindProxy_ValidCIDRs_OK(t *testing.T) {
+	// BEHIND_REVERSE_PROXY=true + 有效 CIDR 列表 → OK
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "dev")
+	t.Setenv("ADMIN_PASSWORD", "dev-password")
+	t.Setenv("BEHIND_REVERSE_PROXY", "true")
+	t.Setenv("TRUSTED_PROXIES", "10.0.0.0/8,192.168.0.0/16,172.16.0.1")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load should accept valid CIDR list, got: %v", err)
+	}
+	if cfg.TrustedProxies != "10.0.0.0/8,192.168.0.0/16,172.16.0.1" {
+		t.Errorf("TrustedProxies = %q, want list", cfg.TrustedProxies)
+	}
+}
+
+func TestLoad_BehindProxy_InvalidCIDR_Rejects(t *testing.T) {
+	// BEHIND_REVERSE_PROXY=true + 无效 CIDR → REJECT
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{"not enough octets", "10.0.0/8"},
+		{"bad prefix", "10.0.0.0/99"},
+		{"non-IP string", "not-an-ip"},
+		{"trailing garbage", "10.0.0.0/8,garbage"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearEnv(t, configEnvKeys...)
+			t.Setenv("SERVER_ENV", "dev")
+			t.Setenv("ADMIN_PASSWORD", "dev-password")
+			t.Setenv("BEHIND_REVERSE_PROXY", "true")
+			t.Setenv("TRUSTED_PROXIES", tt.value)
+
+			_, err := Load()
+			if err == nil {
+				t.Fatalf("Load should reject invalid CIDR %q", tt.value)
+			}
+			if !strings.Contains(err.Error(), "TRUSTED_PROXIES") {
+				t.Errorf("error should mention TRUSTED_PROXIES, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestLoad_DirectExposure_TrustedProxiesSet_SilentAllow(t *testing.T) {
+	// BEHIND_REVERSE_PROXY=false + TrustedProxies 设了 → silent OK
+	// (用户防御性配置,无害 — XFF 被忽略)
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "dev")
+	t.Setenv("ADMIN_PASSWORD", "dev-password")
+	t.Setenv("BEHIND_REVERSE_PROXY", "false")
+	t.Setenv("TRUSTED_PROXIES", "10.0.0.0/8")
+
+	_, err := Load()
+	if err != nil {
+		t.Fatalf("Load should silently allow TrustedProxies in direct mode (no harm), got: %v", err)
+	}
+}
+
+func TestValidateProxyCIDRList_Formats(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"empty", "", false},
+		{"single CIDR", "10.0.0.0/8", false},
+		{"multiple CIDRs", "10.0.0.0/8,192.168.0.0/16", false},
+		{"bare IP", "10.0.0.1", false},
+		{"IPv6 CIDR", "2001:db8::/32", false},
+		{"mixed CIDR + IP", "10.0.0.0/8,192.168.1.1", false},
+		{"whitespace tolerated", "  10.0.0.0/8  ,  192.168.0.0/16  ", false},
+		{"bad CIDR prefix", "10.0.0.0/33", true},
+		{"not IP", "hello", true},
+		{"trailing comma", "10.0.0.0/8,", false}, // empty parts skipped
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateProxyCIDRList(tt.input)
+			if tt.wantErr && err == nil {
+				t.Errorf("validateProxyCIDRList(%q) should error", tt.input)
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("validateProxyCIDRList(%q) unexpected error: %v", tt.input, err)
+			}
+		})
 	}
 }

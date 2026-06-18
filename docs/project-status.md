@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(v1 主干完全收口 + 1aa TS 测试深化交付,admin/SDK 累计 112 单测)
+**最后更新**:2026-06-19(v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固,deep-audit P1-5 关闭)
 
 ---
 
@@ -136,8 +136,9 @@
 | v1-e2e | 全量 e2e acceptance | 🟢 | [impl](./reports/completed/2026-06-18-v1-e2e-acceptance.md) |
 | v1-followups | e2e 后 5 个生产 bug fix | 🟢 | [impl](./reports/completed/2026-06-18-v1-followups.md) |
 | 1aa | TS 测试深化(admin 64 + SDK 48) | 🟢 | [impl](./reports/completed/2026-06-19-slice-1aa-ts-test-deepening.md) |
+| 1ab | TrustedProxies 加固(P1-5) | 🟢 | [impl](./reports/completed/2026-06-19-slice-1ab-trusted-proxies.md) |
 
-**累计**：🟢 ×30 / 🔴 ×1（1h-backend spec partial）
+**累计**：🟢 ×31 / 🔴 ×1（1h-backend spec partial）
 
 **累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。
 
@@ -154,7 +155,6 @@
 - ✅ 5 个 e2e 后生产 bug(v1-followups)
 
 **未修(不阻断 v1 release)**:
-- 🟡 **P1-5 TrustedProxies**:rate limit 可被 `X-Forwarded-For` 伪造绕过。需要部署方配置反向代理白名单。生产拓扑确定后再单独切片加固。
 - 🟡 **P2/P3**:~20 条非阻断项(代码质量、文档完善、测试深化),详见审计文档,留作 post-v1 backlog
 - **rrweb 在动态 SPA 下节点 ID 不稳定**:测试矩阵需覆盖主流框架
 - **AGPL 可能劝退部分企业采用**:双 license 路径预留
@@ -181,12 +181,10 @@
 
 ### post-v1 候选（按优先级）
 
-1. **TrustedProxies 加固(P1-5)** — 唯一未修的 P1 安全项;需明确反向代理拓扑后单独切片
-2. **TS 测试深化** — admin/visitor-sdk 各只有 2 个 vitest smoke;补 integration test
-3. **自定义域名**(PLAN.md §8 #3)— DNS 验证 + Let's Encrypt ACME + Host-header 路由
-4. **页面编辑器**(PLAN.md §8 #2)— 拖拽 / 低代码 / JSON schema → Go 模板渲染
-5. **Tauri 桌面端**(PLAN.md §8 #4)— Win + Mac,复用 admin SPA
-6. **反爬加固**(PLAN.md §8 #5)— CAPTCHA + honeypot + 动态类名/ID
+1. **自定义域名**(PLAN.md §8 #3)— DNS 验证 + Let's Encrypt ACME + Host-header 路由
+2. **页面编辑器**(PLAN.md §8 #2)— 拖拽 / 低代码 / JSON schema → Go 模板渲染
+3. **Tauri 桌面端**(PLAN.md §8 #4)— Win + Mac,复用 admin SPA
+4. **反爬加固**(PLAN.md §8 #5)— CAPTCHA + honeypot + 动态类名/ID
 
 ## 8. LLM 协作提示
 

@@ -3,12 +3,12 @@
 > CLAUDE.md "项目指南"段要求:通过 IMPLEMENTATION_PLAN.md 让模型理解当前正在做什么、边界、下一步。
 > 本文件 rolling 更新,每次开始新切片时改写;完成后归档到 `docs/reports/completed/`。
 
-**当前状态**:v1 主干完全收口 + 1aa TS 测试深化完成(admin/SDK 累计 112 单测全绿)
+**当前状态**:v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固完成(deep-audit P1-5 关闭)
 **最后更新**:2026-06-19
 
 ## 当前焦点
 
-**进行中**:1ab-trusted-proxies-hardening(P1-5 安全加固,validate() fail-fast + Go 单测 + 1 e2e)。
+**无活跃切片**。deep-audit 13 个 P0 + 关键 P1(P1-5 TrustedProxies)全部闭环。等待用户决定 post-v1 路线。
 
 ## v1 已交付切片(完整清单)
 
@@ -46,24 +46,15 @@
 | v1-e2e | 全量 e2e acceptance + 6 regression spec + 4 production bug 修复 | 🟢 |
 | v1-followups | e2e 后 5 个生产 bug fix(co-browse + visitor-sdk + v1-replay × 3) | 🟢 |
 | 1aa | TS 测试深化(admin 64 + SDK 48,累计 112) | 🟢 |
+| 1ab | TrustedProxies 加固(P1-5,BEHIND_REVERSE_PROXY env + validate fail-fast) | 🟢 |
 
-**累计**:🟢 ×30 / 🔴 ×1(1h-backend spec partial)
+**累计**:🟢 ×31 / 🔴 ×1(1h-backend spec partial)
 
 完整深度判定与每切片报告见 [`docs/project-status.md`](./docs/project-status.md) §5 + [`docs/reports/completed/`](./docs/reports/completed/)。
 
 ## 下一步候选(按优先级)
 
-### 1. TrustedProxies 加固(P1-5,进行中 = 切片 1ab)
-
-deep-audit P1-5:rate limit / IP-based throttle 可被 `X-Forwarded-For` 伪造绕过。1o 接入 env var + SetTrustedProxies 但 validate() 不校验 + 0 单测。
-
-范围(用户已确认):
-- validate() 加 prod + 反代特征 + TrustedProxies 留空检测 → **fail-fast 拒绝启动**
-- Go 单测覆盖 3 场景(裸暴露 / 反代配 / 反代忘配)
-- 1 e2e 场景(mock X-Forwarded-For 验证 ClientIP 解析)
-- 估时 0.5-1 天
-
-### 2. post-v1 路线(详见 PLAN.md §8)
+### 1. post-v1 路线(详见 PLAN.md §8)
 
 - **自定义域名**:DNS 验证 + Let's Encrypt ACME + Host-header 路由(1-2 周)
 - **页面编辑器**:拖拽 / 低代码 / JSON schema → Go 模板渲染(切片 2-3)

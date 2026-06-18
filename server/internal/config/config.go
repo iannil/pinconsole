@@ -8,6 +8,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/caarlos0/env/v11"
@@ -68,6 +69,9 @@ type Config struct {
 
 	// 1o P1-5:TrustedProxies CIDR 列表(逗号分隔);prod 部署在 nginx/caddy 后必填
 	TrustedProxies string `env:"TRUSTED_PROXIES" envDefault:""`
+	// 1ab P1-5:显式声明部署拓扑。true = 部署在反代后(TrustedProxies 必填)。
+	// false/默认 = 直接暴露(TrustedProxies 应为空,XFF 被忽略防伪造)。
+	BehindReverseProxy bool `env:"BEHIND_REVERSE_PROXY" envDefault:"false"`
 }
 
 // PostgresConfig 是 PostgreSQL 连接配置。
@@ -164,6 +168,39 @@ func (cfg *Config) validate() error {
 		// 1z:MinIO 跨网络 TLS 防御。本地/docker 内部网络允许 false。
 		if !cfg.MinIO.UseSSL && !isLocalEndpoint(cfg.MinIO.Endpoint) {
 			return fmt.Errorf("MINIO_USE_SSL=false 在 prod 模式 + 远程 MinIO 下不允许：录像 blob 明文走网络，请设 MINIO_USE_SSL=true（1z fail-secure）")
+		}
+	}
+
+	// 1ab P1-5:TrustedProxies 配置一致性校验(fail-secure)。
+	// 反代部署忘配 → rate limit 共用单 IP 预算,功能退化且不易发现。
+	// 直接暴露 + 配 TrustedProxies 是无害的防御性配置(silent allow)。
+	if cfg.BehindReverseProxy {
+		if strings.TrimSpace(cfg.TrustedProxies) == "" {
+			return fmt.Errorf("BEHIND_REVERSE_PROXY=true 但 TRUSTED_PROXIES 未设置：反代部署必须显式配置信任的反代 CIDR（1ab fail-secure，防 rate limit 共用单 IP 预算）")
+		}
+		if err := validateProxyCIDRList(cfg.TrustedProxies); err != nil {
+			return fmt.Errorf("TRUSTED_PROXIES 格式错误：%v（1ab fail-secure）", err)
+		}
+	}
+	return nil
+}
+
+// validateProxyCIDRList 校验逗号分隔的 CIDR/IP 列表格式。
+// 接受 "10.0.0.0/8" / "192.168.1.1" 等格式;空字符串视为 OK(由调用方判断是否允许)。
+func validateProxyCIDRList(s string) error {
+	for _, p := range strings.Split(s, ",") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if strings.Contains(p, "/") {
+			if _, _, err := net.ParseCIDR(p); err != nil {
+				return fmt.Errorf("invalid CIDR %q: %w", p, err)
+			}
+		} else {
+			if net.ParseIP(p) == nil {
+				return fmt.Errorf("invalid IP %q", p)
+			}
 		}
 	}
 	return nil
