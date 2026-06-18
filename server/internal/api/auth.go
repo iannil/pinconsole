@@ -43,7 +43,15 @@ func NewAuthHandler(stores *storage.Stores, logger *slog.Logger, secureCookie bo
 func (h *AuthHandler) Register(r gin.IRoutes) {
 	r.POST("/api/auth/login", h.login)
 	r.POST("/api/auth/logout", h.logout)
-	r.GET("/api/auth/me", h.me)
+	// /api/auth/me 走 protected 组(由 router.go 挂 AuthMiddleware),
+	// 否则 user_id 不会注入 context,handler 永远返回 401 not_authenticated。
+	// 见 router.go: authH.RegisterMe(protected)
+}
+
+// RegisterMe 在 protected 路由组上注册 /api/auth/me。
+// 调用方应传入已挂 AuthMiddleware 的 group。
+func (h *AuthHandler) RegisterMe(protected gin.IRoutes) {
+	protected.GET("/api/auth/me", h.me)
 }
 
 type loginRequest struct {

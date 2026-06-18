@@ -96,7 +96,7 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	r.GET("/healthz", healthLive)
 	r.GET("/readyz", healthReady(opts.Stores))
 
-	// 1h：认证（公开）
+	// 1h：认证（login/logout 公开；me 走 protected，见下）
 	authH := NewAuthHandler(opts.Stores, opts.Logger, opts.Env == "prod")
 	authH.Register(r)
 
@@ -116,6 +116,9 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	authMW := AuthMiddleware(opts.Stores.Redis.Get, opts.Env != "prod")
 	protected := r.Group("/", authMW)
 	{
+		// /api/auth/me 需要 AuthMiddleware 注入 user_id,否则永远返回 401
+		authH.RegisterMe(protected)
+
 		// 1d：replay REST API
 		replayH := NewReplayHandler(opts.Stores, opts.Logger)
 		replayH.Register(protected)

@@ -6,6 +6,7 @@ import VisitorList from '../components/VisitorList.vue';
 import VisitorPanel from '../components/VisitorPanel.vue';
 import CoBrowseOverlay from '../components/CoBrowseOverlay.vue';
 import { useI18n } from 'vue-i18n';
+import { apiFetch } from '../api/client';
 
 const { t, locale, availableLocales } = useI18n();
 const store = useVisitorsStore();
@@ -55,11 +56,12 @@ const {
 });
 
 // 初始拉取访客列表（REST），随后 WS 推送增量
+// 1z P1-1:改用 apiFetch 自动注入 X-Trace-Id(原来用裸 fetch 不带 trace_id)
 async function fetchInitial() {
   try {
-    const resp = await fetch('/api/sessions');
-    if (!resp.ok) return;
-    const data = await resp.json();
+    const { response } = await apiFetch('/api/sessions');
+    if (!response.ok) return;
+    const data = await response.json();
     store.setInitialList(
       (data.sessions ?? []).map((s: Record<string, unknown>) => ({
         sessionId: String(s.session_id ?? ''),
