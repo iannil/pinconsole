@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iannil/marketing-monitor/internal/logging"
+	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
@@ -87,7 +89,11 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	// 1k P0-3：校验调用方拥有 session claim
+	// 1s:Lifecycle
+	logger := logging.FromContext(ctx, h.logger)
+	defer observability.Lifecycle(ctx, "PostMessage", logger)()
+
+	// 1k P0-3:校验调用方拥有 session claim
 	sessionID, _, ok := requireClaimOwnership(c, h.stores, h.logger, false)
 	if !ok {
 		return

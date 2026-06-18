@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
@@ -244,8 +245,11 @@ func (f *Flusher) tick(ctx context.Context) {
 
 // flushSession 读 stream 全量（自上次 flush）、写 MinIO、写 PG、XTRIM。
 func (f *Flusher) flushSession(ctx context.Context, as *activeSession) error {
+	// 1s:Lifecycle 全链路(后台 goroutine,无 HTTP ctx 但仍可观察)
+	defer observability.Lifecycle(ctx, "FlushSession", f.logger)()
+
 	// 读自上次 flush 后的所有 entry
-	// 简化：XRange 全部，flush 完 XTRIM 整条 stream（保留 TrimKeep）
+	// 简化:XRange 全部,flush 完 XTRIM 整条 stream(保留 TrimKeep)
 	entries, err := f.stream.Range(ctx, as.sessionID, "-", "+")
 	if err != nil {
 		return fmt.Errorf("range: %w", err)
@@ -269,8 +273,10 @@ func (f *Flusher) flushSession(ctx context.Context, as *activeSession) error {
 	// Redis XTRIM 失败不影响一致性(stream 多保留些 entry,下次 flush 再 trim)
 	objectKey := fmt.Sprintf("sessions/%s/%d.msgpack", as.sessionID, as.blobIndex)
 	if err := f.stores.MinIO.PutBytes(ctx, objectKey, blob); err != nil {
+		observability.LogExternalCall(ctx, f.logger, "minio.PutObject", "error", "key", objectKey, "size", len(blob))
 		return fmt.Errorf("minio put: %w", err)
 	}
+	observability.LogExternalCall(ctx, f.logger, "minio.PutObject", "ok", "key", objectKey, "size", len(blob))
 
 	// 写 PG event_blobs
 	_, err = f.stores.PG.CreateEventBlob(ctx, storage.EventBlob{
@@ -284,6 +290,10 @@ func (f *Flusher) flushSession(ctx context.Context, as *activeSession) error {
 		SizeBytes:      int64(len(blob)),
 		ChecksumSHA256: checksum,
 	})
+	if err == nil {
+		observability.LogExternalCall(ctx, f.logger, "pg.CreateEventBlob", "ok",
+			"session_id", as.sessionID, "blob_index", as.blobIndex)
+	}
 	if err != nil {
 		// 补偿:删 MinIO 对象,避免孤儿
 		compensateErr := f.stores.MinIO.Client.RemoveObject(ctx, f.stores.MinIO.Bucket, objectKey, minio.RemoveObjectOptions{})

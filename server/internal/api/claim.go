@@ -10,6 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/logging"
+	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
@@ -52,6 +54,10 @@ func claimKey(sessionID uuid.UUID) string {
 func (h *ClaimHandler) claim(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
+
+	// 1s:Lifecycle 全链路埋点
+	logger := logging.FromContext(ctx, h.logger)
+	defer observability.Lifecycle(ctx, "Claim", logger)()
 
 	sessionID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -105,6 +111,10 @@ func (h *ClaimHandler) claim(c *gin.Context) {
 func (h *ClaimHandler) release(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
+
+	// 1s:Lifecycle
+	logger := logging.FromContext(ctx, h.logger)
+	defer observability.Lifecycle(ctx, "Release", logger)()
 
 	sessionID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

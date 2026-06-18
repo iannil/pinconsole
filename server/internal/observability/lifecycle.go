@@ -84,15 +84,16 @@ func LifecycleWithArgs(args ...any) LifecycleOption {
 }
 
 // LogPoint 在 if/else/loop/外部调用前后手动埋点(CLAUDE.md 要求)。
-func LogPoint(ctx context.Context, logger *slog.Logger, et EventType, span string, key string, value any) {
+// 接受 variadic extras,便于记录多个字段。
+func LogPoint(ctx context.Context, logger *slog.Logger, et EventType, span string, extras ...any) {
 	if logger == nil {
 		return
 	}
 	attrs := []any{
 		"event_type", et,
 		"span", span,
-		key, value,
 	}
+	attrs = append(attrs, extras...)
 	logger.InfoContext(ctx, string(et), attrs...)
 }
 

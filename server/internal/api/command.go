@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/iannil/marketing-monitor/internal/logging"
+	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
@@ -73,17 +74,27 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	// 1k P0-3：校验调用方拥有 session claim（不要求 alive，因命令可能针对刚结束的 session）
+	// 1s:LifecycleTracker 全链路埋点
+	logger := logging.FromContext(ctx, h.logger)
+	defer observability.Lifecycle(ctx, "PostCommand", logger)()
+
+	// 1k P0-3:校验调用方拥有 session claim(不要求 alive,因命令可能针对刚结束的 session)
 	sessionID, callerUID, ok := requireClaimOwnership(c, h.stores, h.logger, false)
 	if !ok {
+		observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
+			"claim_check", "failed")
 		return
 	}
+	observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
+		"claim_check", "ok", "command_type", "")
 
 	var req commandRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_json", "detail": err.Error()})
 		return
 	}
+	observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
+		"command_type", req.Type)
 
 	// 构造 CommandPayload
 	cp, err := buildCommandPayload(req)
@@ -92,16 +103,20 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		return
 	}
 
-	// navigate 安全：同源 + localhost + 额外白名单（env var）
+	// navigate 安全:同源 + localhost + 额外白名单(env var)
 	if cp.Navigate != nil {
 		if !h.isURLAllowed(cp.Navigate.URL, c.Request.Host) {
+			observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
+				"navigate_check", "rejected", "url", cp.Navigate.URL)
 			c.JSON(http.StatusForbidden, gin.H{"error": "url_not_allowed", "url": cp.Navigate.URL})
 			return
 		}
 	}
-	// 1k P0-8：show_popup action_url scheme 白名单（防 javascript:/data: 注入）
+	// 1k P0-8:show_popup action_url scheme 白名单(防 javascript:/data: 注入)
 	if cp.Popup != nil && cp.Popup.ActionURL != "" {
 		if !isURLSchemeAllowed(cp.Popup.ActionURL) {
+			observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
+				"popup_url_check", "rejected", "url", cp.Popup.ActionURL)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "popup_url_scheme_not_allowed", "url": cp.Popup.ActionURL})
 			return
 		}
@@ -117,7 +132,7 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		nodeID = &v
 	}
 
-	// 写 PG 审计（1k P0-3：OperatorID 用 user_id 而非 ClientIP，修复审计污染）
+	// 写 PG 审计(1k P0-3:OperatorID 用 user_id 而非 ClientIP,修复审计污染)
 	payloadBytes, _ := json.Marshal(req.Payload)
 	_, err = h.stores.PG.CreateCoBrowsingCommand(ctx, storage.CoBrowsingCommand{
 		TenantID:     storage.DefaultTenantID,
@@ -128,8 +143,11 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		Payload:      payloadBytes,
 	})
 	if err != nil {
+		observability.LogExternalCall(ctx, logger, "pg.CreateCoBrowsingCommand", "error", "session_id", sessionID)
 		h.logger.ErrorContext(ctx, "create command audit failed", "error", err)
-		// 不阻塞下行；继续
+		// 不阻塞下行;继续
+	} else {
+		observability.LogExternalCall(ctx, logger, "pg.CreateCoBrowsingCommand", "ok", "session_id", sessionID)
 	}
 
 	// 包装 envelope,下行到 visitor(1m:透传 ctx trace_id)

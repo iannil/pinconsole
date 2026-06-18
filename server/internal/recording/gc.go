@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iannil/marketing-monitor/internal/observability"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
@@ -98,6 +99,9 @@ func (g *GC) Stop() {
 // 顺序(依赖反向): event_blobs → chat_messages → co_browsing_commands
 // → sessions → visitors。
 func (g *GC) runOnce(ctx context.Context) {
+	// 1s:Lifecycle 全链路(后台 worker,每小时一次)
+	defer observability.Lifecycle(ctx, "GC.runOnce", g.logger)()
+
 	threshold := time.Now().Add(-g.cfg.Retention)
 
 	// 1. event_blobs + 对应 MinIO 对象
