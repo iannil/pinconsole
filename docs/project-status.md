@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-18(v1 主干完全收口 + e2e acceptance 65 测试全绿 + 5 个 followup fix + admin flagged UI/prod-mode CI 全部交付)
+**最后更新**:2026-06-19(v1 主干完全收口 + 1aa TS 测试深化交付,admin/SDK 累计 112 单测)
 
 ---
 
@@ -135,8 +135,9 @@
 | 1z | 生产就绪度补全 | 🟢 | [impl](./reports/completed/2026-06-18-slice-1z-prod-readiness-gaps.md) |
 | v1-e2e | 全量 e2e acceptance | 🟢 | [impl](./reports/completed/2026-06-18-v1-e2e-acceptance.md) |
 | v1-followups | e2e 后 5 个生产 bug fix | 🟢 | [impl](./reports/completed/2026-06-18-v1-followups.md) |
+| 1aa | TS 测试深化(admin 64 + SDK 48) | 🟢 | [impl](./reports/completed/2026-06-19-slice-1aa-ts-test-deepening.md) |
 
-**累计**：🟢 ×29 / 🔴 ×1（1h-backend spec partial）
+**累计**：🟢 ×30 / 🔴 ×1（1h-backend spec partial）
 
 **累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。
 

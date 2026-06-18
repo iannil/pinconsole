@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-18（v1 主干完全收口:1a-1z + e2e acceptance + 5 followup fix + admin flagged UI/prod-mode CI 全部交付,70+ commits）
+**最后更新**：2026-06-19（v1 主干完全收口 + 1aa TS 测试深化交付,admin/SDK 累计 112 单测）
 
 ---
 
