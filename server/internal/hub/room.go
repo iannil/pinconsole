@@ -1,10 +1,14 @@
-// Package hub：session 与 tenant 房间的订阅实现。
+// Package hub:session 与 tenant 房间的订阅实现。
 package hub
 
-import "github.com/google/uuid"
+import (
+	"log/slog"
 
-// subscribe 给当前 sub 加订阅，返回接收 chan。
-// chan 容量 64 足以吸收瞬时突发；满了 publish 会丢弃（带日志）。
+	"github.com/google/uuid"
+)
+
+// subscribe 给当前 sub 加订阅,返回接收 chan。
+// chan 容量 64 足以吸收瞬时突发;满了 publish 会丢弃并打日志(1q 修复 P1-26)。
 func (sc *SessionChan) subscribe(subID uuid.UUID) <-chan []byte {
 	ch := make(chan []byte, 64)
 	sc.mu.Lock()
@@ -43,7 +47,9 @@ func (sc *SessionChan) publish(msg []byte) {
 		select {
 		case ch <- msg:
 		default:
-			// 满，丢弃
+			// 1q P1-26:订阅者消费慢,丢弃消息并打日志(便于排查丢失)
+			slog.Warn("hub.publish drop: subscriber channel full",
+				"room", "session", "msg_size", len(msg))
 		}
 	}
 }
@@ -78,6 +84,9 @@ func (tr *TenantRoom) publish(msg []byte) {
 		select {
 		case ch <- msg:
 		default:
+			// 1q P1-26
+			slog.Warn("hub.publish drop: subscriber channel full",
+				"room", "tenant", "msg_size", len(msg))
 		}
 	}
 }

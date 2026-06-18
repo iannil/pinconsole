@@ -187,19 +187,6 @@ func (f *Flusher) Unregister(ctx context.Context, sessionID uuid.UUID) {
 	}
 }
 
-// FlushSessionNow 立即同步 flush 某 session 的剩余事件。
-// 用于 visitor WS 断开时确保最后一批事件归档（spec §End flush 时机）。
-// 若该 session 不在 flusher 监控中（未注册），无操作。
-func (f *Flusher) FlushSessionNow(ctx context.Context, sessionID uuid.UUID) error {
-	f.mu.RLock()
-	as, exists := f.active[sessionID]
-	f.mu.RUnlock()
-	if !exists {
-		return nil
-	}
-	return f.flushSession(ctx, as)
-}
-
 // Start 启动后台 ticker。
 func (f *Flusher) Start(ctx context.Context) {
 	ticker := time.NewTicker(f.cfg.Interval)

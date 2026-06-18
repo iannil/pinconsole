@@ -146,18 +146,6 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	return r
 }
 
-// NewRouter 保留切片 1a 的接口（已被 NewRouterWithOpts 替代，但保留以兼容）。
-//
-// Deprecated: 用 NewRouterWithOpts。
-func NewRouter(logger *slog.Logger, stores *storage.Stores, embedded fs.FS, release bool) *gin.Engine {
-	return NewRouterWithOpts(Options{
-		Logger:   logger,
-		Stores:   stores,
-		Embedded: embedded,
-		Release:  release,
-	})
-}
-
 // staticHandler 封装 dev/prod 两套静态资源逻辑。
 type staticHandler struct {
 	embedded      fs.FS

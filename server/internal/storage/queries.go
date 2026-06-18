@@ -137,12 +137,6 @@ func (s *Postgres) CreateVisitor(ctx context.Context, tenantID uuid.UUID, finger
 	return scanVisitor(row)
 }
 
-// TouchVisitor 更新 last_seen_at。
-func (s *Postgres) TouchVisitor(ctx context.Context, id uuid.UUID) error {
-	_, err := s.Pool.Exec(ctx, `UPDATE visitors SET last_seen_at = NOW() WHERE id = $1`, id)
-	return err
-}
-
 // CreateSession 创建新会话。
 func (s *Postgres) CreateSession(ctx context.Context, tenantID, visitorID uuid.UUID, ua, ip string) (*Session, error) {
 	var uaArg any
@@ -370,16 +364,6 @@ func (s *Postgres) ListEventBlobsOlderThan(ctx context.Context, threshold time.T
 func (s *Postgres) DeleteEventBlobByID(ctx context.Context, id uuid.UUID) error {
 	_, err := s.Pool.Exec(ctx, `DELETE FROM event_blobs WHERE id = $1`, id)
 	return err
-}
-
-// CountEventBlobsBySession 统计某 session 的 blob 数。
-func (s *Postgres) CountEventBlobsBySession(ctx context.Context, sessionID uuid.UUID) (int64, error) {
-	var n int64
-	err := s.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM event_blobs WHERE session_id = $1`, sessionID).Scan(&n)
-	if err != nil {
-		return 0, err
-	}
-	return n, nil
 }
 
 // scanner 兼容 *pgx.Row 与 *pgx.Rows 的 Scan 接口。

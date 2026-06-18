@@ -27,7 +27,6 @@ type WSHandler struct {
 	snapshots *recording.SnapshotCache
 	logger    *slog.Logger
 	maxMsg    int64
-	pingEvery time.Duration
 }
 
 // NewWSHandler 创建 WS handler。
@@ -40,7 +39,6 @@ func NewWSHandler(h *hub.Hub, stores *storage.Stores, stream *recording.Stream, 
 		snapshots: snapshots,
 		logger:    logger,
 		maxMsg:    1 << 20, // 1 MiB
-		pingEvery: 15 * time.Second,
 	}
 }
 
@@ -457,23 +455,7 @@ func (h *WSHandler) sendError(ctx context.Context, conn *websocket.Conn, code, m
 	_ = conn.Write(ctx, websocket.MessageBinary, env)
 }
 
-// isFullSnapshotEnvelope 检测 envelope bytes 是否含 rrweb FullSnapshot 事件。
-// 已废弃：用 extractFullSnapshotEnvelope 替代（支持 batch 模式）。
-//
-// 保留：测试代码可能引用。
-func isFullSnapshotEnvelope(msg []byte) bool {
-	env, err := proto.Decode(msg)
-	if err != nil || env.Type != proto.MsgEvent {
-		return false
-	}
-	var ep proto.EventPayload
-	if err := proto.DecodePayload(env.Payload, &ep); err != nil {
-		return false
-	}
-	return ep.Type == proto.EvRRWeb && ep.RRWeb != nil && ep.RRWeb.Type == 2
-}
-
-// extractFullSnapshotEnvelope 从 envelope（single 或 batch）中提取含 full snapshot 的子 envelope。
+// extractFullSnapshotEnvelope 从 envelope(single 或 batch)中提取含 full snapshot 的子 envelope。
 // 返回 nil 表示未找到。
 //
 // batch 模式：payload 是 array of EventPayload；找到 type=rrweb && rrweb.type=2 的项，
