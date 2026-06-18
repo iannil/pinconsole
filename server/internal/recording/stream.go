@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -275,7 +276,10 @@ func (f *Flusher) flushSession(ctx context.Context, as *activeSession) error {
 		return fmt.Errorf("encode blob: %w", err)
 	}
 
-	// 上传 MinIO
+	// 1o P1-7:补偿事务模式
+	// MinIO PutObject → PG INSERT → Redis XTRIM
+	// PG INSERT 失败时,RemoveObject 补偿删 MinIO 对象避免孤儿
+	// Redis XTRIM 失败不影响一致性(stream 多保留些 entry,下次 flush 再 trim)
 	objectKey := fmt.Sprintf("sessions/%s/%d.msgpack", as.sessionID, as.blobIndex)
 	if err := f.stores.MinIO.PutBytes(ctx, objectKey, blob); err != nil {
 		return fmt.Errorf("minio put: %w", err)
@@ -294,12 +298,21 @@ func (f *Flusher) flushSession(ctx context.Context, as *activeSession) error {
 		ChecksumSHA256: checksum,
 	})
 	if err != nil {
+		// 补偿:删 MinIO 对象,避免孤儿
+		compensateErr := f.stores.MinIO.Client.RemoveObject(ctx, f.stores.MinIO.Bucket, objectKey, minio.RemoveObjectOptions{})
+		if compensateErr != nil {
+			f.logger.Error("compensate minio remove failed (orphan risk)",
+				"key", objectKey, "pg_error", err, "minio_error", compensateErr)
+		} else {
+			f.logger.Warn("compensate minio remove ok after PG insert failed",
+				"key", objectKey, "pg_error", err)
+		}
 		return fmt.Errorf("create event_blob: %w", err)
 	}
 
-	// XTRIM（保留 TrimKeep）
+	// XTRIM(保留 TrimKeep) — PG 写入成功后才 trim,失败仅 warn(下次 flush 再试)
 	if err := f.stream.Trim(ctx, as.sessionID, f.cfg.TrimKeep); err != nil {
-		f.logger.Warn("xtrim failed", "error", err)
+		f.logger.Warn("xtrim failed (non-fatal, will retry next flush)", "error", err)
 	}
 
 	as.lastFlushedEventCount = 0

@@ -82,12 +82,21 @@ func main() {
 	defer gc.Stop()
 
 	// 路由
-	// 1i：解析 BannedUAs
+	// 1i:解析 BannedUAs
 	bannedUAs := []string{}
 	for _, ua := range strings.Split(cfg.BannedUAs, ",") {
 		ua = strings.TrimSpace(ua)
 		if ua != "" {
 			bannedUAs = append(bannedUAs, ua)
+		}
+	}
+
+	// 1o P1-5:解析 TrustedProxies
+	trustedProxies := []string{}
+	for _, p := range strings.Split(cfg.TrustedProxies, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			trustedProxies = append(trustedProxies, p)
 		}
 	}
 
@@ -104,13 +113,16 @@ func main() {
 		Env:                    cfg.Env,
 		RateLimitPerMin:        cfg.RateLimitPerMin,
 		BannedUAs:              bannedUAs,
+		TrustedProxies:         trustedProxies,
 	})
 
+	// 1o P1-6:WriteTimeout=0(coder/websocket 文档明确要求,否则所有 WS 每 30s 被踢)
+	// ReadTimeout 也设 0,WS 长连接的读由 conn.Read(ctx) 控制
 	srv := &http.Server{
 		Addr:         ":" + cfg.ServerPort,
 		Handler:      router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  0,
+		WriteTimeout: 0,
 		IdleTimeout:  120 * time.Second,
 	}
 

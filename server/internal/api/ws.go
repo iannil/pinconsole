@@ -342,30 +342,49 @@ func (h *WSHandler) operatorWS(c *gin.Context) {
 	}()
 
 	// 用于把 sub chan 的数据 forward 到 conn.Send
-	// 每个 sub 启动一个 goroutine，事件经 chan 推到统一 forwardCh
+	// 1o P1-8 修复:每个 sub 启动一个 goroutine,但用 per-sub cancel context 防止泄漏
 	forwardCh := make(chan []byte, 256)
 	defer close(forwardCh)
 
+	// subCancels 跟踪每个 session sub 的 cancel 函数,unsubscribe 时调用
+	subCancels := make(map[uuid.UUID]context.CancelFunc, 8)
+	defer func() {
+		// 退出时 cancel 所有 sub goroutine
+		for _, cancel := range subCancels {
+			cancel()
+		}
+	}()
+
 	restartSubs := func() {
-		// 启动新 sub 的 goroutine（已在 subs 中但 ch 未 listen）
-		// 此处简单实现：每次启动一个 forwarder
-		// 真实实现需要仔细管理 goroutine 生命周期（1b 简化）
+		// 启动新 sub 的 goroutine(已在 subs 中但 ch 未 listen)
+		// 1o P1-8:每个 sub 用独立 cancel ctx,unsubscribe 时调用 cancel 让 goroutine 退出
 		for sid, s := range subs {
 			if s.ch == nil {
 				continue
 			}
 			ch := s.ch
 			sid := sid
+			subCtx, subCancel := context.WithCancel(ctx)
+			subCancels[sid] = subCancel
 			go func() {
-				for msg := range ch {
+				defer subCancel()
+				for {
 					select {
-					case forwardCh <- msg:
-					case <-ctx.Done():
+					case <-subCtx.Done():
 						return
+					case msg, ok := <-ch:
+						if !ok {
+							return
+						}
+						select {
+						case forwardCh <- msg:
+						case <-subCtx.Done():
+							return
+						}
 					}
 				}
 			}()
-			// 标记已 listen，避免重复（同一 session 多次 subscribe 时只 listen 一次）
+			// 标记已 listen,避免重复(同一 session 多次 subscribe 时只 listen 一次)
 			subs[sid] = activeSub{sessionID: sid, ch: nil}
 		}
 	}
@@ -412,6 +431,11 @@ func (h *WSHandler) operatorWS(c *gin.Context) {
 			case "unsubscribe":
 				if _, exists := subs[cmd.sessionID]; !exists {
 					continue
+				}
+				// 1o P1-8:cancel 该 sub 的 forwarder goroutine
+				if cancel, ok := subCancels[cmd.sessionID]; ok {
+					cancel()
+					delete(subCancels, cmd.sessionID)
 				}
 				h.hub.UnsubscribeSession(client, cmd.sessionID)
 				delete(subs, cmd.sessionID)

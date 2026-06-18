@@ -40,6 +40,9 @@ type Config struct {
 	Postgres PostgresConfig
 	Redis    RedisConfig
 	MinIO    MinIOConfig
+
+	// 1o P1-5:TrustedProxies CIDR 列表(逗号分隔);prod 部署在 nginx/caddy 后必填
+	TrustedProxies string `env:"TRUSTED_PROXIES" envDefault:""`
 }
 
 // PostgresConfig 是 PostgreSQL 连接配置。

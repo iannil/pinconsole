@@ -29,10 +29,10 @@
 - ⏳ 1h-ui 待启动(admin LoginView + Vue Router 守卫)
 - ⏳ 1m-observability / 1n-test-depth 待启动
 
-切片深度分布(v1 主干,基于审计实测 + 1n 修复后):
+切片深度分布(v1 主干,基于审计实测 + 1n 修复 + 1o 硬化):
 
-- 🟢 verified-deep ×7(1d, 1j, 1k, 1l, 1h-ui, 1m, **1n**)
-- 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)— 审计降级,实际深度
+- 🟢 verified-deep ×8(1d, 1j, 1k, 1l, 1h-ui, 1m, 1n, **1o**)
+- 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)
 - 🔴 implemented-unverified ×1(1h-backend)
 - 全部切片已交付
 
@@ -128,6 +128,7 @@ A 阶段升级详情:
 | [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟢 | 修 P0-5/P0-6 |
 | [1m](./reports/completed/2026-06-18-slice-1m-implementation.md) | 可观测性 | 🟢 | LifecycleTracker + WS trace_id |
 | [1n](./reports/completed/2026-06-18-slice-1n-implementation.md) | 测试深度 + 文档虚标修复 | 🟢 | 修 P0-9/10/11/12 + 7 切片 badge 降级 + e2e 静默跳过改 strict assertion |
+| [1o](./reports/completed/2026-06-18-slice-1o-implementation.md) | 生产硬化 | 🟢 | 修 P1-5/6/7/8:TrustedProxies + WS WriteTimeout=0 + flushSession 补偿事务 + operatorWS goroutine 泄漏 |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 

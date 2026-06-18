@@ -43,8 +43,10 @@ type Options struct {
 	Release                bool
 	Env                    string
 	// 1i
-	RateLimitPerMin        int
-	BannedUAs              []string
+	RateLimitPerMin int
+	BannedUAs       []string
+	// 1o P1-5:TrustedProxies 列表(nil/empty = 不信任任何反代)
+	TrustedProxies []string
 }
 
 // NewRouterWithOpts 注册全部路由并返回 gin.Engine。
@@ -58,6 +60,13 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(logging.TraceMiddleware(opts.Logger))
+
+	// 1o P1-5:TrustedProxies 配置
+	// 不信任任何反代 → ClientIP() 返回 RemoteAddr(防 X-Forwarded-For 伪造绕过 rate limit)
+	// 部署在 nginx/caddy 后时通过 TRUSTED_PROXIES env 显式配置(逗号分隔 CIDR)
+	if err := r.SetTrustedProxies(opts.TrustedProxies); err != nil {
+		opts.Logger.Warn("SetTrustedProxies failed, defaulting to no trust", "error", err)
+	}
 
 	// 1i：反爬虫中间件（dev 模式仅 UA 黑名单，跳过 rate limit 便于 e2e）
 	devMode := opts.Env != "prod"
