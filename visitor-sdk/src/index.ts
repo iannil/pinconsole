@@ -16,6 +16,7 @@ import { ChatWidget } from './ui/chatWidget';
 import { collectFingerprint } from './fingerprint';
 import { showConsentBanner, removeConsentBanner } from './ui/consentBanner';
 import { showCoBrowseBanner, removeCoBrowseBanner } from './ui/coBrowseBanner';
+import { sdkLogger } from './logging';
 
 const SDK_VERSION = '0.4.0';
 
@@ -48,13 +49,13 @@ class MarketingMonitorSDK {
     try {
       this.session = await this.obtainSession(apiBase);
     } catch (e) {
-      console.error('[marketing-monitor] session init failed', e);
+      sdkLogger.error('session_init_failed', { error: String(e) });
       return;
     }
 
     // 1i：采集 fingerprint（canvas + WebGL + screen + tz）
     this.fingerprint = collectFingerprint();
-    console.log('[marketing-monitor] fingerprint', this.fingerprint.combined_hash);
+    sdkLogger.info('fingerprint', { hash: this.fingerprint.combined_hash });
 
     // 1l:从服务端查 consent 状态
     await this.loadConsent(apiBase);
@@ -83,7 +84,7 @@ class MarketingMonitorSDK {
       endpoint: `${wsBase}/ws/visitor`,
       hello,
       onStatusChange: (s) => this.onStatus(s),
-      onError: (e) => console.warn('[marketing-monitor] transport error', e),
+      onError: (e) => sdkLogger.warn('transport_error', { error: String(e) }),
       onMessage: (env) => this.onMessage(env),
     });
     this.transport.start();
@@ -99,7 +100,7 @@ class MarketingMonitorSDK {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content, sender: 'visitor' }),
           credentials: 'include',
-        }).catch((e) => console.warn('[marketing-monitor] chat send failed', e));
+        }).catch((e) => sdkLogger.warn('chat_send_failed', { error: String(e) }));
       },
       onFetchMessages: async (sinceId) => {
         const apiBase = this.inferApiBase();
@@ -130,7 +131,7 @@ class MarketingMonitorSDK {
         }
       },
       onReleased: () => {
-        console.log('[marketing-monitor] co-browsing released by visitor');
+        sdkLogger.info('cobrowse_released', { source: 'visitor' });
         // 1l:移除横幅
         removeCoBrowseBanner();
         this.transport?.sendEvent({
@@ -161,14 +162,14 @@ class MarketingMonitorSDK {
       await this.startCollectors();
     }
 
-    console.log('[marketing-monitor] SDK started', {
+    sdkLogger.info('sdk_started', {
       version: SDK_VERSION,
       session_id: this.session.sessionId,
       visitor_id: this.session.visitorId,
-      apiBase,
-      wsBase,
-      consent: this.consentAccepted,
-      consentMode: this.config.consentMode,
+      api_base: apiBase,
+      ws_base: wsBase,
+      consent: String(this.consentAccepted),
+      consent_mode: String(this.config.consentMode),
     });
   }
 
@@ -180,7 +181,7 @@ class MarketingMonitorSDK {
     try {
       await this.rrweb.start();
     } catch (e) {
-      console.warn('[marketing-monitor] rrweb start failed', e);
+      sdkLogger.warn('rrweb_start_failed', { error: String(e) });
     }
 
     // 选择性截图：检测到 canvas/WebGL/iframe 才启动
@@ -203,7 +204,7 @@ class MarketingMonitorSDK {
         this.consentAccepted = null; // 未记录
       }
     } catch (e) {
-      console.warn('[marketing-monitor] load consent failed', e);
+      sdkLogger.warn('consent_load_failed', { error: String(e) });
     }
   }
 
@@ -242,7 +243,7 @@ class MarketingMonitorSDK {
             }),
           });
         } catch (e) {
-          console.warn('[marketing-monitor] persist consent failed', e);
+          sdkLogger.warn('consent_persist_failed', { error: String(e) });
         }
         // 启动 surveillance
         await this.startCollectors();
@@ -259,7 +260,7 @@ class MarketingMonitorSDK {
             }),
           });
         } catch (e) {
-          console.warn('[marketing-monitor] persist consent failed', e);
+          sdkLogger.warn('consent_persist_failed', { error: String(e) });
         }
       },
     });
@@ -297,7 +298,7 @@ class MarketingMonitorSDK {
         }),
       });
     } catch (e) {
-      console.warn('[marketing-monitor] setConsent persist failed', e);
+      sdkLogger.warn('set_consent_persist_failed', { error: String(e) });
     }
     if (accepted) {
       removeConsentBanner();
@@ -346,14 +347,14 @@ class MarketingMonitorSDK {
   private onStatus(s: TransportStatus): void {
     if (this.config.debug) {
       // eslint-disable-next-line no-console
-      console.debug('[marketing-monitor] transport status', s);
+      sdkLogger.debug('transport_status', { status: String(s) });
     }
   }
 
   private onMessage(env: unknown): void {
     if (this.config.debug) {
       // eslint-disable-next-line no-console
-      console.debug('[marketing-monitor] incoming message', env);
+      sdkLogger.debug('incoming_message');
     }
     // 1e：command envelope 交给 CommandHandler
     if (env && typeof env === 'object' && 'type' in env && (env as { type: string }).type === 'command') {

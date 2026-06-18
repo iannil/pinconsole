@@ -2,6 +2,7 @@
 // 详见 docs/progress/2026-06-17-slice-1c-spec.md §SDK 韧性
 
 import type { EventPayload, RRWebEvent } from '@marketing-monitor/proto';
+import { sdkLogger } from '../logging';
 
 // rrweb v2 alpha 的 record 模块动态 import（与 PLAN.md "动态 import" 一致，
 // 同时减小 SDK 首次加载体积）。SSR 安全（typeof window 检查）。
@@ -122,7 +123,7 @@ export class RRWebCollector {
       this.pack.takeFullSnapshot();
       this.incrementalSinceFull = 0;
     } catch (e) {
-      console.warn('[marketing-monitor] takeFullSnapshot failed', e);
+      sdkLogger.warn('take_full_snapshot_failed', { error: String(e) });
     }
   }
 
@@ -133,7 +134,7 @@ export class RRWebCollector {
       const mod = (await import('rrweb')) as unknown as RRWebPack;
       this.pack = mod;
     } catch (e) {
-      console.error('[marketing-monitor] rrweb load failed', e);
+      sdkLogger.error('rrweb_load_failed', { error: String(e) });
       throw e;
     }
   }
@@ -164,14 +165,14 @@ export class RRWebCollector {
       });
       this.retries = 0;
     } catch (e) {
-      console.warn('[marketing-monitor] rrweb record failed', e);
+      sdkLogger.warn('rrweb_record_failed', { error: String(e) });
       this.scheduleRetry();
     }
   }
 
   private scheduleRetry(): void {
     if (this.retries >= this.opts.maxRetries) {
-      console.error('[marketing-monitor] rrweb exhausted retries, giving up');
+      sdkLogger.error('rrweb_exhausted_retries');
       return;
     }
     this.retries++;

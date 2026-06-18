@@ -6,6 +6,8 @@ import type { CommandPayload } from '@marketing-monitor/proto';
 import { OperatorCursor } from './cursor';
 import { NodeMap } from './nodeMap';
 import { OperatorToast } from './toast';
+import { sdkLogger } from '../logging';
+import { t } from '../ui/i18n';
 
 const ESC_TIMEOUT_MS = 1000; // 三连 ESC 在 1s 内
 const FILL_LOCK_MS = 5000; // 临时锁定 5s
@@ -68,7 +70,7 @@ export class CommandHandler {
     this.attachKeyboard();
     if (this.opts.debug) {
       // eslint-disable-next-line no-console
-      console.debug('[marketing-monitor] CommandHandler started');
+      sdkLogger.debug('command_handler_started');
     }
   }
 
@@ -169,8 +171,8 @@ export class CommandHandler {
     // 临时锁定：5s 内访客输入被覆盖
     this.lockInput(el);
     // 1f：Toast 提示
-    const fieldName = (el as HTMLInputElement).name || (el as HTMLInputElement).placeholder || '字段';
-    this.toast.show('运营员', `正在代为填写 ${fieldName}`);
+    const fieldName = (el as HTMLInputElement).name || (el as HTMLInputElement).placeholder || t('cobrowse_field_fallback');
+    this.toast.show(t('cobrowse_operator_label'), t('cobrowse_fill_toast', undefined, { field: fieldName }));
     try {
       // React 等框架需用 native setter 才能触发 onChange
       const proto = el instanceof HTMLInputElement
@@ -254,7 +256,7 @@ export class CommandHandler {
   private log(...args: unknown[]): void {
     if (this.opts.debug) {
       // eslint-disable-next-line no-console
-      console.debug('[marketing-monitor] CommandHandler', ...args);
+      sdkLogger.debug('command_handler_log', { args: String(args) });
     }
   }
 }

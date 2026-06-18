@@ -72,7 +72,7 @@ onMounted(refresh);
       <tbody>
         <tr v-for="s in sessions" :key="s.session_id" @click="openReplay(s.session_id)">
           <td class="fp">{{ s.fingerprint.slice(0, 12) }}</td>
-          <td class="time">{{ formatRelative(s.started_at) }}</td>
+          <td class="time">{{ formatRelative(s.started_at, t) }}</td>
           <td class="dur">{{ formatDuration(s.duration_ms) }}</td>
           <td class="count">{{ s.event_count }}</td>
           <td class="ua">{{ s.ua.slice(0, 40) }}</td>

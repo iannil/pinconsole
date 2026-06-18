@@ -37,6 +37,13 @@ export default {
     deleted_sessions: '已删 {n} 个 sessions',
     deleted_objects: '已删 {n} 个 MinIO 对象',
   },
+  time: {
+    just_now: '刚刚',
+    seconds_ago: '{n} 秒前',
+    minutes_ago: '{n} 分前',
+    hours_ago: '{n} 小时前',
+    fallback_date: '{month}/{day}',
+  },
   dashboard: {
     online_count: '{count} 个访客在线',
     waiting: '等待访客上线...',

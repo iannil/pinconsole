@@ -29,7 +29,7 @@ function onClick(sessionId: string) {
         <div class="fingerprint" :title="v.fingerprint">{{ v.fingerprint.slice(0, 12) }}</div>
         <div class="meta">
           <span class="events">{{ v.eventCount }} events</span>
-          <span class="time">{{ formatRelative(v.lastEventAt ?? v.startedAt) }}</span>
+          <span class="time">{{ formatRelative(v.lastEventAt ?? v.startedAt, t) }}</span>
         </div>
       </li>
       <li v-if="list.length === 0" class="empty">{{ t('dashboard.waiting') }}</li>

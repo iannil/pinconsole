@@ -1,6 +1,7 @@
 // 弹窗渲染器（1g + 1k P0-8 URL scheme 白名单）
 // SDK 接收 show_popup command 后用结构化 JSON + 预设 HTML 模板渲染
 import type { CommandPopup } from '@marketing-monitor/proto';
+import { t } from './i18n';
 
 const POPUP_ID = '__mm_popup__';
 
@@ -74,7 +75,7 @@ export function showPopup(p: CommandPopup): void {
   // dismiss button
   if (p.dismissible) {
     const dismiss = document.createElement('button');
-    dismiss.textContent = '关闭';
+    dismiss.textContent = t('popup_dismiss');
     dismiss.style.cssText = 'padding: 8px 20px;background: #f5f7fa;color: #606266;border: 1px solid #dcdfe6;border-radius: 4px;font-size: 14px;cursor: pointer';
     dismiss.onclick = removePopup;
     card.appendChild(dismiss);

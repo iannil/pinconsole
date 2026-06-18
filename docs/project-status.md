@@ -29,9 +29,9 @@
 - ⏳ 1h-ui 待启动(admin LoginView + Vue Router 守卫)
 - ⏳ 1m-observability / 1n-test-depth 待启动
 
-切片深度分布(v1 主干,基于审计实测 + 1n/1o/1p/1q 修复):
+切片深度分布(v1 主干,基于审计实测 + 1n-1r 修复):
 
-- 🟢 verified-deep ×10(1d, 1j, 1k, 1l, 1h-ui, 1m, 1n, 1o, 1p, **1q**)
+- 🟢 verified-deep ×11(1d, 1j, 1k, 1l, 1h-ui, 1m, 1n, 1o, 1p, 1q, **1r**)
 - 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)
 - 🔴 implemented-unverified ×1(1h-backend)
 - 全部切片已交付
@@ -131,6 +131,7 @@ A 阶段升级详情:
 | [1o](./reports/completed/2026-06-18-slice-1o-implementation.md) | 生产硬化 | 🟢 | 修 P1-5/6/7/8:TrustedProxies + WS WriteTimeout=0 + flushSession 补偿事务 + operatorWS goroutine 泄漏 |
 | [1p](./reports/completed/2026-06-18-slice-1p-implementation.md) | LLM friendly | 🟢 | packages/proto 共享包 + IMPLEMENTATION_PLAN.md + change-safety.md + naming-conventions 语言惯例差异 |
 | [1q](./reports/completed/2026-06-18-slice-1q-implementation.md) | 死代码 + 重复清理 | 🟢 | 删 6 处死代码 + queries.sql + Element Plus(bundle -940KB)+ e2e/helpers + room.publish 加日志 |
+| [1r](./reports/completed/2026-06-18-slice-1r-implementation.md) | i18n + logger 迁移 | 🟢 | admin/utils/time.ts i18n + SDK 新建轻量 i18n 模块 + SDK 22 处 console.* → sdkLogger |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 

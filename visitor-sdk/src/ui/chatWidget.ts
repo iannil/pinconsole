@@ -1,6 +1,8 @@
 // 聊天浮动气泡 widget（1g）
 // 右下角浮动，初始为小圆点（含未读数），点击展开
 
+import { t } from './i18n';
+
 const WIDGET_ID = '__mm_chat_widget__';
 
 interface ChatMessage {
@@ -102,7 +104,7 @@ export class ChatWidget {
     // header
     const header = document.createElement('div');
     header.style.cssText = 'padding: 12px 16px;background: #409eff;color: #fff;font-size: 14px;font-weight: 600';
-    header.textContent = '客服';
+    header.textContent = t('chat_header');
     this.panel.appendChild(header);
 
     // message list
@@ -115,10 +117,10 @@ export class ChatWidget {
     inputBar.style.cssText = 'display:flex;padding: 8px;gap: 4px;border-top: 1px solid #ebeef5';
     this.input = document.createElement('input');
     this.input.type = 'text';
-    this.input.placeholder = '输入消息...';
+    this.input.placeholder = t('chat_input_placeholder');
     this.input.style.cssText = 'flex:1;padding: 6px 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;outline:none';
     const sendBtn = document.createElement('button');
-    sendBtn.textContent = '发送';
+    sendBtn.textContent = t('chat_send');
     sendBtn.style.cssText = 'padding: 6px 14px;background:#409eff;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px';
     sendBtn.onclick = () => this.sendCurrent();
     this.input.onkeydown = (e) => { if (e.key === 'Enter') this.sendCurrent(); };

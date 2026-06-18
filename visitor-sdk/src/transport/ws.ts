@@ -166,7 +166,7 @@ export class WSTransport {
     try {
       this.ws.send(bytes);
     } catch (e) {
-      console.warn('[marketing-monitor] send failed, re-buffering', e);
+      sdkLogger.warn('send_failed_rebuffer', { error: String(e) });
       this.buffer.push(bytes);
       this.bufferBytes += bytes.length;
     }
@@ -197,7 +197,7 @@ export class WSTransport {
         const env = decode(new Uint8Array(ev.data)) as Envelope;
         this.handleIncoming(env);
       } catch (e) {
-        console.warn('[marketing-monitor] decode failed', e);
+        sdkLogger.warn('decode_failed', { error: String(e) });
       }
     };
 
@@ -228,7 +228,7 @@ export class WSTransport {
     try {
       this.ws?.send(bytes);
     } catch (e) {
-      console.warn('[marketing-monitor] hello send failed', e);
+      sdkLogger.warn('hello_send_failed', { error: String(e) });
     }
   }
 

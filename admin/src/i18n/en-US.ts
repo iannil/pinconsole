@@ -37,6 +37,13 @@ export default {
     deleted_sessions: 'Deleted {n} sessions',
     deleted_objects: 'Deleted {n} MinIO objects',
   },
+  time: {
+    just_now: 'just now',
+    seconds_ago: '{n}s ago',
+    minutes_ago: '{n}m ago',
+    hours_ago: '{n}h ago',
+    fallback_date: '{month}/{day}',
+  },
   dashboard: {
     online_count: '{count} visitors online',
     waiting: 'Waiting for visitors...',
