@@ -91,6 +91,7 @@ export default {
     no_events: 'No events to replay',
     loading_more: '(loading...)',
     play_failed: 'Player failed to load',
+    waiting_events: 'Subscribed. Waiting for visitor to interact (mouse/click/input)...',
   },
   chat: {
     title: 'Support',

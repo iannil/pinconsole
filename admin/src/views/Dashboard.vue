@@ -132,6 +132,23 @@ watch(
   },
 );
 
+// 选中 visitor 自动订阅(取消手动 click "订阅实时" 步骤)。
+// 原 UX:user click visitor → 看到 panel → 找 "订阅实时" 按钮(底部可能滚动不到)
+// → click → 等 events → player 渲染。步骤多,易踩坑。
+// 改:user click visitor → 自动 unsubscribe 旧 + subscribe 新 → 等 events →
+// player 渲染。subscribe-bar 按钮保留(可手动取消订阅)。
+watch(
+  () => store.selectedSessionId,
+  (newId, oldId) => {
+    if (oldId && oldId !== newId) {
+      unsubscribe(oldId);
+    }
+    if (newId) {
+      subscribe(newId);
+    }
+  },
+);
+
 function statusBadgeClass(s: WsStatus): string {
   return `status-badge status-${s}`;
 }

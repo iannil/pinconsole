@@ -91,6 +91,7 @@ export default {
     no_events: '无事件可回放',
     loading_more: '（加载中...）',
     play_failed: '播放器加载失败',
+    waiting_events: '已订阅,等待访客产生交互(鼠标/点击/输入)...',
   },
   chat: {
     title: '客服',

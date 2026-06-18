@@ -35,6 +35,8 @@ const props = defineProps<{
 const containerRef = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
 const errorMsg = ref<string | null>(null);
+// 是否有足够 events(≥2)创建 player。否则显示 "等待访客交互" 提示。
+const hasEnoughEvents = ref(false);
 let player: RRWebPlayerInstance | null = null;
 let pack: RRWebPlayerPack | null = null;
 let iframeObserver: MutationObserver | null = null;
@@ -110,6 +112,7 @@ async function rebuildPlayer() {
     const rrwebEvents = extractRRWeb(props.events);
     if (rrwebEvents.length === 0) {
       loading.value = false;
+      hasEnoughEvents.value = false;
       return;
     }
     // rrweb Replayer 需要至少 2 events 才创建(full snapshot + 至少一个 meta/incremental)。
@@ -117,9 +120,11 @@ async function rebuildPlayer() {
     // 这种情况发生在:访客刚同意 consent 触发 full snapshot,但还没产生交互(无 incremental)。
     // 等下一个 event 到来再创建 player(watch 会再触发 rebuildPlayer)。
     if (rrwebEvents.length < 2) {
-      loading.value = true;  // 继续显示 "loading...",等够 events
+      loading.value = false;
+      hasEnoughEvents.value = false;  // 显示 "等待访客交互" 提示
       return;
     }
+    hasEnoughEvents.value = true;
     const Player = playerPack.default;
     player = new Player({
       target: containerRef.value,
@@ -187,6 +192,9 @@ watch(
   () => props.sessionId,
   () => {
     initialized = false;
+    hasEnoughEvents.value = false;
+    loading.value = true;
+    errorMsg.value = null;
     rebuildPlayer();
   },
 );
@@ -210,6 +218,9 @@ defineExpose({ appendEvents });
   <div class="replay-player">
     <div v-if="loading" class="loading">{{ t('replay.loading') }}</div>
     <div v-else-if="errorMsg" class="error">{{ t('replay.play_failed') }}: {{ errorMsg }}</div>
+    <div v-else-if="!hasEnoughEvents" class="loading">
+      {{ t('replay.waiting_events') }}
+    </div>
     <div ref="containerRef" class="player-container"></div>
   </div>
 </template>

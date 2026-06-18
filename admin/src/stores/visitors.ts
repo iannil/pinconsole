@@ -22,6 +22,9 @@ interface VisitorListItem {
 export const useVisitorsStore = defineStore('visitors', () => {
   const visitors = ref<Map<string, VisitorListItem>>(new Map());
   const selectedSessionId = ref<string | null>(null);
+  // 锚定 admin 当前选中的 fingerprint(SDK reload 时 session_id 变,但 fp 不变)。
+  // online 同 fp 时自动把 selectedSessionId 切到新 session,保持订阅连续。
+  const selectedFingerprint = ref<string | null>(null);
   const events = ref<Map<string, EventPayload[]>>(new Map());
   // 1f：navigated 事件的 old/new session ID，供 Dashboard 自动重订阅
   const navigatedFromId = ref<string | null>(null);
@@ -52,9 +55,9 @@ export const useVisitorsStore = defineStore('visitors', () => {
     if (!sessionId) return;
     if (p.event === 'online') {
       // SDK reload(或 reconnect)会产生新 session,但 fingerprint 相同。
-      // 检查同 fingerprint 的旧 session,删除 + 自动切换 selectedSessionId。
-      // 否则 admin 选中的是旧 session(已离线),订阅了也收不到 events,
-      // 用户体验是"订阅后 player 空"。
+      // 检查同 fingerprint 的旧 session,删除(避免列表重复)。
+      // 如果 admin 当前选中的 fingerprint 等于新 session 的 fingerprint,
+      // 自动切到新 session(保持订阅连续)。
       let oldSameFp: string | null = null;
       for (const [sid, v] of visitors.value) {
         if (v.fingerprint === p.fingerprint && sid !== sessionId) {
@@ -72,13 +75,13 @@ export const useVisitorsStore = defineStore('visitors', () => {
       });
       if (oldSameFp) {
         visitors.value.delete(oldSameFp);
-        // 清旧 session 的 events 避免陈旧数据混入
         events.value.delete(oldSameFp);
         events.value = new Map(events.value);
-        // admin 选中的是同 fingerprint 旧 session → 自动切到新 session
-        if (selectedSessionId.value === oldSameFp) {
-          selectedSessionId.value = sessionId;
-        }
+      }
+      // 用 selectedFingerprint 作锚点:即使旧 session 已被 offline 删除,
+      // 只要新 session 同 fp,自动切到新 session。
+      if (selectedFingerprint.value && selectedFingerprint.value === p.fingerprint) {
+        selectedSessionId.value = sessionId;
       }
       visitors.value = new Map(visitors.value);
     } else if (p.event === 'offline') {
@@ -118,6 +121,13 @@ export const useVisitorsStore = defineStore('visitors', () => {
 
   function select(sessionId: string | null) {
     selectedSessionId.value = sessionId;
+    // 同步 selectedFingerprint(用于 SDK reload 时跨 session 自动重订)
+    if (sessionId) {
+      const v = visitors.value.get(sessionId);
+      selectedFingerprint.value = v?.fingerprint ?? null;
+    } else {
+      selectedFingerprint.value = null;
+    }
   }
 
   function appendEvent(sessionId: string, env: Envelope) {
