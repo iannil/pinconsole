@@ -1,8 +1,8 @@
 # 切片 1z-prod-readiness-gaps
 
-**状态**:in_progress(P0 + P1-1/2/3 已实施 + 单测全绿,待最终验收 + 移到 completed)
+**状态**:completed（v1 e2e acceptance 已验证，详见 [v1-e2e-acceptance](./2026-06-18-v1-e2e-acceptance.md)）
 **开始**:2026-06-18
-**完成**:(实施完毕,等 go test/go vet/build/JS test 全绿后归档)
+**完成**:2026-06-18
 **关联**:第三轮 grill-me 审计(2026-06-18 生产就绪度专项)
 
 ## Context

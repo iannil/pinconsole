@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-18（v1 e2e acceptance 完成,65 测试全绿 + 4 production bugs 修复）
+**最后更新**：2026-06-18（v1 主干完全收口:1a-1z + e2e acceptance + 5 followup fix + admin flagged UI/prod-mode CI 全部交付,70+ commits）
 
 ---
 
@@ -40,12 +40,14 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 全切片 e2e acceptance 完成(2026-06-18)**。65 passed / 0 failed / 4 skipped(gated prod-mode + docker-prod 测试)。深度分布:**全部 🟢 verified-deep**(1a-1z 全切片)。详见 [`docs/reports/completed/2026-06-18-v1-e2e-acceptance.md`](../docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)。
+**v1 主干完全收口(2026-06-18)**。70+ commits 交付:1a-1z 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
 
-下一步候选:
-- **1y visitor-ws-rate-limit**(in_progress,实施未完成)— docs/progress/ 中
-- **admin SPA 显示 flagged 标记**(1w P1-29 后端已就绪,UI 未消费)
-- **prod-mode e2e CI job**(1k/1l gated tests 需要)
+深度分布:**🟢 verified-deep ×29**(1a-1z + v1-e2e + v1-followups)/ **🔴 implemented-unverified ×1**(1h-backend spec partial,1h-ui 已补 UI 部分)。详见 [`docs/reports/completed/2026-06-18-v1-e2e-acceptance.md`](../docs/reports/completed/2026-06-18-v1-e2e-acceptance.md) + [`docs/reports/completed/2026-06-18-v1-followups.md`](../docs/reports/completed/2026-06-18-v1-followups.md)。
+
+下一步候选(post-v1):
+- **TrustedProxies 加固(P1-5)** — 唯一未修的 P1 安全项;deep-audit P1-5
+- **TS 测试深化** — admin/visitor-sdk 各只有 2 个 vitest smoke
+- **post-v1 路线** — 自定义域名 / 页面编辑器 / Tauri(详见 [`PLAN.md`](../PLAN.md) §8)
 
 ### 范围边界
 - **不做**：多租户 SaaS、计费、注册流、营销页
@@ -177,6 +179,37 @@
 - e2e fixture 必须显式注入干净 Chrome UA(规避 HeadlessChrome 黑名单)
 - regression 测试是修复完整性的最终保障 — 1z P1-1 声称全覆盖,被 01-trace-id 抓到 Dashboard 漏洞
 - claim 必须显式调(1k P0-3 release binary 强制 requireClaimOwnership)
+
+### e2e acceptance 不是终点 — 真实 UI 操作会暴露单测覆盖不到的 bug(2026-06-18 v1-followups)
+
+**Why**:v1 e2e 65 测试全绿后,真实使用又抓到 **5 个生产 bug**(详见 [`docs/reports/completed/2026-06-18-v1-followups.md`](../docs/reports/completed/2026-06-18-v1-followups.md)):
+1. v1-replay player iframe 渲染失败(Vue ref + iframe mount + player library 三方时序耦合)
+2. selectedSessionId 被 visitor offline 错误清空(SPA 状态管理 bug)
+3. iframe 切换 session 不重 mount player(watch 错过 fingerprint 变化)
+4. visitor-sdk SDK reload 不续接 session(`Partial<config>` 显式 undefined 覆盖 DEFAULTS)
+5. co-browse `listMessages` 过严要求 claim(只读端点不应要授权锁)
+
+**How to apply**:
+- v1 任何"完成"声明后,必走**真实 Playwright UI 操作**(点击/导航/刷新),不只是 API 断言
+- **iframe 渲染是 SPA 状态机高风险区**:e2e 难以稳定模拟,必须手动 UX 测试
+- **claim 锁只用于写/control 端点**:只读端点(list/get history)不要求 claim;接入 `requireClaimOwnership` 时易过度收紧
+- **session 续接靠 client 持久化**:server 是被动方,SDK 必须主动在 `sessionStorage` 保存 `session_id`
+
+### `Partial<T>` 配置合并的 undefined 陷阱(2026-06-18 v1-followups)
+
+**Why**:visitor-sdk 曾出现 `mm.init({ apiBase: undefined })` 后 apiBase 变 undefined 而非默认值。TypeScript 的 `Partial<T>` 允许显式 undefined,但 spread operator 不区分"未设置"和"显式 undefined"。
+
+**How to apply**:任何 `{...DEFAULTS, ...userConfig}` 模式必须先 `dropUndefined`:
+
+```typescript
+function dropUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+}
+```
+
+适用于所有 SDK / library 的"用户配置 + 默认值合并"场景。
 
 ---
 

@@ -13,7 +13,7 @@ License：**AGPL-3.0**（防止云厂商 SaaS 化）。
 - 目标：以强类型、可测试、分层解耦为核心，保证项目健壮性与可扩展性；以清晰可读、模式统一为核心，使大模型易于理解与改写。
 - 语言约定：交流与文档使用中文；生成的代码使用英文；文档放在 `docs` 且使用 Markdown。
 - 发布约定：
-  - 发布固定在 `/release` 文件夹，如 rust 服务固定发布在 `/release/rust` 文件夹。
+  - 前端构建产物（admin / visitor-sdk / landing）由 CI 输出到 `server/cmd/server/embedded/{admin,sdk,landing}/`，Go 通过 `//go:embed` 打包到单二进制。release 流程参见 `.github/workflows/release.yml`。
   - 发布的成果物必须且始终以生产环境为标准，要包含所有发布生产所应该包含的文件或数据（包含全量发布与增量发布，首次发布与非首次发布）。
 - 环境约定：
   - 对于数据库、消息队列、缓存等，尽量使用docker部署环境
