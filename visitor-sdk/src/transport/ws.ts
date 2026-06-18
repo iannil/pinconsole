@@ -10,6 +10,7 @@ import type {
   PresencePayload,
 } from '../proto/envelope';
 import { PROTOCOL_VERSION } from '../proto/envelope';
+import { sdkLogger, generateTraceId } from '../logging';
 
 export interface TransportOptions {
   /** WS 端点 URL，如 ws://localhost:8080/ws/visitor */
@@ -78,6 +79,7 @@ export class WSTransport {
       type: 'presence',
       ts: Date.now(),
       session_id: this.opts.hello.session_id,
+      trace_id: generateTraceId(),
       payload: {
         event: 'navigated',
         session_id: this.opts.hello.session_id,
@@ -97,30 +99,29 @@ export class WSTransport {
     }
   }
 
-  /** 发送一条事件 envelope（自动缓冲+异步重试） */
+  /** 发送一条事件 envelope(自动缓冲+异步重试,1m:trace_id 生成) */
   sendEvent(payload: unknown): void {
     const env: Envelope = {
       v: PROTOCOL_VERSION,
       type: 'event',
       ts: Date.now(),
       session_id: this.opts.hello.session_id,
+      trace_id: generateTraceId(),
       payload,
     };
     const bytes = encode(env);
     this.enqueueOrSend(bytes);
   }
 
-  /** 批量发送事件：把一组 EventPayload 打包成 array，单 envelope 上行。 */
+  /** 批量发送事件:把一组 EventPayload 打包成 array,单 envelope 上行(1m:trace_id)。 */
   sendBatch(events: unknown[]): void {
     if (events.length === 0) return;
-    // 1c：batch envelope.payload 是 array of EventPayload。
-    // 服务端在 ws.go 识别 array vs 单对象分别处理。
-    // session_id 必带，admin useWs 按 session_id 路由到对应访客 store。
     const env: Envelope = {
       v: PROTOCOL_VERSION,
       type: 'event',
       ts: Date.now(),
       session_id: this.opts.hello.session_id,
+      trace_id: generateTraceId(),
       payload: events,
     };
     const bytes = encode(env);
@@ -130,10 +131,10 @@ export class WSTransport {
   private enqueueOrSend(bytes: Uint8Array): void {
     const max = this.opts.bufferMaxEvents ?? 1000;
     if (this.buffer.length >= max) {
-      // 缓冲满，丢弃最旧
+      // 缓冲满,丢弃最旧
       const oldest = this.buffer.shift();
       if (oldest) this.bufferBytes -= oldest.length;
-      console.warn('[marketing-monitor] buffer full, dropping oldest event');
+      sdkLogger.warn('buffer_full_drop_oldest', { buffer_size: this.buffer.length, max });
     }
     if (this.status === 'connected' && this.helloAcked) {
       // 直发

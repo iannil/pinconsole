@@ -213,6 +213,11 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 			logger.Warn("invalid envelope", "error", err)
 			continue
 		}
+		// 1m:SDK 发的 trace_id 写回 ctx,使后续日志能关联 SDK 端
+		if env.TraceID != "" {
+			ctx = logging.WithTraceID(ctx, env.TraceID)
+			logger = logging.FromContext(ctx, h.logger)
+		}
 		if env.Type != proto.MsgEvent {
 			continue
 		}

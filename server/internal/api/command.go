@@ -18,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/logging"
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
@@ -131,11 +132,12 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		// 不阻塞下行；继续
 	}
 
-	// 包装 envelope，下行到 visitor
+	// 包装 envelope,下行到 visitor(1m:透传 ctx trace_id)
 	envBytes, err := proto.Encode(proto.Envelope{
 		V:         proto.ProtocolVersion,
 		Type:      proto.MsgCommand,
 		SessionID: sessionID.String(),
+		TraceID:   logging.TraceID(c.Request.Context()),
 		TS:        time.Now().UnixMilli(),
 		Payload:   cp,
 	})
