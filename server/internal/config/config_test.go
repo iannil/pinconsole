@@ -190,3 +190,169 @@ func TestPostgresConfig_DSN_IncludesSSLMode(t *testing.T) {
 		t.Errorf("DSN should contain sslmode=prefer, got: %s", dsn)
 	}
 }
+
+// 1z:Env 白名单 + prod sslmode/useSSL 缝隙防御测试。
+
+func TestLoad_EnvWhitelist_RejectsTypo(t *testing.T) {
+	tests := []string{
+		"production", // 常见 typo
+		"staging",
+		"prod-uat",
+		"PROD", // 大小写 normalize 后是 prod,合法;此处测真不合法的
+		"live",
+	}
+	// "PROD" 在 ToLower 后是 "prod",合法;移出 typo 测试
+	tests = []string{"production", "staging", "prod-uat", "live"}
+	for _, env := range tests {
+		t.Run("env="+env, func(t *testing.T) {
+			clearEnv(t, configEnvKeys...)
+			t.Setenv("SERVER_ENV", env)
+			t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+			_, err := Load()
+			if err == nil {
+				t.Fatalf("Load should reject unknown SERVER_ENV=%q (防 typo 触发 dev bypass)", env)
+			}
+			if !strings.Contains(err.Error(), "SERVER_ENV") {
+				t.Errorf("error should mention SERVER_ENV, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestLoad_EnvWhitelist_AllowsCanonical(t *testing.T) {
+	for _, env := range []string{"prod", "dev", "test"} {
+		t.Run("env="+env, func(t *testing.T) {
+			clearEnv(t, configEnvKeys...)
+			t.Setenv("SERVER_ENV", env)
+			t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+			if env == "prod" {
+				t.Setenv("PG_PASSWORD", "prod-pg-secret")
+				t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+				t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+			}
+			cfg, err := Load()
+			if err != nil {
+				t.Fatalf("Load should accept SERVER_ENV=%q, got: %v", env, err)
+			}
+			if cfg.Env != env {
+				t.Errorf("Env = %q, want %q", cfg.Env, env)
+			}
+		})
+	}
+}
+
+func TestLoad_EnvWhitelist_NormalizesCase(t *testing.T) {
+	// "PROD" / "DEV" 应被 ToLower 接受
+	for _, env := range []string{"PROD", "Dev", "TEST"} {
+		t.Run("env="+env, func(t *testing.T) {
+			clearEnv(t, configEnvKeys...)
+			t.Setenv("SERVER_ENV", env)
+			t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+			if strings.EqualFold(env, "prod") {
+				t.Setenv("PG_PASSWORD", "prod-pg-secret")
+				t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+				t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+			}
+			_, err := Load()
+			if err != nil {
+				t.Fatalf("Load should normalize case for SERVER_ENV=%q, got: %v", env, err)
+			}
+		})
+	}
+}
+
+func TestLoad_ProdModeRejectsRemotePGSSLDisable(t *testing.T) {
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "prod")
+	t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+	t.Setenv("PG_HOST", "db.example.com") // 远程
+	t.Setenv("PG_PASSWORD", "prod-pg-secret")
+	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+
+	// caarlos0/env 在 env var 设为空串时填 envDefault("prefer"),
+	// 故 "" 无法触发;仅 disable 是真实风险。
+	t.Setenv("PG_SSLMODE", "disable")
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load should reject PG_SSLMODE=disable in prod + remote PG")
+	}
+	if !strings.Contains(err.Error(), "PG_SSLMODE") {
+		t.Errorf("error should mention PG_SSLMODE, got: %v", err)
+	}
+}
+
+func TestLoad_ProdModeAllowsLocalPGSSLDisable(t *testing.T) {
+	// 本地 PG(docker-compose 内部网络)允许 disable —— 容器间不开 TLS 是合理部署。
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "prod")
+	t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_SSLMODE", "disable")
+	t.Setenv("PG_PASSWORD", "prod-pg-secret")
+	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+	t.Setenv("MINIO_ENDPOINT", "localhost:9000")
+
+	_, err := Load()
+	if err != nil {
+		t.Fatalf("Load should allow PG_SSLMODE=disable when PG_HOST is local, got: %v", err)
+	}
+}
+
+func TestLoad_ProdModeRejectsRemoteMinIOWithoutTLS(t *testing.T) {
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "prod")
+	t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_SSLMODE", "prefer")
+	t.Setenv("PG_PASSWORD", "prod-pg-secret")
+	t.Setenv("MINIO_ENDPOINT", "minio.example.com:9000") // 远程
+	t.Setenv("MINIO_USE_SSL", "false")
+	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load should reject MINIO_USE_SSL=false in prod + remote MinIO")
+	}
+	if !strings.Contains(err.Error(), "MINIO_USE_SSL") {
+		t.Errorf("error should mention MINIO_USE_SSL, got: %v", err)
+	}
+}
+
+func TestLoad_ProdModeAllowsLocalMinIOWithoutTLS(t *testing.T) {
+	// docker-compose 内部网络:容器名 "minio" 视为本地,允许 USE_SSL=false。
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "prod")
+	t.Setenv("ADMIN_PASSWORD", "strong-password-123!")
+	t.Setenv("PG_HOST", "postgres")
+	t.Setenv("PG_SSLMODE", "disable")
+	t.Setenv("PG_PASSWORD", "prod-pg-secret")
+	t.Setenv("MINIO_ENDPOINT", "minio:9000")
+	t.Setenv("MINIO_USE_SSL", "false")
+	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
+	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
+
+	_, err := Load()
+	if err != nil {
+		t.Fatalf("Load should allow MINIO_USE_SSL=false when endpoint is local (docker-compose internal), got: %v", err)
+	}
+}
+
+func TestLoad_DevModeSkipsSSLValidations(t *testing.T) {
+	// dev 模式不校验 sslmode/useSSL,允许任意组合方便本地开发。
+	clearEnv(t, configEnvKeys...)
+	t.Setenv("SERVER_ENV", "dev")
+	t.Setenv("ADMIN_PASSWORD", "dev-password")
+	t.Setenv("PG_HOST", "db.example.com")
+	t.Setenv("PG_SSLMODE", "disable")
+	t.Setenv("PG_PASSWORD", "any")
+	t.Setenv("MINIO_ENDPOINT", "minio.example.com:9000")
+	t.Setenv("MINIO_USE_SSL", "false")
+
+	_, err := Load()
+	if err != nil {
+		t.Fatalf("Load in dev mode should skip SSL validations, got: %v", err)
+	}
+}

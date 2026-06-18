@@ -1,4 +1,4 @@
-# marketing-monitor
+# PINCONSOLE
 
 > 开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。
 > 对标某商业竞品，AGPL-3.0 license，支持自托管。
@@ -67,7 +67,36 @@ docker compose --profile prod up -d --build
 
 默认 admin 凭据（env var 可配）：
 - Email: `admin@marketing-monitor.local`
-- Password: `changeme123`
+- Password: 部署时由 `ADMIN_PASSWORD` 强制要求(prod 模式拒绝 `changeme123`)
+
+## v1 已知限制(部署前必读)
+
+v1 是端到端最小可演示切片,以下限制在生产部署前需自行评估:
+
+1. **单实例 hub(不支持横向扩展)**
+   WebSocket 路由基于进程内 `map`(`server/internal/hub/hub.go`)。
+   多实例部署(2+ server behind LB)会导致 visitor 和 operator 连到不同实例后互不可见,
+   系统不会报错(静默表现坏)。如需多实例,需引入 Redis Pub/Sub 或 NATS 作为消息总线。
+
+2. **500 WS/房间并发未压测**
+   PLAN.md 把"500 WS/房间"作为设计目标驱动单租户/hub-and-spoke/1:1 锁定决策,
+   但 v1 **未做实际压测**。默认 `PG_MAX_CONNS=25` / `REDIS_POOL_SIZE=50`
+   是经验值,实际容量需部署方自行压测验证。
+
+3. **OSS 项目不提供生产拓扑**
+   docker-compose `prod` profile 仅作为参考,实际生产部署(VM / k8s / 反代 / TLS /
+   备份 / 监控 / 日志聚合 / 资源限制)由部署方自行决定。本仓库只保证:
+   - dev/CI 路径可重复运行
+   - release 二进制 fail-secure(默认拒绝弱配置,详见 [`docs/audits/`](./docs/audits/))
+   - `/healthz` + `/readyz` 提供依赖健康检查
+
+4. **Trace_id 端到端传播(1z 已补全)**
+   operator browser → server → visitor SDK → server → operator 形成完整 trace_id 闭环:
+   - admin SPA 每次 REST 调用注入 `X-Trace-Id` 头(`admin/src/api/client.ts`)
+   - visitor SDK 收到 operator command 时缓存 trace_id,后续 10 个事件或 5 秒内继承(`visitor-sdk/src/transport/ws.ts`)
+   - server 端 TraceMiddleware + WS handler 还原 ctx trace_id
+
+   详见 [`docs/progress/2026-06-18-slice-1z-prod-readiness-gaps.md`](./docs/progress/2026-06-18-slice-1z-prod-readiness-gaps.md)。
 
 ## 文档导航
 

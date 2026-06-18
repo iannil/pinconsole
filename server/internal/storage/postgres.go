@@ -16,8 +16,18 @@ type Postgres struct {
 }
 
 // ConnectPostgres 建立 PG 连接池并验证。
+//
+// 1z:从 cfg.MaxConns 应用连接池上限(默认 25),
+// 取代 pgxpool 默认的 max(4, NumCPU)。
 func ConnectPostgres(ctx context.Context, cfg config.PostgresConfig, logger *slog.Logger) (*Postgres, error) {
-	pool, err := pgxpool.New(ctx, cfg.DSN())
+	pgCfg, err := pgxpool.ParseConfig(cfg.DSN())
+	if err != nil {
+		return nil, fmt.Errorf("parse config: %w", err)
+	}
+	if cfg.MaxConns > 0 {
+		pgCfg.MaxConns = int32(cfg.MaxConns)
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, pgCfg)
 	if err != nil {
 		return nil, fmt.Errorf("new pool: %w", err)
 	}
@@ -25,7 +35,8 @@ func ConnectPostgres(ctx context.Context, cfg config.PostgresConfig, logger *slo
 		pool.Close()
 		return nil, fmt.Errorf("ping: %w", err)
 	}
-	logger.Info("postgres 已连接", "host", cfg.Host, "port", cfg.Port, "db", cfg.Database)
+	logger.Info("postgres 已连接",
+		"host", cfg.Host, "port", cfg.Port, "db", cfg.Database, "max_conns", pgCfg.MaxConns)
 	return &Postgres{Pool: pool, logger: logger}, nil
 }
 

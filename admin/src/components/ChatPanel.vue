@@ -1,5 +1,10 @@
 <script setup lang="ts">
 // ChatPanel：嵌入 VisitorPanel 下方的聊天面板
+//
+// 1z 修 deep-audit P2-23 + 控制台 403 刷屏:
+// session 未 claim 时 server 返 403 not_claimed,旧实现 catch ignore + 继续 2s 轮询,
+// 控制台被 403 刷爆。新实现:遇 401/403 暂停轮询,UI 提示需 claim 才能聊天;
+// sessionId 变化或 send 成功后恢复。
 import { ref, watch, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { listMessages, sendMessage, type ChatMessageItem } from '../api/sessions';
@@ -12,19 +17,34 @@ const input = ref('');
 const listEl = ref<HTMLDivElement | null>(null);
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let lastId = 0;
+// pausedReason: '' / 'not_claimed' / 'auth_required' / 'unknown_error'
+const pausedReason = ref<string>('');
 
 async function refresh() {
   if (!props.sessionId) return;
   try {
     const resp = await listMessages(props.sessionId, lastId);
+    // 成功一次,清掉 paused 状态(可能 claim 已恢复)
+    if (pausedReason.value) pausedReason.value = '';
     if (resp.messages.length > 0) {
       messages.value.push(...resp.messages);
       lastId = resp.messages[resp.messages.length - 1].id;
       await nextTick();
       if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight;
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    // 1z:401/403 → 暂停轮询(避免控制台 403 刷屏 + server 负载)
+    // sessionId 变化或 send 成功后才会重新尝试
+    const errObj = err as { message?: string };
+    const msg = String(errObj?.message ?? err);
+    if (msg.includes('HTTP 401')) {
+      pausedReason.value = 'auth_required';
+      stopPolling();
+    } else if (msg.includes('HTTP 403')) {
+      pausedReason.value = 'not_claimed';
+      stopPolling();
+    }
+    // 其他错误静默(network blip),下个 tick 重试
   }
 }
 
@@ -38,8 +58,27 @@ async function send() {
     lastId = msg.id;
     await nextTick();
     if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight;
+    // send 成功 → claim 已恢复 → 重新启动轮询
+    if (pausedReason.value) {
+      pausedReason.value = '';
+      startPolling();
+    }
   } catch {
-    // ignore
+    // ignore(send 时的错误不阻塞 UI)
+  }
+}
+
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(() => {
+    if (props.sessionId) refresh();
+  }, 2000);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
   }
 }
 
@@ -48,20 +87,25 @@ watch(
   (sid) => {
     messages.value = [];
     lastId = 0;
-    if (sid) refresh();
+    pausedReason.value = '';
+    stopPolling();
+    if (sid) {
+      refresh();
+      startPolling();
+    }
   },
 );
 
 onMounted(() => {
-  if (props.sessionId) refresh();
-  pollTimer = setInterval(() => {
-    if (props.sessionId) refresh();
-  }, 2000);
+  if (props.sessionId) {
+    refresh();
+    startPolling();
+  }
 });
 
 import { onUnmounted } from 'vue';
 onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
+  stopPolling();
 });
 </script>
 
@@ -72,7 +116,13 @@ onUnmounted(() => {
         <span class="sender">{{ m.sender === 'operator' ? t('chat.operator') : t('chat.visitor') }}</span>
         <span class="content">{{ m.content }}</span>
       </div>
-      <div v-if="messages.length === 0" class="empty">{{ t('chat.empty') }}</div>
+      <div v-if="messages.length === 0 && !pausedReason" class="empty">{{ t('chat.empty') }}</div>
+      <div v-if="pausedReason === 'not_claimed'" class="empty paused">
+        {{ t('chat.paused_claim_required') }}
+      </div>
+      <div v-else-if="pausedReason === 'auth_required'" class="empty paused">
+        {{ t('chat.paused_auth_required') }}
+      </div>
     </div>
     <div class="input-bar">
       <input
@@ -80,9 +130,11 @@ onUnmounted(() => {
         type="text"
         :placeholder="t('chat.placeholder')"
         @keydown.enter="send"
-        :disabled="!sessionId"
+        :disabled="!sessionId || !!pausedReason"
       />
-      <button @click="send" :disabled="!sessionId || !input.trim()">{{ t('chat.send') }}</button>
+      <button @click="send" :disabled="!sessionId || !input.trim() || !!pausedReason">
+        {{ t('chat.send') }}
+      </button>
     </div>
   </div>
 </template>

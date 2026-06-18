@@ -1,5 +1,9 @@
 // WebSocket transport：连接、重连、缓冲、事件发送
 // 详见 docs/progress/2026-06-17-slice-1b-spec.md §SDK 重连策略
+//
+// 1z P1-1:trace_id 端到端补全 — 收到 operator command 时缓存其 trace_id,
+// 后续事件 envelope 在 N 步内 / M 秒内继承该 trace_id,
+// 使 operator → server → visitor → server → operator 形成 trace_id 闭环。
 
 import { encode, decode } from '@msgpack/msgpack';
 import type {
@@ -11,6 +15,11 @@ import type {
 } from '@marketing-monitor/proto';
 import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
 import { sdkLogger, generateTraceId } from '../logging';
+
+// 1z:trace_id 继承窗口。命令到达后,接下来 N 个事件或 M 毫秒内的事件 envelope
+// 复用该命令的 trace_id,使排障时能 grep 同一 ID 关联 operator 动作与 visitor 响应。
+const TRACE_INHERIT_MAX_EVENTS = 10;
+const TRACE_INHERIT_TTL_MS = 5000;
 
 export interface TransportOptions {
   /** WS 端点 URL，如 ws://localhost:8080/ws/visitor */
@@ -43,6 +52,12 @@ export class WSTransport {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private closed = false;
   private helloAcked = false;
+
+  // 1z:trace_id 继承状态。收到 operator command 时设置,
+  // 后续事件 envelope 在窗口内复用。
+  private inheritedTraceId: string | null = null;
+  private inheritedTraceAt = 0;
+  private eventsSinceInherit = 0;
 
   constructor(opts: TransportOptions) {
     this.opts = opts;
@@ -99,21 +114,21 @@ export class WSTransport {
     }
   }
 
-  /** 发送一条事件 envelope(自动缓冲+异步重试,1m:trace_id 生成) */
+  /** 发送一条事件 envelope(自动缓冲+异步重试,1m:trace_id 生成;1z:窗口内继承 command trace_id) */
   sendEvent(payload: unknown): void {
     const env: Envelope = {
       v: PROTOCOL_VERSION,
       type: 'event',
       ts: Date.now(),
       session_id: this.opts.hello.session_id,
-      trace_id: generateTraceId(),
+      trace_id: this.nextEventTraceId(),
       payload,
     };
     const bytes = encode(env);
     this.enqueueOrSend(bytes);
   }
 
-  /** 批量发送事件:把一组 EventPayload 打包成 array,单 envelope 上行(1m:trace_id)。 */
+  /** 批量发送事件:把一组 EventPayload 打包成 array,单 envelope 上行(1m:trace_id;1z:继承)。 */
   sendBatch(events: unknown[]): void {
     if (events.length === 0) return;
     const env: Envelope = {
@@ -121,11 +136,36 @@ export class WSTransport {
       type: 'event',
       ts: Date.now(),
       session_id: this.opts.hello.session_id,
-      trace_id: generateTraceId(),
+      trace_id: this.nextEventTraceId(),
       payload: events,
     };
     const bytes = encode(env);
     this.enqueueOrSend(bytes);
+  }
+
+  /**
+   * 1z:取下一个事件 envelope 应使用的 trace_id。
+   *
+   * 优先级:
+   *   1. 若 inheritedTraceId 有效(未过期 + 未超事件数),复用之并自增计数
+   *   2. 否则新生成
+   *
+   * 设计依据:operator 触发的 cursor/click/fill/navigate 命令,visitor 响应的
+   * 后续 rrweb 事件应当能通过同一 trace_id 关联到 operator 动作。
+   * N=10 / M=5s 是经验值,覆盖一次代填/导航触发的典型 burst。
+   */
+  private nextEventTraceId(): string {
+    if (this.inheritedTraceId) {
+      const expired = Date.now() - this.inheritedTraceAt > TRACE_INHERIT_TTL_MS;
+      const exhausted = this.eventsSinceInherit >= TRACE_INHERIT_MAX_EVENTS;
+      if (!expired && !exhausted) {
+        this.eventsSinceInherit++;
+        return this.inheritedTraceId;
+      }
+      // 窗口失效,清状态
+      this.inheritedTraceId = null;
+    }
+    return generateTraceId();
   }
 
   private enqueueOrSend(bytes: Uint8Array): void {
@@ -249,6 +289,18 @@ export class WSTransport {
       case 'error': {
         const payload = env.payload as ErrorPayload;
         this.opts.onError?.(new Error(`${payload?.code}: ${payload?.message ?? ''}`));
+        break;
+      }
+      case 'command': {
+        // 1z:缓存 operator command 的 trace_id,后续事件 envelope 窗口内继承,
+        // 使 server 端日志能关联"operator 触发的动作" → "visitor 上报的事件"。
+        if (env.trace_id) {
+          this.inheritedTraceId = env.trace_id;
+          this.inheritedTraceAt = Date.now();
+          this.eventsSinceInherit = 0;
+          sdkLogger.debug('trace_id_inherited_from_command', { trace_id: env.trace_id });
+        }
+        this.opts.onMessage?.(env);
         break;
       }
       default:

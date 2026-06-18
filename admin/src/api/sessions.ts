@@ -1,5 +1,9 @@
 // REST API 客户端：sessions 列表与 replay
 // 详见 docs/progress/2026-06-17-slice-1d-spec.md §协议扩展
+//
+// 1z P1-1:全部改用 apiJson 自动注入 X-Trace-Id 头。
+
+import { apiJson } from './client';
 
 export interface EndedSession {
   session_id: string;
@@ -38,9 +42,10 @@ export async function listEndedSessions(
   since: SinceRange = '24h',
   limit = 200,
 ): Promise<ListEndedSessionsResponse> {
-  const resp = await fetch(`/api/sessions/ended?since=${since}&limit=${limit}`);
-  if (!resp.ok) throw new Error(`listEndedSessions: HTTP ${resp.status}`);
-  return resp.json();
+  const { data } = await apiJson<ListEndedSessionsResponse>(
+    `/api/sessions/ended?since=${since}&limit=${limit}`,
+  );
+  return data;
 }
 
 export async function getSessionReplay(
@@ -48,11 +53,10 @@ export async function getSessionReplay(
   offset = 0,
   limit = 10000,
 ): Promise<ReplayEventsResponse> {
-  const resp = await fetch(
+  const { data } = await apiJson<ReplayEventsResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/replay?offset=${offset}&limit=${limit}`,
   );
-  if (!resp.ok) throw new Error(`getSessionReplay: HTTP ${resp.status}`);
-  return resp.json();
+  return data;
 }
 
 // ===== 1e：co-browsing 命令 =====
@@ -72,16 +76,15 @@ export async function sendCommand(
   type: CommandType,
   payload: Record<string, unknown>,
 ): Promise<{ ok: boolean }> {
-  const resp = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/command`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type, payload }),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(`sendCommand: HTTP ${resp.status} ${err.error ?? ''}`);
-  }
-  return resp.json();
+  const { data } = await apiJson<{ ok: boolean }>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/command`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, payload }),
+    },
+  );
+  return data;
 }
 
 // ===== 1g：聊天消息 =====
@@ -97,11 +100,10 @@ export async function listMessages(
   sessionId: string,
   sinceId = 0,
 ): Promise<{ messages: ChatMessageItem[] }> {
-  const resp = await fetch(
+  const { data } = await apiJson<{ messages: ChatMessageItem[] }>(
     `/api/sessions/${encodeURIComponent(sessionId)}/messages?since_id=${sinceId}`,
   );
-  if (!resp.ok) throw new Error(`listMessages: HTTP ${resp.status}`);
-  return resp.json();
+  return data;
 }
 
 export async function sendMessage(
@@ -109,11 +111,13 @@ export async function sendMessage(
   content: string,
   sender: 'operator' | 'visitor' = 'operator',
 ): Promise<ChatMessageItem> {
-  const resp = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, sender }),
-  });
-  if (!resp.ok) throw new Error(`sendMessage: HTTP ${resp.status}`);
-  return resp.json();
+  const { data } = await apiJson<ChatMessageItem>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/messages`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, sender }),
+    },
+  );
+  return data;
 }

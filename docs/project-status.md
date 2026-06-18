@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**：2026-06-18(1v-post-audit-fixes 已交付 🟢;修 [1k-1u 回归审计](./audits/2026-06-18-1k-1u-regression.md) 4 类问题)
+**最后更新**：2026-06-18(1z-prod-readiness-gaps 进行中:修第三轮 grill-me 审计 P0 i18n SyntaxError + P1 trace_id 端到端 + 连接池调优 + fail-secure 缝隙)
 
 ---
 
@@ -138,6 +138,8 @@ A 阶段升级详情:
 | [1v](./reports/completed/2026-06-18-slice-1v-implementation.md) | 审计后续修复 | 🟢 | 修 [1k-1u 回归审计](./audits/2026-06-18-1k-1u-regression.md) 新-1/2/3/5/6/7/8:migrator 路径统一 + GDPR DELETE ErrNoRows + e2e webServer fixture + 文档对齐 |
 | [1w](./reports/completed/2026-06-18-slice-1w-implementation.md) | flagged session 接入 | 🟢 | 修 [deep-audit](./audits/2026-06-18-deep-audit.md) P1-29:IsSessionFlagged 接入 listSessions(operatorWS subscribe warn + replay warn + is_flagged 字段) |
 | [1x](./reports/completed/2026-06-18-slice-1x-implementation.md) | 登录暴力破解防护 | 🟢 | 修 [deep-audit](./audits/2026-06-18-deep-audit.md) P1-3:Redis 计数器 email+IP 双 key,5 次失败后锁定 15 分钟,429 + Retry-After;fail-open |
+| [1y](../progress/2026-06-18-slice-1y-visitor-ws-rate-limit.md) | visitor WS rate limit | 🟡 in_progress | 修 [deep-audit](./audits/2026-06-18-deep-audit.md) P1-4:per-session 滑动窗口 10s 内 500 envelope 或 50 MiB,超限 FlagSession + close |
+| [1z](../progress/2026-06-18-slice-1z-prod-readiness-gaps.md) | 生产就绪度补全 | 🟡 in_progress | 修第三轮 grill-me 审计:P0 i18n `@` SyntaxError(已修)+ P1 trace_id 端到端(admin SPA X-Trace-Id 头 + SDK command trace_id 继承)+ P1 连接池调优(PG_MAX_CONNS/REDIS_POOL_SIZE)+ P1 fail-secure 缝隙(Env 白名单 + prod sslmode/useSSL 校验) |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 

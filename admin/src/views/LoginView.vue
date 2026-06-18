@@ -11,7 +11,7 @@
             v-model="email"
             type="email"
             autocomplete="email"
-            :placeholder="t('login.email_placeholder')"
+            :placeholder="DEFAULT_ADMIN_EMAIL"
             :disabled="auth.loading"
             required
           />
@@ -46,18 +46,23 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 
+// 默认 admin 邮箱(与 server config.AdminEmail 默认值同步)。
+// 抽为常量而非 i18n key:vue-i18n 把 `@` 解析为 linked-message 引用,
+// 写在 message 里会触发 INVALID_LINKED_FORMAT 编译错误。
+const DEFAULT_ADMIN_EMAIL = 'admin@marketing-monitor.local';
+
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
-const email = ref('admin@marketing-monitor.local');
+const email = ref(DEFAULT_ADMIN_EMAIL);
 const password = ref('');
 
 // dev 模式默认账号提示(便于快速登录)
 const defaultHint = computed(() => {
-  if (email.value === 'admin@marketing-monitor.local') {
-    return t('login.default_hint');
+  if (email.value === DEFAULT_ADMIN_EMAIL) {
+    return t('login.default_email_hint', { email: DEFAULT_ADMIN_EMAIL });
   }
   return '';
 });

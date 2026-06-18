@@ -1,5 +1,10 @@
 // 1h-ui:认证 REST 客户端
 // 对应后端 server/internal/api/auth.go
+//
+// 1z P1-1:改用 apiFetch/apiJson 自动注入 X-Trace-Id 头,
+// admin SPA → server 端 trace_id 端到端传播。
+
+import { apiFetch, apiJson } from './client';
 
 export interface UserInfo {
   id: string;
@@ -14,31 +19,23 @@ export interface LoginRequest {
 }
 
 export async function postLogin(req: LoginRequest): Promise<UserInfo> {
-  const resp = await fetch('/api/auth/login', {
+  const { data } = await apiJson<UserInfo>('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
-    credentials: 'include',
   });
-  if (!resp.ok) {
-    const data = await resp.json().catch(() => ({}));
-    throw new Error(data.error || `HTTP ${resp.status}`);
-  }
-  return resp.json();
+  return data;
 }
 
 export async function postLogout(): Promise<void> {
-  await fetch('/api/auth/logout', {
-    method: 'POST',
-    credentials: 'include',
-  });
+  // logout 即使失败也不抛,保持原语义
+  await apiFetch('/api/auth/logout', { method: 'POST' });
 }
 
 export async function getMe(): Promise<UserInfo | null> {
-  const resp = await fetch('/api/auth/me', {
-    credentials: 'include',
-  });
-  if (resp.status === 401) return null;
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
+  // 401 是合法响应(未登录),特殊处理:不走 apiJson(会抛)
+  const { response } = await apiFetch<UserInfo>('/api/auth/me');
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
 }

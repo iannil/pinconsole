@@ -17,16 +17,23 @@ type Redis struct {
 }
 
 // ConnectRedis 建立 Redis 客户端并验证。
+//
+// 1z:从 cfg.PoolSize 应用连接池上限(默认 50),
+// 取代 go-redis 默认的 10*NumCPU。
 func ConnectRedis(ctx context.Context, cfg config.RedisConfig, logger *slog.Logger) (*Redis, error) {
-	client := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,
-	})
+	}
+	if cfg.PoolSize > 0 {
+		opts.PoolSize = cfg.PoolSize
+	}
+	client := redis.NewClient(opts)
 	if err := client.Ping(ctx).Err(); err != nil {
 		client.Close()
 		return nil, fmt.Errorf("ping: %w", err)
 	}
-	logger.Info("redis 已连接", "addr", cfg.Addr)
+	logger.Info("redis 已连接", "addr", cfg.Addr, "pool_size", opts.PoolSize)
 	return &Redis{Client: client, logger: logger}, nil
 }
 
