@@ -415,6 +415,17 @@ func (h *WSHandler) operatorWS(c *gin.Context) {
 				if _, exists := subs[cmd.sessionID]; exists {
 					continue
 				}
+				// 1w P1-29:订阅 flagged session 时 warn(不阻断,留给运营决策)
+				if h.stores != nil && h.stores.Redis != nil && h.stores.Redis.Client != nil {
+					if flagged, reason, err := antiscrape.IsSessionFlagged(ctx, h.stores.Redis.Client, cmd.sessionID.String()); err != nil {
+						h.logger.WarnContext(ctx, "is_session_flagged check failed on subscribe",
+							"session_id", cmd.sessionID, "error", err)
+					} else if flagged {
+						h.logger.WarnContext(ctx, "operator subscribing to flagged session",
+							"session_id", cmd.sessionID, "flag_reason", reason,
+							"note", "behavior tracker marked this session as suspicious")
+					}
+				}
 				// 1c 新增：订阅时先发缓存的最近 full snapshot（如果有）
 				if h.snapshots != nil {
 					if snap, _ := h.snapshots.Get(ctx, cmd.sessionID); snap != nil {

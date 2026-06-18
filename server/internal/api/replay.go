@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/antiscrape"
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/storage"
 	"github.com/vmihailenco/msgpack/v5"
@@ -139,6 +140,18 @@ func (h *ReplayHandler) getSessionReplay(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
 		return
+	}
+
+	// 1w P1-29:replay 请求查 flagged;日志 warn,不阻断回放(管理员可能需要分析可疑 session)。
+	if h.stores.Redis != nil && h.stores.Redis.Client != nil {
+		if flagged, reason, err := antiscrape.IsSessionFlagged(ctx, h.stores.Redis.Client, sessionIDStr); err != nil {
+			h.logger.WarnContext(ctx, "is_session_flagged check failed on replay",
+				"session_id", sessionID, "error", err)
+		} else if flagged {
+			h.logger.WarnContext(ctx, "replay requested for flagged session",
+				"session_id", sessionID, "flag_reason", reason,
+				"note", "behavior tracker marked this session as suspicious")
+		}
 	}
 
 	offset := 0

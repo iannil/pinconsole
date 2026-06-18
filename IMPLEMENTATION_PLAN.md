@@ -3,12 +3,12 @@
 > CLAUDE.md 第 39 行要求:通过 IMPLEMENTATION_PLAN.md 让模型理解当前正在做什么、边界、下一步。
 > 本文件 rolling 更新,每次开始新切片时改写;完成后归档到 `docs/reports/completed/`。
 
-**当前状态**:v1 主干已交付,1v 审计后续修复完成
+**当前状态**:v1 主干已交付,1w flagged session 接入完成
 **最后更新**:2026-06-18
 
 ## 当前焦点
 
-无活跃切片(刚完成 1v-post-audit-fixes)。下一步候选见 docs/project-status.md §7。
+无活跃切片(刚完成 1w-flagged-session-wire)。下一步候选见 docs/project-status.md §7。
 
 ## v1 已交付切片(深度 + 顺序)
 
@@ -28,6 +28,7 @@
 | 1t | 测试覆盖补全 | 🟢 |
 | 1u | god files 拆分 | 🟢 |
 | 1v | 审计后续修复 | 🟢 |
+| 1w | flagged session 接入 | 🟢 |
 
 ## 下一步候选(按优先级)
 

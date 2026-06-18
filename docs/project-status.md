@@ -136,6 +136,7 @@ A 阶段升级详情:
 | [1t](./reports/completed/2026-06-18-slice-1t-implementation.md) | 测试覆盖补全 | 🟢 | logging(9 tests)+ storage DSN(2)+ privacy handler(4)+ migrations(2),12 个 Go 包全有测试 |
 | [1u](./reports/completed/2026-06-18-slice-1u-implementation.md) | god files 拆分 | 🟢 | queries.go 771 LOC 拆 10 个 per-aggregate 文件;顺手修 docker-compose `:?` 阻塞 infra 启动 |
 | [1v](./reports/completed/2026-06-18-slice-1v-implementation.md) | 审计后续修复 | 🟢 | 修 [1k-1u 回归审计](./audits/2026-06-18-1k-1u-regression.md) 新-1/2/3/5/6/7/8:migrator 路径统一 + GDPR DELETE ErrNoRows + e2e webServer fixture + 文档对齐 |
+| [1w](./reports/completed/2026-06-18-slice-1w-implementation.md) | flagged session 接入 | 🟢 | 修 [deep-audit](./audits/2026-06-18-deep-audit.md) P1-29:IsSessionFlagged 接入 listSessions(operatorWS subscribe warn + replay warn + is_flagged 字段) |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 

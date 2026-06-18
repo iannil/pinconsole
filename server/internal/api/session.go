@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iannil/marketing-monitor/internal/antiscrape"
 	"github.com/iannil/marketing-monitor/internal/hub"
 	"github.com/iannil/marketing-monitor/internal/logging"
 	"github.com/iannil/marketing-monitor/internal/privacy"
@@ -116,6 +117,9 @@ type sessionListItem struct {
 	LastEventAt *int64 `json:"last_event_at,omitempty"`
 	EventCount  int32  `json:"event_count"`
 	UA          string `json:"ua"`
+	// 1w P1-29:BehaviorTracker 标记的可疑 session(is_flagged=true 时 admin 应警惕)。
+	IsFlagged  bool   `json:"is_flagged"`
+	FlagReason string `json:"flag_reason,omitempty"`
 }
 
 // ListSessions 返回当前租户的全部活跃会话（初始列表，admin 用）。
@@ -158,6 +162,12 @@ func (h *SessionHandler) listSessions(c *gin.Context) {
 		if s.UA != nil {
 			ua = *s.UA
 		}
+		// 1w P1-29:查 Redis flagged:session:{id};失败不阻断列表(Redis 故障 ≠ 业务故障)。
+		flagged, reason, err := antiscrape.IsSessionFlagged(ctx, h.stores.Redis.Client, s.ID.String())
+		if err != nil {
+			h.logger.WarnContext(ctx, "is_session_flagged failed",
+				"session_id", s.ID, "error", err)
+		}
 		items = append(items, sessionListItem{
 			SessionID:   s.ID.String(),
 			VisitorID:   s.VisitorID.String(),
@@ -166,6 +176,8 @@ func (h *SessionHandler) listSessions(c *gin.Context) {
 			LastEventAt: lastEventAt,
 			EventCount:  s.EventCount,
 			UA:          ua,
+			IsFlagged:   flagged,
+			FlagReason:  reason,
 		})
 	}
 
