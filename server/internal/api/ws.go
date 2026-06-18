@@ -4,6 +4,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/recording"
 	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/redis/go-redis/v9"
 )
 
 // WSHandler 处理 /ws/* 端点。
@@ -27,6 +29,57 @@ type WSHandler struct {
 	snapshots *recording.SnapshotCache
 	logger    *slog.Logger
 	maxMsg    int64
+}
+
+// 1y P1-4:visitor WS rate limit 常量。
+// 阈值估算:正常 SDK 流量 ~10 env/sec + ~1KB/env = 100 env/10s + 100KB/10s。
+// 阈值 500 env/10s + 50 MiB/10s 是 5x/500x 余量,只抓真攻击。
+const (
+	wsRateLimitWindow   = 10 * time.Second
+	wsRateLimitMaxMsgs  = 500
+	wsRateLimitMaxBytes = 50 * 1024 * 1024 // 50 MiB
+)
+
+// wsRateLimitLua 原子 INCR count + INCR bytes + 首次失败时 EXPIRE(2 keys)。
+// 返回 {count, bytes},调用方比对阈值。
+const wsRateLimitLua = `
+local c = redis.call('INCR', KEYS[1])
+local b = redis.call('INCRBY', KEYS[2], ARGV[1])
+if c == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+if b == tonumber(ARGV[1]) then
+  redis.call('EXPIRE', KEYS[2], ARGV[2])
+end
+return {c, b}
+`
+
+// checkWSRateLimit 检查 + 记录一次 envelope。
+// 返回 (allowed, reason)。allowed=false 时调用方应 FlagSession + close conn。
+// Redis 故障时返回 (true, "", err) 让调用方 fail-open。
+func checkWSRateLimit(ctx context.Context, rdb *redis.Client, sessionID string, msgSize int) (bool, string, error) {
+	countKey := fmt.Sprintf("ws:rate:count:%s", sessionID)
+	bytesKey := fmt.Sprintf("ws:rate:bytes:%s", sessionID)
+	res, err := rdb.Eval(ctx, wsRateLimitLua,
+		[]string{countKey, bytesKey},
+		msgSize, int(wsRateLimitWindow.Seconds())).Result()
+	if err != nil {
+		return true, "", err // fail-open
+	}
+	// res 是 []interface{}{count(int64), bytes(int64)}
+	vals, ok := res.([]interface{})
+	if !ok || len(vals) != 2 {
+		return true, "", fmt.Errorf("unexpected lua result type %T", res)
+	}
+	count, _ := vals[0].(int64)
+	bytesVal, _ := vals[1].(int64)
+	if count > int64(wsRateLimitMaxMsgs) {
+		return false, fmt.Sprintf("ws_rate_exceeded_msgs:%d", count), nil
+	}
+	if bytesVal > int64(wsRateLimitMaxBytes) {
+		return false, fmt.Sprintf("ws_rate_exceeded_bytes:%d", bytesVal), nil
+	}
+	return true, "", nil
 }
 
 // NewWSHandler 创建 WS handler。
@@ -218,6 +271,23 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 		}
 		if env.Type != proto.MsgEvent {
 			continue
+		}
+
+		// 1y P1-4:per-session 滑动窗口 rate limit(10s/500 env/50MiB)。
+		// 在 stream.Append 之前检查,避免被限流的 envelope 也写到 Redis Stream/MinIO。
+		// 超限:FlagSession(让 admin 看到)+ force close(PolicyViolation)。
+		// Redis 故障 fail-open(只 warn),与 1i 行为一致。
+		allowed, reason, rlErr := checkWSRateLimit(ctx, h.stores.Redis.Client, sessionID.String(), len(msg))
+		if rlErr != nil {
+			logger.Warn("ws rate limit check failed (fail-open)", "error", rlErr)
+		} else if !allowed {
+			logger.Warn("visitor ws rate limit exceeded, closing",
+				"session_id", sessionID, "reason", reason, "msg_size", len(msg))
+			if flagErr := antiscrape.FlagSession(ctx, h.stores.Redis.Client, sessionID.String(), reason); flagErr != nil {
+				logger.Warn("FlagSession failed (already closing)", "error", flagErr)
+			}
+			conn.Close(websocket.StatusPolicyViolation, "rate limit exceeded")
+			return
 		}
 
 		// 1) 写 Redis Stream：batch envelope 作为单条 stream entry（保留批量结构）
