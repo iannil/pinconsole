@@ -9,7 +9,7 @@ import type { EventPayload } from '@marketing-monitor/proto';
 const { t } = useI18n();
 
 // rrweb-player 的类型定义在 alpha 版不完整，使用 unknown 透传
-type RRWebPlayerInstance = { append: (events: unknown[]) => void } & Record<string, unknown>;
+type RRWebPlayerInstance = { addEvent?: (e: unknown) => void } & Record<string, unknown>;
 type RRWebPlayerPack = {
   default: {
     new (opts: {
@@ -37,6 +37,39 @@ const loading = ref(true);
 const errorMsg = ref<string | null>(null);
 let player: RRWebPlayerInstance | null = null;
 let pack: RRWebPlayerPack | null = null;
+let iframeObserver: MutationObserver | null = null;
+
+// 1c-fix:rrweb-player v2 alpha.18 的 iframe 默认 sandbox="allow-same-origin",
+// 缺 allow-scripts 导致 Replayer 内部脚本被浏览器阻断(player 渲染空 iframe)。
+// 用 MutationObserver 监听 iframe 创建,自动补 allow-scripts + 强制 reload。
+// 注:改 sandbox attribute 后必须 reload iframe 才生效。
+function setupIframeSandboxPatch(root: HTMLElement): void {
+  if (iframeObserver) iframeObserver.disconnect();
+  const patch = (iframe: HTMLIFrameElement) => {
+    const cur = iframe.getAttribute('sandbox') ?? '';
+    if (!cur.includes('allow-scripts')) {
+      iframe.setAttribute('sandbox', cur ? `${cur} allow-scripts` : 'allow-scripts');
+      // reload 让新 sandbox 生效(srcdoc iframe reload via re-set srcdoc)
+      const srcdoc = iframe.getAttribute('srcdoc');
+      if (srcdoc) {
+        iframe.removeAttribute('srcdoc');
+        iframe.setAttribute('srcdoc', srcdoc);
+      }
+    }
+  };
+  // patch 现有
+  root.querySelectorAll('iframe').forEach(patch);
+  // 监听新 iframe
+  iframeObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      m.addedNodes.forEach((n) => {
+        if (n.nodeName === 'IFRAME') patch(n as HTMLIFrameElement);
+        if (n instanceof Element) n.querySelectorAll?.('iframe').forEach(patch);
+      });
+    }
+  });
+  iframeObserver.observe(root, { childList: true, subtree: true });
+}
 
 // 提取 rrweb 原生事件（FullSnapshot + IncrementalSnapshot 等）
 function extractRRWeb(events: EventPayload[]): unknown[] {
@@ -79,6 +112,14 @@ async function rebuildPlayer() {
       loading.value = false;
       return;
     }
+    // rrweb Replayer 需要至少 2 events 才创建(full snapshot + 至少一个 meta/incremental)。
+    // 只有 1 个 full snapshot 时会抛 "Replayer need at least 2 events"。
+    // 这种情况发生在:访客刚同意 consent 触发 full snapshot,但还没产生交互(无 incremental)。
+    // 等下一个 event 到来再创建 player(watch 会再触发 rebuildPlayer)。
+    if (rrwebEvents.length < 2) {
+      loading.value = true;  // 继续显示 "loading...",等够 events
+      return;
+    }
     const Player = playerPack.default;
     player = new Player({
       target: containerRef.value,
@@ -89,6 +130,11 @@ async function rebuildPlayer() {
         skipInactive: true,
       },
     });
+    // rrweb-player v2 alpha 的 iframe sandbox 默认只设 allow-same-origin,
+    // 导致 Replayer 内部脚本被浏览器阻断("frame is sandboxed and 'allow-scripts'
+    // permission is not set")→ player 渲染空白。
+    // 修复:用 MutationObserver 监听 iframe 创建,自动补 allow-scripts。
+    setupIframeSandboxPatch(containerRef.value);
   } catch (e) {
     errorMsg.value = (e as Error).message;
   } finally {
@@ -102,21 +148,30 @@ function appendEvents(events: EventPayload[]) {
   const rrwebEvents = extractRRWeb(events);
   if (rrwebEvents.length === 0) return;
   try {
-    // rrweb-player v2 alpha 的 append 接受 array of events
-    player.append(rrwebEvents);
+    // rrweb-player v2 alpha 的 addEvent 接受单个 eventWithTime。
+    // 注意 v2 没有 append(批量) 方法 — 之前的 player.append 是 bug,
+    // 静默吞掉 catch 导致 incremental events 永远不进 player。
+    // 修复:逐个 addEvent。
+    for (const ev of rrwebEvents) {
+      (player as unknown as { addEvent?: (e: unknown) => void }).addEvent?.(ev);
+    }
   } catch (e) {
     console.warn('[ReplayPlayer] append failed', e);
   }
 }
 
-// 监听 events 变化：首批重建，后续 append
+// 监听 events 变化：首批重建,后续 append。
+// 注意 rrweb Replayer 需 ≥ 2 events 才能实例化,所以 events<2 时 rebuildPlayer
+// 内部跳过创建 player,这时不能标记 initialized=true,否则下次新 events 来时
+// 走 appendEvents 分支(player=null 时 return),player 永远不创建。
 let initialized = false;
 watch(
   () => props.events,
   (newEvents, oldEvents) => {
     if (!initialized || !player) {
       rebuildPlayer();
-      initialized = true;
+      // 只有 player 真创建后才标记 initialized,后续走 appendEvents
+      if (player) initialized = true;
       return;
     }
     if (newEvents.length > (oldEvents?.length ?? 0)) {
@@ -142,6 +197,8 @@ onUnmounted(() => {
   if (containerRef.value) {
     containerRef.value.replaceChildren();
   }
+  iframeObserver?.disconnect();
+  iframeObserver = null;
   player = null;
 });
 

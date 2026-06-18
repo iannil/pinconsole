@@ -36,8 +36,8 @@ importers:
         specifier: ^2.2.4
         version: 2.3.1(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3))
       rrweb-player:
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: 2.0.0-alpha.18
+        version: 2.0.0-alpha.18
       vue:
         specifier: ^3.5.12
         version: 3.5.38(typescript@5.9.3)
@@ -2017,8 +2017,8 @@ packages:
   rrweb-cssom@0.8.0:
     resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
 
-  rrweb-player@2.0.1:
-    resolution: {integrity: sha512-v8PVnOy7Q3kXqWriGuzZo4ndGEV06nCMRkH/jSHweJfTLwpLqb2evgMj0S5FwQLsN2X1VM+L2/i7QWGJfgj9zw==}
+  rrweb-player@2.0.0-alpha.18:
+    resolution: {integrity: sha512-v31QgtjR9Ei3JnyvaN/2THj6a/i+dG49LzHiUtHcfTIFi7ecVExmMq+QDctVxUsuwdPPTtEcslpQh2tbVbi/ow==}
 
   rrweb-snapshot@2.0.1:
     resolution: {integrity: sha512-H8TA29ct2tpYtr5oaB0N+ksRY9bhEErfAYcKbce4+w8lqEUQChpKZd41HpBJLkp04b5QUfWUg4v6r9Okf8r7vA==}
@@ -4213,7 +4213,7 @@ snapshots:
 
   rrweb-cssom@0.8.0: {}
 
-  rrweb-player@2.0.1:
+  rrweb-player@2.0.0-alpha.18:
     dependencies:
       '@rrweb/packer': 2.0.1
       '@rrweb/replay': 2.0.1

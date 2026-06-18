@@ -60,10 +60,13 @@ export const useVisitorsStore = defineStore('visitors', () => {
         eventCount: 0,
       });
     } else if (p.event === 'offline') {
+      // 从列表删除,但**不清 selectedSessionId**。
+      // 原实现清 selectedSessionId 导致 admin 选中 visitor 后,SDK 重连短暂
+      // 断线触发 offline → selectedSessionId=null → 整个 panel(含订阅按钮、
+      // events area、player)消失,UX 极差。
+      // 修复:selectedSessionId 保留,VisitorPanel 仍可见,只是该 session 不
+      // 在 online 列表里(再次 online 时自动回来)。
       visitors.value.delete(sessionId);
-      if (selectedSessionId.value === sessionId) {
-        selectedSessionId.value = null;
-      }
     } else if (p.event === 'navigated') {
       // 1f：访客跳转到新页面。old session 下线，new session 上线。
       const oldId = p.oldSessionId;
@@ -96,7 +99,7 @@ export const useVisitorsStore = defineStore('visitors', () => {
   }
 
   function appendEvent(sessionId: string, env: Envelope) {
-    const list = events.value.get(sessionId) ?? [];
+    const oldList = events.value.get(sessionId) ?? [];
     // 支持 single 与 batch（1c：SDK 批量发 array）
     const payloads: EventPayload[] = [];
     if (Array.isArray(env.payload)) {
@@ -110,18 +113,23 @@ export const useVisitorsStore = defineStore('visitors', () => {
     }
     if (payloads.length === 0) return;
 
-    for (const p of payloads) list.push(p);
+    // **创建新 array**(immutable update),让下游 computed/watch 能检测到引用变化。
+    // 原实现 push 到旧 array + set 旧 reference,导致 ReplayPlayer 的 watch 不触发
+    // (浅比较 array reference 不变)→ incremental events 永远不进 player。
+    let newList = [...oldList, ...payloads];
     // 1c：rrweb 事件多，从 200 扩到 500
-    if (list.length > 500) list.splice(0, list.length - 500);
-    events.value.set(sessionId, list);
+    if (newList.length > 500) newList = newList.slice(newList.length - 500);
+    events.value.set(sessionId, newList);
     events.value = new Map(events.value);
 
     // 更新该 session 的元数据
     const item = visitors.value.get(sessionId);
     if (item) {
-      item.lastEventAt = env.ts;
-      item.eventCount += payloads.length;
-      visitors.value.set(sessionId, { ...item });
+      visitors.value.set(sessionId, {
+        ...item,
+        lastEventAt: env.ts,
+        eventCount: item.eventCount + payloads.length,
+      });
       visitors.value = new Map(visitors.value);
     }
   }
