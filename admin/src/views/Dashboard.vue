@@ -71,6 +71,9 @@ async function fetchInitial() {
         lastEventAt:
           typeof s.last_event_at === 'number' ? Number(s.last_event_at) : null,
         eventCount: Number(s.event_count ?? 0),
+        // 1w P1-29:消费后端 is_flagged 字段
+        isFlagged: Boolean(s.is_flagged),
+        flagReason: s.flag_reason ? String(s.flag_reason) : undefined,
       })),
     );
   } catch (e) {

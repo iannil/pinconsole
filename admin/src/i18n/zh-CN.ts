@@ -68,6 +68,9 @@ export default {
     popup_action_ph: '按钮文字（可选）',
     popup_url_ph: '按钮链接（可选）',
     send_popup: '发送弹窗',
+    // 1w P1-29:flagged session UI 文案
+    flagged_tooltip: '该会话被标记为可疑(行为分析触发)',
+    flagged_tooltip_with_reason: '可疑会话:{reason}',
   },
   replay: {
     title: '历史会话',

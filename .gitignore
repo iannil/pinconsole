@@ -62,3 +62,6 @@ docker-compose.override.yml
 .claude/
 .backup/
 *.tsbuildinfo
+
+# Runtime artifacts
+.server.pid

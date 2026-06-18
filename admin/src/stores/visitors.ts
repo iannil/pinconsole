@@ -13,6 +13,10 @@ interface VisitorListItem {
   startedAt: number;
   lastEventAt: number | null;
   eventCount: number;
+  // 1w P1-29:UI 消费 is_flagged 字段(后端 /api/sessions 已就绪)。
+  // flagged session = BehaviorTracker 标记可疑,运营应警惕(可能是爬虫/刷量)。
+  isFlagged?: boolean;
+  flagReason?: string;
 }
 
 export const useVisitorsStore = defineStore('visitors', () => {

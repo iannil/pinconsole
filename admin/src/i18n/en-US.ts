@@ -68,6 +68,9 @@ export default {
     popup_action_ph: 'Button text (optional)',
     popup_url_ph: 'Button URL (optional)',
     send_popup: 'Send Popup',
+    // 1w P1-29:flagged session UI text
+    flagged_tooltip: 'This session is flagged as suspicious (behavior analysis trigger)',
+    flagged_tooltip_with_reason: 'Suspicious session: {reason}',
   },
   replay: {
     title: 'Session History',

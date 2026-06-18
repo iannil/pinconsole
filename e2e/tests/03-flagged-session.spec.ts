@@ -90,4 +90,45 @@ test.describe('1w: flagged session', () => {
       await ctx.close();
     }
   });
+
+  test('regression:flagged session 在 admin UI 显示 🚩 标记(1w P1-29 UI 消费)', async ({ adminPage, adminRequest, browser }) => {
+    const admin = adminPage;
+    // 启一个新 visitor,确保 admin 列表里有它
+    const ctx = await browser.newContext();
+    const visitor = await ctx.newPage();
+    await visitor.goto('/');
+    await visitor.waitForTimeout(2500);
+
+    try {
+      // 等访客出现在 admin dashboard 列表
+      await expect(admin.locator('.visitor-list li:not(.empty)')).not.toHaveCount(0, { timeout: 10000 });
+
+      // 取第一个 session id
+      const before = await adminRequest.get('/api/sessions');
+      const beforeData = await before.json();
+      const target = beforeData.sessions[0];
+      const sessionId = target.session_id;
+
+      // 默认无 🚩
+      await expect(admin.locator('.visitor-list .flag-icon')).toHaveCount(0);
+
+      // 设 flag
+      await setSessionFlag(sessionId, 'e2e-1w-ui-test');
+
+      // reload admin dashboard,触发 fetchInitial 拉新数据
+      await admin.goto('/admin/dashboard');
+      await admin.waitForSelector('.visitor-list li', { timeout: 10_000 });
+
+      // 🚩 应该可见
+      await expect(admin.locator('.visitor-list .flag-icon')).toBeVisible({ timeout: 5000 });
+      // 同一 li 应有 flagged class(底色变红)
+      const flaggedLi = admin.locator('.visitor-list li.flagged');
+      await expect(flaggedLi).toHaveCount(1);
+
+      // cleanup
+      await clearSessionFlag(sessionId);
+    } finally {
+      await ctx.close();
+    }
+  });
 });

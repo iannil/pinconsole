@@ -12,6 +12,14 @@ const list = computed(() => store.visitorList);
 function onClick(sessionId: string) {
   store.select(sessionId);
 }
+
+// 1w P1-29:flagged session tooltip 文案(运营 hover 🚩 看到原因)
+function flagTitle(reason?: string): string {
+  if (reason) {
+    return t('visitor.flagged_tooltip_with_reason', { reason });
+  }
+  return t('visitor.flagged_tooltip');
+}
 </script>
 
 <template>
@@ -23,10 +31,13 @@ function onClick(sessionId: string) {
       <li
         v-for="v in list"
         :key="v.sessionId"
-        :class="{ selected: store.selectedSessionId === v.sessionId }"
+        :class="{ selected: store.selectedSessionId === v.sessionId, flagged: v.isFlagged }"
         @click="onClick(v.sessionId)"
       >
-        <div class="fingerprint" :title="v.fingerprint">{{ v.fingerprint.slice(0, 12) }}</div>
+        <div class="fingerprint" :title="v.fingerprint">
+          <span class="flag-icon" v-if="v.isFlagged" :title="flagTitle(v.flagReason)">🚩</span>
+          {{ v.fingerprint.slice(0, 12) }}
+        </div>
         <div class="meta">
           <span class="events">{{ v.eventCount }} events</span>
           <span class="time">{{ formatRelative(v.lastEventAt ?? v.startedAt, t) }}</span>
@@ -73,6 +84,22 @@ li.selected {
   background: #ecf5ff;
   border-left: 3px solid #409eff;
   padding-left: calc(1rem - 3px);
+}
+/* 1w P1-29:flagged session 高亮(淡红底)提示运营警惕 */
+li.flagged {
+  background: #fef0f0;
+  border-left: 3px solid #f56c6c;
+}
+li.flagged:hover {
+  background: #fde2e2;
+}
+li.flagged.selected {
+  background: #fde2e2;
+  border-left: 3px solid #f56c6c;
+}
+.flag-icon {
+  margin-right: 4px;
+  cursor: help;
 }
 .fingerprint {
   font-family: ui-monospace, monospace;
