@@ -65,6 +65,23 @@
 | `isXxx` / `hasXxx` | 谓词 | `isAuthenticated`、`hasScope` |
 | `mustXxx` | 强制成功版（panic on error） | `mustConnect` |
 
+### 4.1 语言惯例差异(1p 同步)
+
+不同语言生态有不同的工厂函数惯例,**两者都正确**,不要强行统一:
+
+| 语言 | 工厂惯例 | 示例 |
+|---|---|---|
+| **Go** | `NewXxx` (PascalCase) | `NewHub()`、`NewClient()`、`NewAuthHandler()` |
+| **TypeScript** | `createXxx` (camelCase) | `createRouter()`、`createPinia()`、`createStore()` |
+
+Go 端保留 `New*`(标准库惯例 + Go community 一致);TS 端用 `create*`(Vue/Pinia/Router 一致)。
+
+### 4.2 当前代码与规范的差异(1p 标记)
+
+- Go 端:多数函数用 `extractXxx` / `scanXxx` / `buildXxx`,与 `parseXxx` / `safeXxx` 不完全对齐
+- 这部分是 1b/1c 时建立的模式,迁移成本高于收益,**保留**
+- 新代码建议优先用本表前缀(尤其纯函数)
+
 ## 5. Git 分支命名
 
 | 类型 | 前缀 | 示例 |

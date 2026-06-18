@@ -7,7 +7,7 @@
 import { resolveConfig, type VisitorConfig } from './config';
 import { getOrCreateVisitorId, initSession, getCachedSessionId, type SessionInfo } from './session';
 import { WSTransport, type TransportStatus } from './transport/ws';
-import type { HelloPayload, Envelope } from './proto/envelope';
+import type { HelloPayload, Envelope } from '@marketing-monitor/proto';
 import { Batch } from './batch';
 import { RRWebCollector } from './collectors/rrweb';
 import { ScreenshotCollector } from './collectors/screenshot';

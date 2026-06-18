@@ -3,8 +3,8 @@
 
 import { ref, onUnmounted } from 'vue';
 import { encode, decode } from '@msgpack/msgpack';
-import type { Envelope, PresencePayload, SubscribePayload } from '../proto/envelope';
-import { PROTOCOL_VERSION } from '../proto/envelope';
+import type { Envelope, PresencePayload, SubscribePayload } from '@marketing-monitor/proto';
+import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
 
 export type WsStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'closed';
 

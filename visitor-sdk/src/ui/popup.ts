@@ -1,6 +1,6 @@
 // 弹窗渲染器（1g + 1k P0-8 URL scheme 白名单）
 // SDK 接收 show_popup command 后用结构化 JSON + 预设 HTML 模板渲染
-import type { CommandPopup } from '../proto/command';
+import type { CommandPopup } from '@marketing-monitor/proto';
 
 const POPUP_ID = '__mm_popup__';
 

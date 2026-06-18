@@ -8,8 +8,8 @@ import type {
   AckPayload,
   ErrorPayload,
   PresencePayload,
-} from '../proto/envelope';
-import { PROTOCOL_VERSION } from '../proto/envelope';
+} from '@marketing-monitor/proto';
+import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
 import { sdkLogger, generateTraceId } from '../logging';
 
 export interface TransportOptions {

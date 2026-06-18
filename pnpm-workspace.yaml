@@ -2,3 +2,4 @@ packages:
   - admin
   - visitor-sdk
   - e2e
+  - 'packages/*'

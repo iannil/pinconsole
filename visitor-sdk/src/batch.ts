@@ -1,7 +1,7 @@
 // 事件批量器：100ms 或 50 events 阈值触发 flush
 // 详见 docs/progress/2026-06-17-slice-1c-spec.md §事件批量
 
-import type { EventPayload } from './proto/events';
+import type { EventPayload } from '@marketing-monitor/proto';
 
 export interface BatchOptions {
   /** 最大等待时间（毫秒），默认 100 */
