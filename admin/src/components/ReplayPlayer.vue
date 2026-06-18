@@ -243,4 +243,13 @@ defineExpose({ appendEvents });
   height: 100%;
   border: 0;
 }
+
+/* rrweb-player v2 alpha.18 bug:Replayer 创建的 mirror iframe 默认
+   style="display:none; pointer-events:none",但实际它是用来渲染 snapshot
+   DOM 的(不只是镜像)。强制 display:block 让用户看到回放内容。
+   canvas.replayer-mouse-tail 仍正常显示鼠标轨迹。 */
+.player-container :deep(iframe) {
+  display: block !important;
+  pointer-events: auto !important;
+}
 </style>

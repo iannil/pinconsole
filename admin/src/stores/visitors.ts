@@ -51,6 +51,17 @@ export const useVisitorsStore = defineStore('visitors', () => {
     const sessionId = p.sessionId;
     if (!sessionId) return;
     if (p.event === 'online') {
+      // SDK reload(或 reconnect)会产生新 session,但 fingerprint 相同。
+      // 检查同 fingerprint 的旧 session,删除 + 自动切换 selectedSessionId。
+      // 否则 admin 选中的是旧 session(已离线),订阅了也收不到 events,
+      // 用户体验是"订阅后 player 空"。
+      let oldSameFp: string | null = null;
+      for (const [sid, v] of visitors.value) {
+        if (v.fingerprint === p.fingerprint && sid !== sessionId) {
+          oldSameFp = sid;
+          break;
+        }
+      }
       visitors.value.set(sessionId, {
         sessionId,
         visitorId: p.visitorId,
@@ -59,6 +70,17 @@ export const useVisitorsStore = defineStore('visitors', () => {
         lastEventAt: null,
         eventCount: 0,
       });
+      if (oldSameFp) {
+        visitors.value.delete(oldSameFp);
+        // 清旧 session 的 events 避免陈旧数据混入
+        events.value.delete(oldSameFp);
+        events.value = new Map(events.value);
+        // admin 选中的是同 fingerprint 旧 session → 自动切到新 session
+        if (selectedSessionId.value === oldSameFp) {
+          selectedSessionId.value = sessionId;
+        }
+      }
+      visitors.value = new Map(visitors.value);
     } else if (p.event === 'offline') {
       // 从列表删除,但**不清 selectedSessionId**。
       // 原实现清 selectedSessionId 导致 admin 选中 visitor 后,SDK 重连短暂
