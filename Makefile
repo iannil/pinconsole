@@ -129,10 +129,16 @@ docker-logs: ## 跟踪容器日志
 
 PG_URL ?= postgres://mm:mm_dev@localhost:5432/marketing_monitor?sslmode=disable
 
-migrate-up: ## 应用所有迁移
+migrate-up: ## 应用所有迁移（与 server 启动时自动执行相同逻辑；一般无需手动跑）
 	$(MIGRATE) -path $(SERVER_DIR)/migrations -database "$(PG_URL)" up
 
-migrate-down: ## 回滚最后一个迁移
+migrate-down: ## 回滚最后一个迁移（破坏性！1k P0-13 加保护）
+	@if [ "$$MM_ALLOW_DESTRUCTIVE_MIGRATE" != "1" ]; then \
+		echo "$(C_YELLOW)⚠️  migrate-down 会 DROP TABLE 并丢失数据！$(C_RESET)"; \
+		echo "5 秒内按 Ctrl+C 取消，或设 MM_ALLOW_DESTRUCTIVE_MIGRATE=1 跳过此提示。"; \
+		for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; \
+		echo ""; \
+	fi
 	$(MIGRATE) -path $(SERVER_DIR)/migrations -database "$(PG_URL)" down 1
 
 migrate-new: ## 创建新迁移：make migrate-new NAME=add_users

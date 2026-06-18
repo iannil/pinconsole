@@ -32,8 +32,11 @@ jobs:
           version: v1.61
           working-directory: server
 
-      - name: go test
-        run: go test -race -cover ./...
+      - name: go test (dev build)
+        run: go test -race -cover -count=1 ./...
+
+      - name: go test (release build tags)
+        run: go test -race -count=1 -tags release ./internal/api/... ./internal/config/... ./cmd/server/...
 
       - name: go build (dev)
         run: go build -tags dev -o /tmp/server-dev ./cmd/server
@@ -135,11 +138,55 @@ jobs:
           docker compose ps
           exit 1
 
-      - name: 应用全部 migrations
+      - name: 应用全部 migrations (验证 down/up 干净循环)
+        env:
+          MM_ALLOW_DESTRUCTIVE_MIGRATE: "1"
         run: |
+          # 应用 up
           for f in server/migrations/*.up.sql; do
             docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
           done
+          # 验证 schema_migrations 表不存在（手动 psql -f 模式）
+          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users|chat_messages|co_browsing_commands|event_blobs'
+          # 跑一遍 down(逃生门已设)
+          for f in $(ls server/migrations/*.down.sql | tac); do
+            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+          done
+          # 再跑 up,验证可重放
+          for f in server/migrations/*.up.sql; do
+            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+          done
+          # 再次验证表存在
+          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users'
+
+      - name: 验证 server 启动自动应用 migrations (1k P0-14)
+        env:
+          SERVER_ENV: dev
+          ADMIN_EMAIL: ci-admin@test.local
+          ADMIN_PASSWORD: ci-strong-password-123
+          PG_PASSWORD: mm_dev
+          MINIO_ACCESS_KEY: mm_dev
+          MINIO_SECRET_KEY: mm_dev_secret
+        run: |
+          # 重置 DB (模拟 fresh DB)
+          docker compose exec -T postgres psql -U mm -d marketing_monitor -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+          # 构建 dev binary
+          cd server && go build -tags dev -o /tmp/mm-server ./cmd/server
+          # 启动 server (后台),应自动跑 migrations 创建表
+          /tmp/mm-server &
+          SERVER_PID=$!
+          sleep 5
+          # 验证表存在
+          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users|schema_migrations'
+          # 验证 schema_migrations 表记录数 = migrations 数
+          COUNT=$(docker compose exec -T postgres psql -U mm -d marketing_monitor -t -c "SELECT COUNT(*) FROM schema_migrations")
+          if [ "$COUNT" -lt "4" ]; then
+            echo "schema_migrations 记录数 $COUNT < 4,失败"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+          kill $SERVER_PID 2>/dev/null || true
+          wait $SERVER_PID 2>/dev/null || true
 
       - name: 清理
         if: always()

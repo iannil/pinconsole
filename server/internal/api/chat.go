@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/iannil/marketing-monitor/internal/proto"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
@@ -45,11 +44,12 @@ func (h *ChatHandler) listMessages(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	sessionID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
+	// 1k P0-3：校验调用方拥有 session claim
+	sessionID, _, ok := requireClaimOwnership(c, h.stores, h.logger, false)
+	if !ok {
 		return
 	}
+
 	sinceID := int64(0)
 	if s := c.Query("since_id"); s != "" {
 		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
@@ -77,18 +77,19 @@ func (h *ChatHandler) listMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, listMessagesResponse{Messages: items})
 }
 
+// postMessageRequest 1k P0-3：移除 client-controllable sender 字段。
+// REST POST 永远是 operator 发起；visitor → admin 走 WS 上行。
 type postMessageRequest struct {
 	Content string `json:"content" binding:"required"`
-	Sender  string `json:"sender"` // operator / visitor，默认 operator
 }
 
 func (h *ChatHandler) postMessage(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	sessionID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
+	// 1k P0-3：校验调用方拥有 session claim
+	sessionID, _, ok := requireClaimOwnership(c, h.stores, h.logger, false)
+	if !ok {
 		return
 	}
 
@@ -97,10 +98,8 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_json"})
 		return
 	}
-	sender := req.Sender
-	if sender != "visitor" {
-		sender = "operator"
-	}
+	// 1k P0-3：sender 固定为 "operator"（防止审计污染/伪造访客发言）
+	sender := "operator"
 
 	// 写 PG
 	msg, err := h.stores.PG.CreateChatMessage(ctx, storage.DefaultTenantID, sessionID, sender, req.Content)
@@ -110,27 +109,23 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 		return
 	}
 
-	// 消息推送到对端
-	if sender == "operator" {
-		// admin → visitor：下行到访客 WS
-		envBytes, _ := proto.Encode(proto.Envelope{
-			V:         proto.ProtocolVersion,
-			Type:      proto.MsgCommand,
-			SessionID: sessionID.String(),
-			TS:        time.Now().UnixMilli(),
-			Payload: proto.CommandPayload{
-				Type: "chat_message",
-				TS:   time.Now().UnixMilli(),
-				Chat: &proto.CommandChatMessage{
-					MessageID: msg.ID,
-					Content:   msg.Content,
-				},
+	// admin → visitor：下行到访客 WS
+	envBytes, _ := proto.Encode(proto.Envelope{
+		V:         proto.ProtocolVersion,
+		Type:      proto.MsgCommand,
+		SessionID: sessionID.String(),
+		TS:        time.Now().UnixMilli(),
+		Payload: proto.CommandPayload{
+			Type: "chat_message",
+			TS:   time.Now().UnixMilli(),
+			Chat: &proto.CommandChatMessage{
+				MessageID: msg.ID,
+				Content:   msg.Content,
 			},
-		})
-		h.hub.SendCommandToVisitor(sessionID, envBytes)
-	}
+		},
+	})
+	h.hub.SendCommandToVisitor(sessionID, envBytes)
 	// visitor → admin 的消息通过 admin 的订阅 channel 自动到达
-	// （admin 端定期 GET messages 或 WS event 接收）
 
 	c.JSON(http.StatusOK, chatMessageItem{
 		ID:        msg.ID,

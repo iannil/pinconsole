@@ -1,4 +1,4 @@
-// Package api：认证中间件（切片 1h）。
+// Package api：认证中间件（切片 1h + 1k fail-secure）。
 package api
 
 import (
@@ -11,14 +11,15 @@ import (
 )
 
 // AuthMiddleware 检查 cookie 中的 session_id，从 Redis 查 user_id，注入 context。
-// 未认证返回 401。dev 模式（SERVER_ENV=dev）自动绕过，便于 e2e 测试。
+// 未认证返回 401。
+//
+// 1k fail-secure：dev 模式（SERVER_ENV=dev）自动绕过便于 e2e 测试，
+// 但绕过代码本身在 release 构建下不存在（//go:build !release），
+// 因此 release 二进制结构上无法走 dev bypass，即使误配 SERVER_ENV=dev 也安全。
 func AuthMiddleware(getSession func(ctx context.Context, key string) ([]byte, error), devMode bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if devMode {
-			// dev 模式：自动注入一个 mock user_id
-			c.Set("user_id", uuid.Nil)
-			c.Set("dev_mode", true)
-			c.Next()
+		// dev bypass 仅在 dev build 中编译进来（见 bypass_dev.go）
+		if devMode && tryDevBypass(c) {
 			return
 		}
 

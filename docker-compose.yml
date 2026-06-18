@@ -81,14 +81,21 @@ services:
       PG_HOST: postgres
       PG_PORT: "5432"
       PG_USER: ${PG_USER:-mm}
-      PG_PASSWORD: ${PG_PASSWORD:-mm_dev}
+      # 1k P0-7 fail-secure：prod profile 必须显式提供凭证
+      PG_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD required for prod profile}
       PG_DB: ${PG_DB:-marketing_monitor}
+      PG_SSLMODE: ${PG_SSLMODE:-prefer}
       REDIS_ADDR: redis:6379
       MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-mm_dev}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-mm_dev_secret}
+      # 1k P0-7：prod profile 必须显式提供凭证
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY required for prod profile}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY required for prod profile}
       MINIO_BUCKET: ${MINIO_BUCKET:-marketing-monitor}
       MINIO_USE_SSL: "false"
+      # 1k P0-2 fail-secure：prod profile 必须显式提供 admin 凭证
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL required for prod profile}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required for prod profile}
+      BCRYPT_COST: ${BCRYPT_COST:-12}
     ports:
       - "${SERVER_PORT:-8080}:8080"
     depends_on:

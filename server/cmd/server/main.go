@@ -57,6 +57,12 @@ func main() {
 	}
 	defer stores.Close()
 
+	// 1k：启动时自动应用 migrations（嵌入二进制，无需外部 CLI）
+	if err := runMigrations(rootCtx, stores.PG.Pool, logger); err != nil {
+		logger.Error("migrations 应用失败，启动中止（fail-fast）", "error", err)
+		os.Exit(1)
+	}
+
 	// 1h：启动时初始化默认 admin 用户（如果 users 表为空）
 	if err := seedAdminUser(rootCtx, stores, cfg, logger); err != nil {
 		logger.Warn("seed admin user failed", "error", err)
@@ -140,7 +146,8 @@ func seedAdminUser(ctx context.Context, stores *storage.Stores, cfg *config.Conf
 	if count > 0 {
 		return nil
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), bcrypt.DefaultCost)
+	// 1k：bcrypt cost 从配置读（CLAUDE.md 要求 ≥ 12）
+	hash, err := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), cfg.BCryptCost)
 	if err != nil {
 		return err
 	}
@@ -148,6 +155,6 @@ func seedAdminUser(ctx context.Context, stores *storage.Stores, cfg *config.Conf
 	if err != nil {
 		return err
 	}
-	logger.Info("默认 admin 用户已创建", "email", cfg.AdminEmail)
+	logger.Info("默认 admin 用户已创建", "email", cfg.AdminEmail, "bcrypt_cost", cfg.BCryptCost)
 	return nil
 }

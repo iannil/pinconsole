@@ -88,7 +88,7 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	r.GET("/readyz", healthReady(opts.Stores))
 
 	// 1h：认证（公开）
-	authH := NewAuthHandler(opts.Stores, opts.Logger)
+	authH := NewAuthHandler(opts.Stores, opts.Logger, opts.Env == "prod")
 	authH.Register(r)
 
 	// 1b：访客 REST session API（公开，SDK 用）

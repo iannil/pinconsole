@@ -72,9 +72,9 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	sessionID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
+	// 1k P0-3：校验调用方拥有 session claim（不要求 alive，因命令可能针对刚结束的 session）
+	sessionID, callerUID, ok := requireClaimOwnership(c, h.stores, h.logger, false)
+	if !ok {
 		return
 	}
 
@@ -98,6 +98,13 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 			return
 		}
 	}
+	// 1k P0-8：show_popup action_url scheme 白名单（防 javascript:/data: 注入）
+	if cp.Popup != nil && cp.Popup.ActionURL != "" {
+		if !isURLSchemeAllowed(cp.Popup.ActionURL) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "popup_url_scheme_not_allowed", "url": cp.Popup.ActionURL})
+			return
+		}
+	}
 
 	// 计算 target_node_id（审计用）
 	var nodeID *int32
@@ -109,12 +116,12 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		nodeID = &v
 	}
 
-	// 写 PG 审计
+	// 写 PG 审计（1k P0-3：OperatorID 用 user_id 而非 ClientIP，修复审计污染）
 	payloadBytes, _ := json.Marshal(req.Payload)
 	_, err = h.stores.PG.CreateCoBrowsingCommand(ctx, storage.CoBrowsingCommand{
 		TenantID:     storage.DefaultTenantID,
 		SessionID:    sessionID,
-		OperatorID:   c.ClientIP(),
+		OperatorID:   callerUID.String(),
 		CommandType:  req.Type,
 		TargetNodeID: nodeID,
 		Payload:      payloadBytes,
@@ -137,13 +144,51 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		return
 	}
 
-	ok := h.hub.SendCommandToVisitor(sessionID, envBytes)
-	if !ok {
+	delivered := h.hub.SendCommandToVisitor(sessionID, envBytes)
+	if !delivered {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "visitor_offline"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true, "type": req.Type})
+}
+
+// isURLSchemeAllowed 1k P0-8：popup action_url scheme 白名单。
+// 只允许 http/https；拒绝 javascript:/data:/vbscript:/file:/mailto: 等其他 scheme。
+// 空字符串、protocol-relative (//host)、相对路径 (/path 或 page.html) 按同源允许。
+func isURLSchemeAllowed(rawURL string) bool {
+	if rawURL == "" {
+		return true
+	}
+	lower := strings.ToLower(rawURL)
+
+	// 显式拒绝危险 scheme（深度防御,即使下面的 scheme 检测错过这类也先拒）
+	for _, bad := range []string{"javascript:", "data:", "vbscript:", "file:", "about:"} {
+		if strings.HasPrefix(lower, bad) {
+			return false
+		}
+	}
+
+	// 显式允许 http/https
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return true
+	}
+
+	// 允许 protocol-relative (//host/path)
+	if strings.HasPrefix(rawURL, "//") {
+		return true
+	}
+
+	// 检测是否含 scheme：":" 出现在第一个 "/" 之前
+	firstColon := strings.Index(rawURL, ":")
+	firstSlash := strings.Index(rawURL, "/")
+	if firstColon == -1 || (firstSlash != -1 && firstSlash < firstColon) {
+		// 无 scheme,视为相对路径,允许
+		return true
+	}
+
+	// 含非 http/https scheme（mailto:/tel:/ftp:/custom: 等）— 拒绝
+	return false
 }
 
 // buildCommandPayload 把请求体解析为 CommandPayload。

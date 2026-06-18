@@ -22,12 +22,15 @@ const (
 )
 
 type AuthHandler struct {
-	stores *storage.Stores
-	logger *slog.Logger
+	stores       *storage.Stores
+	logger       *slog.Logger
+	secureCookie bool // 1k：prod 模式下 cookie Secure=true
 }
 
-func NewAuthHandler(stores *storage.Stores, logger *slog.Logger) *AuthHandler {
-	return &AuthHandler{stores: stores, logger: logger}
+// NewAuthHandler 创建 auth handler。
+// secureCookie 控制是否在 SetCookie 时启用 Secure flag（prod 模式下必须 true）。
+func NewAuthHandler(stores *storage.Stores, logger *slog.Logger, secureCookie bool) *AuthHandler {
+	return &AuthHandler{stores: stores, logger: logger, secureCookie: secureCookie}
 }
 
 func (h *AuthHandler) Register(r gin.IRoutes) {
@@ -83,8 +86,9 @@ func (h *AuthHandler) login(c *gin.Context) {
 	}
 
 	// 设置 cookie
+	// 1k：prod 模式 Secure=true（HTTPS only）
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(sessionCookieName, sessionID, int(sessionTTL.Seconds()), "/", "", false, true)
+	c.SetCookie(sessionCookieName, sessionID, int(sessionTTL.Seconds()), "/", "", h.secureCookie, true)
 
 	h.logger.InfoContext(ctx, "login success", "user_id", user.ID, "email", user.Email)
 
@@ -104,7 +108,7 @@ func (h *AuthHandler) logout(c *gin.Context) {
 	if err == nil && sessionID != "" {
 		_ = h.stores.Redis.Del(ctx, sessionRedisKey(sessionID))
 	}
-	c.SetCookie(sessionCookieName, "", -1, "/", "", false, true)
+	c.SetCookie(sessionCookieName, "", -1, "/", "", h.secureCookie, true)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 

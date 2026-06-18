@@ -47,6 +47,23 @@ func (r *Redis) Set(ctx context.Context, key string, value []byte, ttl time.Dura
 	return r.Client.Set(ctx, key, value, ttl).Err()
 }
 
+// SetNX 原子设置 KV 仅当 key 不存在，支持 TTL。
+// 返回 true 表示成功（之前无 key），false 表示 key 已存在（未写入）。
+// 1k P0-4：claim 原子锁使用。
+func (r *Redis) SetNX(ctx context.Context, key string, value []byte, ttl time.Duration) (bool, error) {
+	ok, err := r.Client.SetNX(ctx, key, value, ttl).Result()
+	if err != nil {
+		return false, fmt.Errorf("setnx %s: %w", key, err)
+	}
+	return ok, nil
+}
+
+// EvalLua 执行 Lua 脚本。
+// 1k P0-4：release claim 原子对比 owner 再 DEL。
+func (r *Redis) EvalLua(ctx context.Context, script string, keys []string, args ...any) (any, error) {
+	return r.Client.Eval(ctx, script, keys, args...).Result()
+}
+
 // Get 取 KV。key 不存在返回 nil + nil error。
 func (r *Redis) Get(ctx context.Context, key string) ([]byte, error) {
 	val, err := r.Client.Get(ctx, key).Bytes()

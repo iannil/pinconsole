@@ -1,8 +1,36 @@
-// 弹窗渲染器（1g）
+// 弹窗渲染器（1g + 1k P0-8 URL scheme 白名单）
 // SDK 接收 show_popup command 后用结构化 JSON + 预设 HTML 模板渲染
 import type { CommandPopup } from '../proto/command';
 
 const POPUP_ID = '__mm_popup__';
+
+// isURLSchemeAllowed 1k P0-8：双重防御。
+// 后端 command.go 也校验，这里再加一层防止绕过（直接构造 envelope）。
+// 只允许 http/https；空字符串、protocol-relative (//host)、相对路径 (/path 或 page.html) 允许。
+function isURLSchemeAllowed(rawURL: string): boolean {
+  if (!rawURL) return true;
+  const lower = rawURL.toLowerCase();
+
+  // 显式拒绝危险 scheme
+  for (const bad of ['javascript:', 'data:', 'vbscript:', 'file:', 'about:']) {
+    if (lower.startsWith(bad)) return false;
+  }
+
+  // 显式允许 http/https
+  if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
+
+  // 允许 protocol-relative
+  if (rawURL.startsWith('//')) return true;
+
+  // 检测是否含 scheme：":" 出现在第一个 "/" 之前
+  const firstColon = rawURL.indexOf(':');
+  const firstSlash = rawURL.indexOf('/');
+  if (firstColon === -1 || (firstSlash !== -1 && firstSlash < firstColon)) {
+    return true; // 无 scheme,相对路径
+  }
+
+  return false; // 含非 http/https scheme
+}
 
 export function showPopup(p: CommandPopup): void {
   removePopup();
@@ -35,8 +63,8 @@ export function showPopup(p: CommandPopup): void {
     body.style.cssText = 'margin: 0 0 16px;font-size: 14px;color: #606266;line-height: 1.6';
     card.appendChild(body);
   }
-  // action button
-  if (p.action_label && p.action_url) {
+  // action button（1k P0-8：URL scheme 白名单）
+  if (p.action_label && p.action_url && isURLSchemeAllowed(p.action_url)) {
     const btn = document.createElement('a');
     btn.textContent = p.action_label;
     btn.href = p.action_url;
