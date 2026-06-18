@@ -29,9 +29,9 @@
 - ⏳ 1h-ui 待启动(admin LoginView + Vue Router 守卫)
 - ⏳ 1m-observability / 1n-test-depth 待启动
 
-切片深度分布(v1 主干,基于审计实测 + 1n-1t 修复):
+切片深度分布(v1 主干,基于审计实测 + 1n-1u 修复):
 
-- 🟢 verified-deep ×13(1d, 1j, 1k, 1l, 1h-ui, 1m, 1n, 1o, 1p, 1q, 1r, 1s, **1t**)
+- 🟢 verified-deep ×14(1d, 1j, 1k, 1l, 1h-ui, 1m, 1n, 1o, 1p, 1q, 1r, 1s, 1t, **1u**)
 - 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)
 - 🔴 implemented-unverified ×1(1h-backend)
 - 全部切片已交付
@@ -134,6 +134,7 @@ A 阶段升级详情:
 | [1r](./reports/completed/2026-06-18-slice-1r-implementation.md) | i18n + logger 迁移 | 🟢 | admin/utils/time.ts i18n + SDK 新建轻量 i18n 模块 + SDK 22 处 console.* → sdkLogger |
 | [1s](./reports/completed/2026-06-18-slice-1s-implementation.md) | 可观测性深化 | 🟢 | Lifecycle 接入 PostCommand/Claim/Release/PostMessage/FlushSession/GC + LogPoint 分支 + LogExternalCall MinIO/PG 边界 |
 | [1t](./reports/completed/2026-06-18-slice-1t-implementation.md) | 测试覆盖补全 | 🟢 | logging(9 tests)+ storage DSN(2)+ privacy handler(4)+ migrations(2),12 个 Go 包全有测试 |
+| [1u](./reports/completed/2026-06-18-slice-1u-implementation.md) | god files 拆分 | 🟢 | queries.go 771 LOC 拆 10 个 per-aggregate 文件;顺手修 docker-compose `:?` 阻塞 infra 启动 |
 
 > 1n 完成后 badge 复核:1a/1b/1c/1e/1f/1g/1i 已降级 🟡(基于审计 §5 实测);1d/1j/1k/1l/1h-ui/1m/1n 维持 🟢;1h-backend 维持 🔴。深度细节见 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 
