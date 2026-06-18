@@ -88,43 +88,72 @@ func (g *GC) Stop() {
 }
 
 // runOnce 执行一次 GC 扫描。
+//
+// 1l-privacy-gdpr 扩展:除 event_blobs 外,也按相同 retention 清:
+//   - chat_messages
+//   - co_browsing_commands
+//   - sessions(已结束 + ended_at < threshold)
+//   - visitors(last_seen_at < threshold 且无活跃 session)
+//
+// 顺序(依赖反向): event_blobs → chat_messages → co_browsing_commands
+// → sessions → visitors。
 func (g *GC) runOnce(ctx context.Context) {
 	threshold := time.Now().Add(-g.cfg.Retention)
+
+	// 1. event_blobs + 对应 MinIO 对象
 	blobs, err := g.stores.PG.ListEventBlobsOlderThan(ctx, threshold, g.cfg.BatchSize)
 	if err != nil {
-		g.logger.Warn("gc list failed", "error", err)
-		return
-	}
-	if len(blobs) == 0 {
-		return
-	}
-
-	var deleted, failed int
-	for _, b := range blobs {
-		select {
-		case <-ctx.Done():
-			return
-		default:
+		g.logger.Warn("gc list event_blobs failed", "error", err)
+	} else if len(blobs) > 0 {
+		var deleted, failed int
+		for _, b := range blobs {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			if err := g.stores.MinIO.Client.RemoveObject(ctx, g.stores.MinIO.Bucket, b.MinIOObjectKey, minioRemoveObjectOpts); err != nil {
+				g.logger.Warn("gc minio remove failed", "key", b.MinIOObjectKey, "error", err)
+				failed++
+				continue
+			}
+			if err := g.stores.PG.DeleteEventBlobByID(ctx, b.ID); err != nil {
+				g.logger.Warn("gc pg delete failed", "id", b.ID, "error", err)
+				failed++
+				continue
+			}
+			deleted++
 		}
-		// 删 MinIO（RemoveObject 幂等，对象不存在不报错）
-		if err := g.stores.MinIO.Client.RemoveObject(ctx, g.stores.MinIO.Bucket, b.MinIOObjectKey, minioRemoveObjectOpts); err != nil {
-			g.logger.Warn("gc minio remove failed", "key", b.MinIOObjectKey, "error", err)
-			failed++
-			continue
-		}
-		// 删 PG
-		if err := g.stores.PG.DeleteEventBlobByID(ctx, b.ID); err != nil {
-			g.logger.Warn("gc pg delete failed", "id", b.ID, "error", err)
-			failed++
-			continue
-		}
-		deleted++
+		g.logger.Info("gc event_blobs completed",
+			"scanned", len(blobs), "deleted", deleted, "failed", failed)
 	}
 
-	g.logger.Info("gc completed",
-		"scanned", len(blobs),
-		"deleted", deleted,
-		"failed", failed,
-		"retention", g.cfg.Retention.String(),
-	)
+	// 2. chat_messages (1l)
+	chatIDs, err := g.stores.PG.ListChatMessagesOlderThan(ctx, threshold, g.cfg.BatchSize)
+	if err != nil {
+		g.logger.Warn("gc list chat_messages failed", "error", err)
+	} else if len(chatIDs) > 0 {
+		if err := g.stores.PG.DeleteChatMessagesByID(ctx, chatIDs); err != nil {
+			g.logger.Warn("gc delete chat_messages failed", "error", err)
+		} else {
+			g.logger.Info("gc chat_messages completed", "deleted", len(chatIDs))
+		}
+	}
+
+	// 3. co_browsing_commands (1l)
+	if err := g.stores.PG.DeleteCoBrowsingCommandsOlderThan(ctx, threshold); err != nil {
+		g.logger.Warn("gc delete co_browsing_commands failed", "error", err)
+	} else {
+		// 注:无 count 返回值,日志静默
+	}
+
+	// 4. sessions(ended_at < threshold) — 必须在 event_blobs/chat_messages/commands 已清后
+	if err := g.stores.PG.DeleteSessionsEndedBefore(ctx, threshold); err != nil {
+		g.logger.Warn("gc delete sessions failed", "error", err)
+	}
+
+	// 5. visitors(last_seen_at < threshold 且无 session) — 必须在 sessions 已清后
+	if err := g.stores.PG.DeleteVisitorsLastSeenBefore(ctx, threshold); err != nil {
+		g.logger.Warn("gc delete visitors failed", "error", err)
+	}
 }

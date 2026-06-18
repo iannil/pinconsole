@@ -14,6 +14,8 @@ import { ScreenshotCollector } from './collectors/screenshot';
 import { CommandHandler } from './commands/handler';
 import { ChatWidget } from './ui/chatWidget';
 import { collectFingerprint } from './fingerprint';
+import { showConsentBanner, removeConsentBanner } from './ui/consentBanner';
+import { showCoBrowseBanner, removeCoBrowseBanner } from './ui/coBrowseBanner';
 
 const SDK_VERSION = '0.4.0';
 
@@ -27,6 +29,9 @@ class MarketingMonitorSDK {
   private commandHandler: CommandHandler | null = null;
   private chatWidget: ChatWidget | null = null;
   private started = false;
+  // 1l:consent 状态(是否允许采集 surveillance 数据)
+  private consentAccepted: boolean | null = null;
+  private fingerprint: ReturnType<typeof collectFingerprint> | null = null;
 
   constructor() {
     this.config = resolveConfig();
@@ -48,21 +53,31 @@ class MarketingMonitorSDK {
     }
 
     // 1i：采集 fingerprint（canvas + WebGL + screen + tz）
-    const fingerprint = collectFingerprint();
-    console.log('[marketing-monitor] fingerprint', fingerprint.combined_hash);
+    this.fingerprint = collectFingerprint();
+    console.log('[marketing-monitor] fingerprint', this.fingerprint.combined_hash);
 
-    const hello: HelloPayload = {
+    // 1l:从服务端查 consent 状态
+    await this.loadConsent(apiBase);
+
+    // 1l:根据 consentMode + consentAccepted 决定是否启动 surveillance
+    const shouldCollect = this.shouldCollectSurveillance();
+    if (!shouldCollect && this.config.consentMode === 'opt-in') {
+      // opt-in 模式下未同意 → 显示 banner 等用户决策
+      this.showConsentBannerIfNeeded(apiBase);
+    }
+
+    const hello = {
       visitor_id: this.session.visitorId,
       session_id: this.session.sessionId,
       sdk_version: SDK_VERSION,
       capabilities: {
-        events: ['rrweb'],
-        co_browsing: false,
-        recording: true,
+        events: shouldCollect ? ['rrweb'] : [],
+        co_browsing: true,
+        recording: shouldCollect,
       },
       // 1i：fingerprint 作为 hello 额外字段上报
-      fingerprint,
-    } as HelloPayload & { fingerprint: typeof fingerprint };
+      fingerprint: this.fingerprint,
+    } as HelloPayload & { fingerprint: NonNullable<MarketingMonitorSDK['fingerprint']> };
 
     this.transport = new WSTransport({
       endpoint: `${wsBase}/ws/visitor`,
@@ -106,8 +121,18 @@ class MarketingMonitorSDK {
 
     this.commandHandler = new CommandHandler({
       debug: !!this.config.debug,
+      onControlStart: () => {
+        // 1l:co-browsing 接管横幅(GDPR Art.22 透明度)
+        if (this.config.showCoBrowseBanner) {
+          showCoBrowseBanner({
+            onExit: () => this.releaseControl(),
+          });
+        }
+      },
       onReleased: () => {
         console.log('[marketing-monitor] co-browsing released by visitor');
+        // 1l:移除横幅
+        removeCoBrowseBanner();
         this.transport?.sendEvent({
           type: 'rrweb',
           ts: Date.now(),
@@ -131,6 +156,25 @@ class MarketingMonitorSDK {
     // 页面卸载前 flush 残余
     window.addEventListener('beforeunload', () => this.batch?.flush(), { once: true });
 
+    // 1l:仅当 consent 通过才启动 surveillance
+    if (shouldCollect) {
+      await this.startCollectors();
+    }
+
+    console.log('[marketing-monitor] SDK started', {
+      version: SDK_VERSION,
+      session_id: this.session.sessionId,
+      visitor_id: this.session.visitorId,
+      apiBase,
+      wsBase,
+      consent: this.consentAccepted,
+      consentMode: this.config.consentMode,
+    });
+  }
+
+  /** 1l:启动 surveillance 采集器(rrweb + screenshot)。 */
+  private async startCollectors(): Promise<void> {
+    if (this.rrweb || this.screenshot) return; // 已启动
     // rrweb 采集器：默认 mask 所有输入
     this.rrweb = new RRWebCollector((e) => this.batch?.push(e));
     try {
@@ -142,14 +186,129 @@ class MarketingMonitorSDK {
     // 选择性截图：检测到 canvas/WebGL/iframe 才启动
     this.screenshot = new ScreenshotCollector((e) => this.batch?.push(e));
     this.screenshot.start();
+  }
 
-    console.log('[marketing-monitor] SDK started', {
-      version: SDK_VERSION,
-      session_id: this.session.sessionId,
-      visitor_id: this.session.visitorId,
-      apiBase,
-      wsBase,
+  /** 1l:从服务端查 consent 状态。 */
+  private async loadConsent(apiBase: string): Promise<void> {
+    if (!this.fingerprint) return;
+    try {
+      const resp = await fetch(
+        `${apiBase}/api/privacy/consent?fingerprint=${encodeURIComponent(this.fingerprint.combined_hash)}`,
+      );
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.found) {
+        this.consentAccepted = !!data.accepted;
+      } else {
+        this.consentAccepted = null; // 未记录
+      }
+    } catch (e) {
+      console.warn('[marketing-monitor] load consent failed', e);
+    }
+  }
+
+  /** 1l:根据 consentMode + consentAccepted 决定是否采集 surveillance。 */
+  private shouldCollectSurveillance(): boolean {
+    switch (this.config.consentMode) {
+      case 'always-on':
+        return true;
+      case 'always-off':
+        return false;
+      case 'opt-out':
+        // 默认采集,除非显式拒绝
+        return this.consentAccepted !== false;
+      case 'opt-in':
+      default:
+        // 默认不采集,除非显式同意
+        return this.consentAccepted === true;
+    }
+  }
+
+  /** 1l:opt-in 模式下未同意时显示 banner。 */
+  private showConsentBannerIfNeeded(apiBase: string): void {
+    if (this.consentAccepted !== null) return; // 已有记录(接受或拒绝)
+    showConsentBanner({
+      text: this.config.consentBannerText,
+      onAccept: async () => {
+        this.consentAccepted = true;
+        // POST 到服务端持久化
+        try {
+          await fetch(`${apiBase}/api/privacy/consent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fingerprint: this.fingerprint!.combined_hash,
+              accepted: true,
+            }),
+          });
+        } catch (e) {
+          console.warn('[marketing-monitor] persist consent failed', e);
+        }
+        // 启动 surveillance
+        await this.startCollectors();
+      },
+      onReject: async () => {
+        this.consentAccepted = false;
+        try {
+          await fetch(`${apiBase}/api/privacy/consent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fingerprint: this.fingerprint!.combined_hash,
+              accepted: false,
+            }),
+          });
+        } catch (e) {
+          console.warn('[marketing-monitor] persist consent failed', e);
+        }
+      },
     });
+  }
+
+  /** 1l:访客点退出按钮触发(等同 ESC 三连)。 */
+  private releaseControl(): void {
+    // 调 commandHandler 触发 release_control 流程
+    // CommandHandler.onReleased 已绑定,直接调用会绕过内部清理
+    // 简化:发一个 release 事件给后端,等后端广播 release_control
+    this.transport?.sendEvent({
+      type: 'rrweb',
+      ts: Date.now(),
+      rrweb: {
+        type: 99,
+        timestamp: Date.now(),
+        data: { kind: 'release_control', source: 'visitor_button' },
+      },
+    });
+    // 直接本地清理(不等服务端确认)
+    removeCoBrowseBanner();
+  }
+
+  /** 1l:公开 API — 访客/部署方手动设置 consent。 */
+  async setConsent(accepted: boolean): Promise<void> {
+    this.consentAccepted = accepted;
+    const apiBase = this.inferApiBase();
+    try {
+      await fetch(`${apiBase}/api/privacy/consent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fingerprint: this.fingerprint?.combined_hash ?? '',
+          accepted,
+        }),
+      });
+    } catch (e) {
+      console.warn('[marketing-monitor] setConsent persist failed', e);
+    }
+    if (accepted) {
+      removeConsentBanner();
+      await this.startCollectors();
+    } else {
+      // 撤回同意 → 停止 surveillance
+      this.rrweb?.stop();
+      this.rrweb = null;
+      this.screenshot?.stop();
+      this.screenshot = null;
+    }
   }
 
   /** 显式停止（页面卸载时调用）。 */

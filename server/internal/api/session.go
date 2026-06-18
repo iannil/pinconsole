@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iannil/marketing-monitor/internal/hub"
 	"github.com/iannil/marketing-monitor/internal/logging"
+	"github.com/iannil/marketing-monitor/internal/privacy"
 	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
@@ -72,9 +73,11 @@ func (h *SessionHandler) initSession(c *gin.Context) {
 	}
 
 	tenantID := storage.DefaultTenantID
+	// 1l: GDPR 数据最小化 — IP 截断 IPv4 /24 + IPv6 /64,使 IP 不再是个人数据
+	truncatedIP := privacy.TruncateIP(c.ClientIP())
 
 	// upsert visitor
-	visitor, err := h.stores.PG.CreateVisitor(ctx, tenantID, req.VisitorID, req.UA, c.ClientIP())
+	visitor, err := h.stores.PG.CreateVisitor(ctx, tenantID, req.VisitorID, req.UA, truncatedIP)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "create visitor failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})
@@ -82,7 +85,7 @@ func (h *SessionHandler) initSession(c *gin.Context) {
 	}
 
 	// create session
-	sess, err := h.stores.PG.CreateSession(ctx, tenantID, visitor.ID, req.UA, c.ClientIP())
+	sess, err := h.stores.PG.CreateSession(ctx, tenantID, visitor.ID, req.UA, truncatedIP)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "create session failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})

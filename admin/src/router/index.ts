@@ -23,6 +23,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/ReplayViewer.vue'),
     props: true,
   },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('../views/Privacy.vue'),
+  },
 ];
 
 export const router = createRouter({

@@ -21,6 +21,8 @@ export interface CommandHandlerOptions {
   debug?: boolean;
   onReleased?: () => void;
   onChatMessage?: (msg: ChatMessage) => void;
+  /** 1l:co-browsing 接管开始(首个 cursor/click/fill 命令) → 显示横幅 */
+  onControlStart?: () => void;
 }
 
 /**
@@ -51,6 +53,7 @@ export class CommandHandler {
       debug: opts.debug ?? false,
       onReleased: opts.onReleased ?? (() => {}),
       onChatMessage: opts.onChatMessage ?? (() => {}),
+      onControlStart: opts.onControlStart ?? (() => {}),
     };
     this.cursor = new OperatorCursor();
     this.nodeMap = new NodeMap();
@@ -90,11 +93,13 @@ export class CommandHandler {
     switch (cp.type) {
       case 'cursor_highlight':
         if (cp.cursor) {
+          this.opts.onControlStart();
           this.cursor.moveTo(cp.cursor.x, cp.cursor.y, cp.cursor.name);
         }
         break;
       case 'click':
         if (cp.click) {
+          this.opts.onControlStart();
           this.doClick(cp.click.node_id);
         }
         break;
@@ -105,11 +110,13 @@ export class CommandHandler {
         break;
       case 'fill_input':
         if (cp.fill_input) {
+          this.opts.onControlStart();
           this.doFill(cp.fill_input.node_id, cp.fill_input.value);
         }
         break;
       case 'navigate':
         if (cp.navigate) {
+          this.opts.onControlStart();
           this.doNavigate(cp.navigate.url);
         }
         break;

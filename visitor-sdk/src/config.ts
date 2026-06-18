@@ -16,11 +16,19 @@ export interface VisitorConfig {
   enableRecording?: boolean;
   /** 是否启用调试日志 */
   debug?: boolean;
+  /** 1l:consent 模式(默认 opt-in = 用户必须同意才采集) */
+  consentMode?: 'opt-in' | 'opt-out' | 'always-on' | 'always-off';
+  /** 1l:co-browsing 接管横幅是否显示(默认 true,GDPR Art.22 透明度) */
+  showCoBrowseBanner?: boolean;
+  /** 1l:consent banner 自定义文案(可覆盖默认中英文) */
+  consentBannerText?: { title?: string; body?: string; accept?: string; reject?: string };
 }
 
 const DEFAULTS: VisitorConfig = {
   enableRecording: false,
   debug: false,
+  consentMode: 'opt-in',
+  showCoBrowseBanner: true,
 };
 
 /** 从 <script data-*> 与 window.MM_CONFIG 合并配置。 */
@@ -38,12 +46,17 @@ function readScriptData(): Partial<VisitorConfig> {
 
   const get = (k: string): string | undefined => current.getAttribute(k) ?? undefined;
 
+  const consentMode = get('data-consent-mode');
   return {
     tenantId: get('data-tenant-id'),
     pageId: get('data-page-id'),
     endpoint: get('data-endpoint'),
     enableRecording: parseBool(get('data-enable-recording')),
     debug: parseBool(get('data-debug')),
+    consentMode: consentMode === 'opt-in' || consentMode === 'opt-out' || consentMode === 'always-on' || consentMode === 'always-off'
+      ? consentMode
+      : undefined,
+    showCoBrowseBanner: parseBool(get('data-show-co-browse-banner')),
   };
 }
 

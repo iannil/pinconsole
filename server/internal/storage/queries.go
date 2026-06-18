@@ -7,10 +7,13 @@ package storage
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/netip"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -566,4 +569,219 @@ func scanUser(row scanner) (*User, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+
+// ===== 1l-privacy-gdpr =====
+
+// VisitorConsent 对应 visitor_consents 表。
+type VisitorConsent struct {
+	ID          int64
+	TenantID    uuid.UUID
+	Fingerprint string
+	Scope       string
+	Version     string
+	Accepted    bool
+	ConsentedAt time.Time
+	ExpiresAt   pgtype.Timestamptz // 可空
+}
+
+// GetLatestConsent 取 fingerprint 在指定 scope + version 下的最新同意状态。
+// 返回 (consent, found);未找到时 found=false(调用方应按默认策略处理)。
+func (s *Postgres) GetLatestConsent(ctx context.Context, tenantID uuid.UUID, fingerprint, scope, version string) (*VisitorConsent, bool, error) {
+	row := s.Pool.QueryRow(ctx, `
+		SELECT id, tenant_id, fingerprint, scope, version, accepted, consented_at, expires_at
+		FROM visitor_consents
+		WHERE tenant_id = $1 AND fingerprint = $2 AND scope = $3 AND version = $4
+		ORDER BY consented_at DESC
+		LIMIT 1
+	`, tenantID, fingerprint, scope, version)
+	var c VisitorConsent
+	if err := row.Scan(&c.ID, &c.TenantID, &c.Fingerprint, &c.Scope, &c.Version,
+		&c.Accepted, &c.ConsentedAt, &c.ExpiresAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return &c, true, nil
+}
+
+// UpsertConsent 写入或更新同意状态。
+// 同 (fingerprint, scope, version) 只保留最新;旧记录被替换。
+func (s *Postgres) UpsertConsent(ctx context.Context, tenantID uuid.UUID, fingerprint, scope, version string, accepted bool) (*VisitorConsent, error) {
+	row := s.Pool.QueryRow(ctx, `
+		INSERT INTO visitor_consents (tenant_id, fingerprint, scope, version, accepted)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (fingerprint, scope, version)
+		DO UPDATE SET accepted = EXCLUDED.accepted, consented_at = NOW()
+		RETURNING id, tenant_id, fingerprint, scope, version, accepted, consented_at, expires_at
+	`, tenantID, fingerprint, scope, version, accepted)
+	var c VisitorConsent
+	if err := row.Scan(&c.ID, &c.TenantID, &c.Fingerprint, &c.Scope, &c.Version,
+		&c.Accepted, &c.ConsentedAt, &c.ExpiresAt); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+// DeleteVisitorByFingerprint 1l:级联删除访客的所有数据(GDPR Art.17 被遗忘权)。
+//
+// 删除顺序(依赖关系反向):
+//  1. visitor_consents(无依赖)
+//  2. chat_messages(依赖 sessions)
+//  3. co_browsing_commands(依赖 sessions)
+//  4. event_blobs(依赖 sessions) — 仅 PG 行;MinIO 对象由调用方删除
+//  5. sessions(依赖 visitors)
+//  6. visitors
+//
+// 返回:删除的 session IDs(供调用方定位 MinIO/Redis 清理)。
+//
+// 注意:不在事务里,因 PG 事务有大小限制;每步独立提交。
+// 失败时已删的数据不回滚(GDPR 偏向"多删而非少删")。
+func (s *Postgres) DeleteVisitorByFingerprint(ctx context.Context, tenantID uuid.UUID, fingerprint string) (deletedSessionIDs []uuid.UUID, err error) {
+	// 1. 找到 visitor ID + 关联 sessions
+	var visitorID uuid.UUID
+	err = s.Pool.QueryRow(ctx, `
+		SELECT id FROM visitors WHERE tenant_id = $1 AND fingerprint = $2
+	`, tenantID, fingerprint).Scan(&visitorID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // visitor 不存在,无操作
+		}
+		return nil, fmt.Errorf("lookup visitor: %w", err)
+	}
+
+	// 收集 session IDs
+	rows, err := s.Pool.Query(ctx, `
+		SELECT id FROM sessions WHERE visitor_id = $1
+	`, visitorID)
+	if err != nil {
+		return nil, fmt.Errorf("list sessions: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sid uuid.UUID
+		if err := rows.Scan(&sid); err != nil {
+			return nil, fmt.Errorf("scan session id: %w", err)
+		}
+		deletedSessionIDs = append(deletedSessionIDs, sid)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
+
+	// 2. visitor_consents
+	if _, err := s.Pool.Exec(ctx, `
+		DELETE FROM visitor_consents WHERE tenant_id = $1 AND fingerprint = $2
+	`, tenantID, fingerprint); err != nil {
+		return deletedSessionIDs, fmt.Errorf("delete consents: %w", err)
+	}
+
+	// 3-4. 按 session 删除 chat_messages / co_browsing_commands / event_blobs
+	if len(deletedSessionIDs) > 0 {
+		if _, err := s.Pool.Exec(ctx, `
+			DELETE FROM chat_messages WHERE session_id = ANY($1)
+		`, deletedSessionIDs); err != nil {
+			return deletedSessionIDs, fmt.Errorf("delete chat_messages: %w", err)
+		}
+		if _, err := s.Pool.Exec(ctx, `
+			DELETE FROM co_browsing_commands WHERE session_id = ANY($1)
+		`, deletedSessionIDs); err != nil {
+			return deletedSessionIDs, fmt.Errorf("delete co_browsing_commands: %w", err)
+		}
+		if _, err := s.Pool.Exec(ctx, `
+			DELETE FROM event_blobs WHERE session_id = ANY($1)
+		`, deletedSessionIDs); err != nil {
+			return deletedSessionIDs, fmt.Errorf("delete event_blobs: %w", err)
+		}
+
+		// 5. sessions
+		if _, err := s.Pool.Exec(ctx, `
+			DELETE FROM sessions WHERE visitor_id = $1
+		`, visitorID); err != nil {
+			return deletedSessionIDs, fmt.Errorf("delete sessions: %w", err)
+		}
+	}
+
+	// 6. visitors
+	if _, err := s.Pool.Exec(ctx, `
+		DELETE FROM visitors WHERE id = $1
+	`, visitorID); err != nil {
+		return deletedSessionIDs, fmt.Errorf("delete visitor: %w", err)
+	}
+
+	return deletedSessionIDs, nil
+}
+
+// ListEventBlobKeysBySessions 列出指定 sessions 的 MinIO object keys。
+// 用于 erasure 时调用方批量删 MinIO 对象。
+func (s *Postgres) ListEventBlobKeysBySessions(ctx context.Context, sessionIDs []uuid.UUID) ([]string, error) {
+	if len(sessionIDs) == 0 {
+		return nil, nil
+	}
+	rows, err := s.Pool.Query(ctx, `
+		SELECT minio_object_key FROM event_blobs WHERE session_id = ANY($1)
+	`, sessionIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var keys []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// ListChatMessagesOlderThan 1l GC 扩展:列出超过保留期的 chat_messages。
+func (s *Postgres) ListChatMessagesOlderThan(ctx context.Context, threshold time.Time, limit int32) ([]int64, error) {
+	rows, err := s.Pool.Query(ctx, `
+		SELECT id FROM chat_messages WHERE created_at < $1 LIMIT $2
+	`, threshold, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// DeleteChatMessagesByID 1l GC:批量删除 chat_messages。
+func (s *Postgres) DeleteChatMessagesByID(ctx context.Context, ids []int64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := s.Pool.Exec(ctx, `DELETE FROM chat_messages WHERE id = ANY($1)`, ids)
+	return err
+}
+
+// DeleteCoBrowsingCommandsOlderThan 1l GC:删除超期 co_browsing_commands。
+func (s *Postgres) DeleteCoBrowsingCommandsOlderThan(ctx context.Context, threshold time.Time) error {
+	_, err := s.Pool.Exec(ctx, `DELETE FROM co_browsing_commands WHERE created_at < $1`, threshold)
+	return err
+}
+
+// DeleteSessionsEndedBefore 1l GC:删除已结束且超过保留期的 sessions。
+// 必须先删 event_blobs / chat_messages / co_browsing_commands(否则 FK 阻塞)。
+func (s *Postgres) DeleteSessionsEndedBefore(ctx context.Context, threshold time.Time) error {
+	_, err := s.Pool.Exec(ctx, `DELETE FROM sessions WHERE ended_at IS NOT NULL AND ended_at < $1`, threshold)
+	return err
+}
+
+// DeleteVisitorsLastSeenBefore 1l GC:删除超过保留期未活动的 visitors(孤立 visitor)。
+// 必须在 sessions 已清后调用。
+func (s *Postgres) DeleteVisitorsLastSeenBefore(ctx context.Context, threshold time.Time) error {
+	_, err := s.Pool.Exec(ctx, `DELETE FROM visitors WHERE last_seen_at < $1`, threshold)
+	return err
 }
