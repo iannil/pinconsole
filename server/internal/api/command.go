@@ -93,8 +93,9 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_json", "detail": err.Error()})
 		return
 	}
+	// 1s 安全修复:command_type 可能是用户输入,限制长度 + 用白名单
 	observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
-		"command_type", req.Type)
+		"command_type", sanitizeCommandType(req.Type))
 
 	// 构造 CommandPayload
 	cp, err := buildCommandPayload(req)
@@ -106,8 +107,9 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	// navigate 安全:同源 + localhost + 额外白名单(env var)
 	if cp.Navigate != nil {
 		if !h.isURLAllowed(cp.Navigate.URL, c.Request.Host) {
+			// 1s 安全修复:日志只记 URL 主体(去掉 query string 防泄露 PII)
 			observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
-				"navigate_check", "rejected", "url", cp.Navigate.URL)
+				"navigate_check", "rejected", "url_safe", sanitizeURLForLog(cp.Navigate.URL))
 			c.JSON(http.StatusForbidden, gin.H{"error": "url_not_allowed", "url": cp.Navigate.URL})
 			return
 		}
@@ -115,8 +117,9 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	// 1k P0-8:show_popup action_url scheme 白名单(防 javascript:/data: 注入)
 	if cp.Popup != nil && cp.Popup.ActionURL != "" {
 		if !isURLSchemeAllowed(cp.Popup.ActionURL) {
+			// 1s 安全修复:同样去掉 query string
 			observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
-				"popup_url_check", "rejected", "url", cp.Popup.ActionURL)
+				"popup_url_check", "rejected", "url_safe", sanitizeURLForLog(cp.Popup.ActionURL))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "popup_url_scheme_not_allowed", "url": cp.Popup.ActionURL})
 			return
 		}
@@ -171,6 +174,44 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true, "type": req.Type})
+}
+
+// sanitizeCommandType 1s 安全修复:限制 command_type 长度,防止用户输入溢出日志。
+// 已知 8 种合法命令,白名单优先;未知截断到 50 字符。
+var allowedCommandTypes = map[string]bool{
+	"cursor_highlight": true, "click": true, "scroll": true,
+	"fill_input": true, "navigate": true, "release_control": true,
+	"show_popup": true, "chat_message": true,
+}
+
+func sanitizeCommandType(t string) string {
+	if allowedCommandTypes[t] {
+		return t
+	}
+	if len(t) > 50 {
+		return t[:50] + "...(truncated)"
+	}
+	return t
+}
+
+// sanitizeURLForLog 1s 安全修复:URL 进入日志前剥离 query string(可能含 PII / token)
+// 并限制总长度。返回 "scheme://host/path" 形式(最多 200 字符)。
+func sanitizeURLForLog(rawURL string) string {
+	if rawURL == "" {
+		return ""
+	}
+	clean := rawURL
+	if idx := strings.Index(clean, "?"); idx >= 0 {
+		clean = clean[:idx]
+	}
+	if idx := strings.Index(clean, "#"); idx >= 0 {
+		clean = clean[:idx]
+	}
+	const maxLen = 200
+	if len(clean) > maxLen {
+		clean = clean[:maxLen] + "...(truncated)"
+	}
+	return clean
 }
 
 // isURLSchemeAllowed 1k P0-8：popup action_url scheme 白名单。
