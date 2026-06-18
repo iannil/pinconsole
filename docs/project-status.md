@@ -31,10 +31,10 @@
 
 切片深度分布(v1 主干,基于审计实测):
 
-- 🟢 verified-deep ×4(1d, 1j, 1k, **1l**)
+- 🟢 verified-deep ×5(1d, 1j, 1k, 1l, **1h-ui**)
 - 🟡 verified-shallow ×7(1a, 1b, 1c, 1e, 1f, 1g, 1i)— 审计建议降级,待 1n 切片统一处理
-- 🔴 implemented-unverified ×1(1h-backend)
-- ⏳ 未启动 ×3(1h-ui, 1m-observability, 1n-test-depth)
+- 🔴 implemented-unverified ×1(1h-backend 后端代码 + 1h-ui 已补)
+- ⏳ 未启动 ×2(1m-observability, 1n-test-depth)
 
 A 阶段升级详情:
 
@@ -125,6 +125,7 @@ A 阶段升级详情:
 | [1j](./reports/completed/2026-06-17-slice-1j-implementation.md) | i18n + 部署 + CI | 🟢 | A 阶段升级:硬编码中文抽 key + 语言切换按钮 + 4 个真 e2e + 修 Dockerfile go 版本 bug |
 | [1k](./reports/completed/2026-06-18-slice-1k-implementation.md) | 安全阻断栈 | 🟢 | 修审计 T0:8 个 P0;silent defaults 全套 fail-secure + command/chat/claim 授权 + claim TOCTOU/Lua + popup URL 白名单 + migrations embed + auto up |
 | [1l](./reports/completed/2026-06-18-slice-1l-implementation.md) | GDPR 合规 | 🟢 | 修 P0-5/P0-6:consent opt-in 流程 + PG 持久 + 被遗忘权级联删除 + IP /24+64 截断 + co-browse 横幅 + GC 扩展(5/6 表) |
+| [1h-ui](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) | admin LoginView + 守卫 | 🟢 | 修 1h spec 决策 #5:独立 /login 页 + Vue Router beforeEach + Pinia useAuthStore + 全局 fetchJson 处理 401 |
 
 > ⚠️ **审计 badge 复核**(2026-06-18):全栈深度审计 [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md) §5 建议 7 切片(1a/1b/1c/1e/1f/1g/1i)的 🟢 应降级 🟡。**本表 badge 暂未修改**,留给 1n-test-depth 切片统一处理(避免历史 badge 反复抖动)。深度细节见审计报告。
 
