@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -19,6 +20,12 @@ import (
 const (
 	sessionCookieName = "mm_session"
 	sessionTTL         = 24 * time.Hour
+
+	// 1x P1-3:登录暴力破解防护阈值。
+	// 同一 email+IP 在 loginLockoutWindow 内失败 loginMaxAttempts 次后,
+	// 锁定 loginLockoutWindow(计数器 TTL 自然过期)。
+	loginMaxAttempts   = 5
+	loginLockoutWindow = 15 * time.Minute
 )
 
 type AuthHandler struct {
@@ -61,18 +68,42 @@ func (h *AuthHandler) login(c *gin.Context) {
 		return
 	}
 
+	// 1x P1-3:登录暴力破解防护 — 锁定检查(email+IP 双 key)
+	clientIP := c.ClientIP()
+	throttleKey := loginThrottleKey(req.Email, clientIP)
+	if locked, retryAfter, err := h.checkLoginThrottle(ctx, throttleKey); err != nil {
+		// Redis 故障 fail-open(与 1i rate limit 一致),仅 warn
+		h.logger.WarnContext(ctx, "login throttle check failed (fail-open)", "error", err)
+	} else if locked {
+		h.logger.WarnContext(ctx, "login rejected: throttle locked",
+			"email", req.Email, "client_ip", clientIP, "retry_after_s", retryAfter)
+		c.Header("Retry-After", fmt.Sprintf("%d", retryAfter))
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error":       "too_many_attempts",
+			"retry_after": retryAfter,
+		})
+		return
+	}
+
 	// 查 user
 	user, err := h.stores.PG.GetUserByEmail(ctx, storage.DefaultTenantID, req.Email)
 	if err != nil {
 		h.logger.WarnContext(ctx, "login: user not found", "email", req.Email, "error", err)
+		h.recordLoginFailure(ctx, throttleKey)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_credentials"})
 		return
 	}
 
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		h.recordLoginFailure(ctx, throttleKey)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_credentials"})
 		return
+	}
+
+	// 1x P1-3:登录成功清零计数器(防偶然失败锁定正常用户)
+	if err := h.stores.Redis.Del(ctx, throttleKey); err != nil {
+		h.logger.WarnContext(ctx, "login throttle clear failed", "error", err)
 	}
 
 	// 创建 session
@@ -98,6 +129,56 @@ func (h *AuthHandler) login(c *gin.Context) {
 		DisplayName: user.DisplayName,
 		Role:        user.Role,
 	})
+}
+
+// checkLoginThrottle 检查 email+IP 是否被锁定。
+// 返回 (locked, retryAfter秒, err)。Redis 故障时返回 (false, 0, err) 让调用方 fail-open。
+func (h *AuthHandler) checkLoginThrottle(ctx context.Context, key string) (bool, int64, error) {
+	val, err := h.stores.Redis.Get(ctx, key)
+	if err != nil {
+		return false, 0, err
+	}
+	if val == nil {
+		return false, 0, nil // 未记录
+	}
+	// val 是失败计数 ASCII
+	countStr := string(val)
+	var count int64
+	if _, err := fmt.Sscanf(countStr, "%d", &count); err != nil {
+		return false, 0, fmt.Errorf("parse throttle count %q: %w", countStr, err)
+	}
+	if count < int64(loginMaxAttempts) {
+		return false, 0, nil
+	}
+	// 已锁定;查 TTL 算 retry-after
+	ttl, err := h.stores.Redis.Client.TTL(ctx, key).Result()
+	if err != nil {
+		return true, int64(loginLockoutWindow.Seconds()), nil // 兜底
+	}
+	if ttl < 0 {
+		return true, int64(loginLockoutWindow.Seconds()), nil
+	}
+	return true, int64(ttl.Seconds()), nil
+}
+
+// recordLoginFailure 记录一次登录失败 — INCR 计数器,首次失败时设 TTL。
+// Redis 故障静默(fail-open),仅 warn。
+func (h *AuthHandler) recordLoginFailure(ctx context.Context, key string) {
+	// 用 Lua 原子:INCR + 首次(返回值=1)时 EXPIRE
+	const luaScript = `local c = redis.call('INCR', KEYS[1])
+if c == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return c`
+	if _, err := h.stores.Redis.EvalLua(ctx, luaScript,
+		[]string{key}, int(loginLockoutWindow.Seconds())); err != nil {
+		h.logger.WarnContext(ctx, "record login failure failed (fail-open)", "error", err)
+	}
+}
+
+// loginThrottleKey 构造 Redis key:auth:throttle:<email>:<ip>。
+func loginThrottleKey(email, ip string) string {
+	return fmt.Sprintf("auth:throttle:%s:%s", email, ip)
 }
 
 func (h *AuthHandler) logout(c *gin.Context) {
