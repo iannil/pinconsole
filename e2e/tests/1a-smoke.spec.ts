@@ -38,7 +38,9 @@ test.describe('smoke: 切片 1a', () => {
     page.on('console', (msg) => logs.push(msg.text()));
     await page.goto('/');
     await page.waitForTimeout(500);
-    expect(logs.join('\n')).toContain('marketing-monitor');
+    // 1r 切片换 JSON logger 后,SDK 不再输出 marketing-monitor 字面量;
+    // 改用 source 字段标识(与 1b/1h-auth 一致)
+    expect(logs.join('\n')).toContain('"source":"visitor-sdk"');
   });
 
   test('/admin 路由响应', async ({ request }) => {

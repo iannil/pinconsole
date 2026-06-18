@@ -1,29 +1,30 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/admin-auth';
 
 // 切片 1b 单向最小:e2e 验收(4 场景)
 // 前置:release 模式构建的二进制在 :8080,infra 起在 docker compose
 // 深度判定:见 docs/standards/verification-depth.md
+//
+// 修复(2026-06-18 v1-e2e-acceptance):
+// - admin 上下文不再用裸 browser.newContext() + goto('/admin/')(被 router 守卫挡到 /login),
+//   改用 admin-auth fixture 的 adminPage / adminContext(已登录)
+// - SDK 日志断言从字面量 'marketing-monitor' 改为 source 字段(1r 切片换 JSON logger)
 
 test.describe('1b', () => {
   test.beforeEach(async ({}, testInfo) => {
     testInfo.setTimeout(60_000);
   });
-  test('1b 场景1：访客访问 + admin 列表出现 + 订阅 + 事件传递', async ({ browser }) => {
+  test('1b 场景1：访客访问 + admin 列表出现 + 订阅 + 事件传递', async ({ browser, adminPage }) => {
     const visitorCtx = await browser.newContext();
-    const adminCtx = await browser.newContext();
     const visitor = await visitorCtx.newPage();
-    const admin = await adminCtx.newPage();
-
-    await admin.goto('/admin/');
-    await admin.waitForTimeout(1500);
+    const admin = adminPage;
 
     const sdkLogs: string[] = [];
     visitor.on('console', (m) => sdkLogs.push(m.text()));
     await visitor.goto('/');
     await visitor.waitForTimeout(2000);
 
-    // SDK 应已启动
-    expect(sdkLogs.join('\n')).toContain('marketing-monitor');
+    // SDK 应已启动 — 新 logger 输出 JSON,source=visitor-sdk
+    expect(sdkLogs.join('\n')).toContain('"source":"visitor-sdk"');
 
     // admin 应在 5s 内看到访客上线
     await expect(admin.locator('.visitor-list li')).not.toHaveCount(0, { timeout: 5000 });
@@ -41,14 +42,10 @@ test.describe('1b', () => {
     expect(eventCountText).toBeTruthy();
 
     await visitorCtx.close();
-    await adminCtx.close();
   });
 
-  test('1b 场景2：10 访客并发', async ({ browser }) => {
-    const adminCtx = await browser.newContext();
-    const admin = await adminCtx.newPage();
-    await admin.goto('/admin/');
-    await admin.waitForTimeout(1500);
+  test('1b 场景2：10 访客并发', async ({ browser, adminPage }) => {
+    const admin = adminPage;
 
     const visitors = [];
     for (let i = 0; i < 10; i++) {
@@ -64,7 +61,6 @@ test.describe('1b', () => {
     expect(liCount).toBeGreaterThanOrEqual(5);
 
     for (const v of visitors) await v.ctx.close();
-    await adminCtx.close();
   });
 
   test('1b 场景3：SDK 重连（healthz 探测）', async ({ browser, request }) => {
@@ -79,7 +75,7 @@ test.describe('1b', () => {
     await ctx.close();
   });
 
-  test('1b 场景4：MinIO 录像快照（admin 仍能拿到 events）', async ({ browser, request }) => {
+  test('1b 场景4：MinIO 录像快照（admin 仍能拿到 events）', async ({ browser, adminRequest }) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await page.goto('/');
@@ -91,7 +87,8 @@ test.describe('1b', () => {
     await page.mouse.click(100, 100);
     await page.waitForTimeout(500);
 
-    const sess = await request.get('/api/sessions');
+    // /api/sessions 需要登录 — 用 adminRequest
+    const sess = await adminRequest.get('/api/sessions');
     expect(sess.ok()).toBeTruthy();
 
     await ctx.close();

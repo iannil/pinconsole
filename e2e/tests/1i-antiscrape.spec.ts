@@ -77,11 +77,14 @@ test.describe('1i', () => {
     await visitorCtx.close();
   });
 
-  test('1i 场景4:BehaviorTracker 已接线,visitor 事件流量不崩', async ({ browser, request }) => {
+  test('1i 场景4:BehaviorTracker 已接线,visitor 事件流量不崩', async ({ browser, request }, testInfo) => {
     // 真实启发式触发由 Go 单测覆盖:
     //   TestBehaviorTracker_NoMouseEvents / TestBehaviorTracker_RepetitiveClicks /
     //   TestBehaviorTracker_NoFlagForNormalTraffic
     // 这里只验证接线:visitor 大量事件后 server 仍正常
+    // 重型 e2e suite 下 mouse.move 较慢,bump timeout 到 180s
+    testInfo.setTimeout(180_000);
+
     const visitorCtx = await browser.newContext();
     const visitor = await visitorCtx.newPage();
     await visitor.goto('/');

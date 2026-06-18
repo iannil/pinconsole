@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-18（v1 全切片代码已交付 + reality check 完成）
+**最后更新**：2026-06-18（v1 e2e acceptance 完成,65 测试全绿 + 4 production bugs 修复）
 
 ---
 
@@ -40,9 +40,12 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 切片 1a-1g + 1i + 1j 已深度验证(🟢);1h 拆为 1h-backend(🔴 spec partial) + 1h-ui(⏳ 未启动)**。深度分布 🟢×9 / 🔴×1 + ⏳×1。详见 [`docs/project-status.md`](../docs/project-status.md) §5。
+**v1 全切片 e2e acceptance 完成(2026-06-18)**。65 passed / 0 failed / 4 skipped(gated prod-mode + docker-prod 测试)。深度分布:**全部 🟢 verified-deep**(1a-1z 全切片)。详见 [`docs/reports/completed/2026-06-18-v1-e2e-acceptance.md`](../docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)。
 
-下一步优先级:**B 文档对齐(✅)→ A 浅测补深 + 实施补全(✅)→ C 设计漏洞(待启动)**。
+下一步候选:
+- **1y visitor-ws-rate-limit**(in_progress,实施未完成)— docs/progress/ 中
+- **admin SPA 显示 flagged 标记**(1w P1-29 后端已就绪,UI 未消费)
+- **prod-mode e2e CI job**(1k/1l gated tests 需要)
 
 ### 范围边界
 - **不做**：多租户 SaaS、计费、注册流、营销页
@@ -159,6 +162,21 @@
 **Why**:1h 完成报告写 "completed" 但 spec 验收 "admin /admin/login 页 + 路由守卫" 未满足。LLM 倾向把决策表逐项打勾而不验证代码路径。
 
 **How to apply**:读完成报告时,**对照原 spec 的 acceptance** 而不是看报告自评状态。spec 是 source of truth,报告只是叙述。
+
+### e2e acceptance 必走 grill-me + 策略 A(2026-06-18)
+
+**Why**:2026-06-18 用 Playwright 对 v1 主干做严格验收。策略 A(行为性失败必修)让我们抓到 **4 个 production bugs**,都不是单测能发现的:
+1. server `/api/auth/me` 未挂 AuthMiddleware → 永远 401 → SPA 刷新全跳 login
+2. SPA router 守卫与 fetchMe 时序竞争 → 首次 navigation 必跳 /login
+3. 1z P1-1 修复时漏了 Dashboard.vue 的裸 fetch → trace_id 端到端断裂
+4. Playwright 默认 APIRequestContext UA 是 HeadlessChrome → 被 1i antiscrape 拦截
+
+**How to apply**:
+- 任何"v1 已完成"的声明,用 Playwright 全量 e2e 兜底验收
+- e2e fixture 用 UI login 而非 API login(规避 SPA fetchMe 时序 bug)
+- e2e fixture 必须显式注入干净 Chrome UA(规避 HeadlessChrome 黑名单)
+- regression 测试是修复完整性的最终保障 — 1z P1-1 声称全覆盖,被 01-trace-id 抓到 Dashboard 漏洞
+- claim 必须显式调(1k P0-3 release binary 强制 requireClaimOwnership)
 
 ---
 
