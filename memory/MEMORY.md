@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-19（v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固,deep-audit P1-5 关闭）
+**最后更新**：2026-06-19(测试信心审计完成 — badge 系统性虚标发现,20 切片实降;详见下方经验教训 + [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md);前序:v1 主干完全收口 + 1aa/1ab)
 
 ---
 
@@ -40,13 +40,20 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 主干完全收口(2026-06-18)**。70+ commits 交付:1a-1z 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
+**v1 主干完全收口 + 测试信心审计完成(2026-06-19)**。70+ commits 交付:1a-1ab 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
 
-深度分布:**🟢 verified-deep ×29**(1a-1z + v1-e2e + v1-followups)/ **🔴 implemented-unverified ×1**(1h-backend spec partial,1h-ui 已补 UI 部分)。详见 [`docs/reports/completed/2026-06-18-v1-e2e-acceptance.md`](../docs/reports/completed/2026-06-18-v1-e2e-acceptance.md) + [`docs/reports/completed/2026-06-18-v1-followups.md`](../docs/reports/completed/2026-06-18-v1-followups.md)。
+**测试信心审计(2026-06-19)**:31 切片 spec→test 对照实测,**20 个切片应降级**:
+- 🔴 ×7(1d/1g/1h-backend/1k/1l/1s/1y)— critical 路径无回归测试
+- 🟡 ×13 — T1/T3 gap
+- 🟢 ×11(4 strict + 1 aligned + 6 touched)— 真深度验证
+
+修复 plan:审计 §5 列出 T0×28 / T1×40,总工作量 ~58 小时(solo 全职 ~2 周)。建议拆 1ac(T0 加固)+ 1ad(T1 加固)两切片推进。
+
+详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md)。
 
 下一步候选(post-v1):
-- **TrustedProxies 加固(P1-5)** — 唯一未修的 P1 安全项;deep-audit P1-5
-- **TS 测试深化** — admin/visitor-sdk 各只有 2 个 vitest smoke
+- **1ac 测试信心加固 T0**(28 小时)— 关闭 7 个 🔴 切片
+- **1ad 测试信心加固 T1**(30 小时)— 关闭 13 个 🟡 切片
 - **post-v1 路线** — 自定义域名 / 页面编辑器 / Tauri(详见 [`PLAN.md`](../PLAN.md) §8)
 
 ### 范围边界
@@ -210,6 +217,39 @@ function dropUndefined<T extends object>(obj: T): T {
 ```
 
 适用于所有 SDK / library 的"用户配置 + 默认值合并"场景。
+
+### Badge 自报 🟢 系统性虚标 — 修代码 ≠ 补测试(2026-06-19 测试信心审计)
+
+**Why**:deep-audit(2026-06-18)闭环 13 个 P0 后,`project-status.md` §5 把 31 切片标 🟢。2026-06-19 测试信心审计发现 **20 个虚标**:
+
+- 1l GDPR 1v 修了 `ErrNoRows` bug,但 **erasure 级联(PG+MinIO+Redis)和 GC(5 表)完全无回归测试**
+- 1k 修了 P0-3/P0-4 越权和 race,但**非 owner 403、SET NX race、Lua compare-and-del 全无单测**
+- 1y 实现了 WS rate limit,但 **close + FlagSession 触发条件无测试**
+- 1s lifecycle 装饰器加到 5 个 handler,**但全部 13 个集成点/分支/外部调用点无测试**
+
+deep-audit 修了"代码 bug",但没补"回归测试"。**下次重构 bug 会复发**。
+
+**How to apply**:
+
+1. **修 bug 时同步补回归测试**——P0/P1 类修复必须包含"如果 bug 复现则测试失败"的负向测试
+2. **完成报告 badge 不能自报**——必须经过 spec 决策点逐项对照(见下方"测试信心审计方法")
+3. **`verification-depth.md` 已升级**:🟢 内部分 strict/aligned/touched 三级 + T0~T3 测试 gap 严重度尺度(独立于 P0~P3 代码 bug 尺度)
+4. **新切片完成时,必须按 spec 决策逐项打勾**——不只是"功能跑通"
+
+### 测试信心审计方法(2026-06-19)
+
+**Why**:此前 reality check 流程(7 步)已包含 spec 对照,但**对照是手动的、非系统的**。2026-06-19 用 grill-me 13 问达成共识后,固化了系统化的 spec→test 对照方法。
+
+**How to apply**:对未来任意切片组做测试信心审计:
+
+1. **方法 = A+F + B spot-check**:A=spec 决策点列表,F=spec→test traceability 矩阵,B=mutation testing 在高风险切片 spot-check
+2. **spec 源 = hybrid**:有 spec 文档用 spec;无 spec 用 START/PLAN;无 spec 无顶层决策用 impl 报告目标段
+3. **执行 = 阶段 1 并行定位 + 阶段 2 顺序判定**:阶段 1 subagent 只填"决策 ID + source + 实际测试位置",不判 severity;阶段 2 单一 auditor 用统一 rubric 判
+4. **severity = T0~T3**(独立于 deep-audit 的 P0~P3):T0=critical 路径无测试,T3=测试存在但弱
+5. **熔断**:≥10 切片且 T0=0 或总 gap >30 → 停止扩展,聚焦 T0/T1
+6. **deliverable = 诊断 + 降级 + 修复 plan**(不动代码)
+
+详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md) + [`docs/standards/verification-depth.md`](../docs/standards/verification-depth.md) §2.5/§2.6。
 
 ---
 
