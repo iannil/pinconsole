@@ -1,0 +1,3 @@
+# 此目录用于存放"当前正在进行的修改"文档（progress 文件）。
+# 完成后 spec + implementation 一起移到 docs/reports/completed/，此目录保持为空。
+# 详见 CLAUDE.md "文档约定" + docs/standards/doc-structure.md。
