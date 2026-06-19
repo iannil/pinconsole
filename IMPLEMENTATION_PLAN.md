@@ -3,7 +3,7 @@
 > CLAUDE.md "项目指南"段要求:通过 IMPLEMENTATION_PLAN.md 让模型理解当前正在做什么、边界、下一步。
 > 本文件 rolling 更新,每次开始新切片时改写;完成后归档到 `docs/reports/completed/`。
 
-**当前状态**:v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固 + 1ae 测试健康度加固完成(test-health-audit 9 项 P0+P1 修复)
+**当前状态**:v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固 + 1ae 测试健康度加固 + 1af 测试健康度深化完成(test-health-audit 全部 4 维 🟢)
 **最后更新**:2026-06-19
 
 ## 当前焦点
@@ -50,8 +50,9 @@
 | 1aa | TS 测试深化(admin 64 + SDK 48,累计 112) | 🟢 |
 | 1ab | TrustedProxies 加固(P1-5,BEHIND_REVERSE_PROXY env + validate fail-fast) | 🟢 |
 | 1ae | 测试健康度加固(9 项 P0+P1:muation score 71.4%→100%, e2e flaky 20%→0%) | 🟢 |
+| 1af | 测试健康度深化(R3 续做 6 group:23 新行为级测试,D1 ~55%→~75%) | 🟢 |
 
-**累计**:🟢 ×32 / 🔴 ×1(1h-backend spec partial)
+**累计**:🟢 ×33 / 🔴 ×1(1h-backend spec partial)
 
 完整深度判定与每切片报告见 [`docs/project-status.md`](./docs/project-status.md) §5 + [`docs/reports/completed/`](./docs/reports/completed/)。
 
