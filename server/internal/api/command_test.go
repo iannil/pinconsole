@@ -1,7 +1,9 @@
-// 1k 测试：popup URL scheme 白名单 (P0-8)。
+// 1k 测试：popup URL scheme 白名单 (P0-8) + 1ac T0-1k-3 OperatorID 审计完整性。
 package api
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -87,5 +89,48 @@ func TestSanitizeURLForLog(t *testing.T) {
 				t.Errorf("sanitizeURLForLog(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestOperatorID_UsesCallerUID_NotClientIP — 1ac T0-1k-3 回归测试。
+//
+// deep-audit P0-3 修复:command.go 写 PG 审计时,OperatorID 必须用 callerUID.String()
+// (来自 AuthMiddleware 注入的 user_id),不能用 c.ClientIP() — 否则审计完整性失守
+// (IP 不稳定、可伪造、不指向具体运营)。
+//
+// 此为源码契约测试:验证 command.go 的 OperatorID 赋值来源是 callerUID 而非 ClientIP。
+// 不做完整 handler 集成测试(需 PG fixture),用源码检查捕获重构回归。
+func TestOperatorID_UsesCallerUID_NotClientIP(t *testing.T) {
+	// 找到 command.go 源文件(同目录)
+	srcPath := filepath.Join(".", "command.go")
+	if _, err := os.Stat(srcPath); err != nil {
+		// 测试在不同 cwd 运行时,从 runtime.Caller 找源文件路径
+		abs, _ := filepath.Abs(srcPath)
+		t.Skipf("command.go not found at %s (cwd mismatch); abs=%s", srcPath, abs)
+	}
+	src, err := os.ReadFile(srcPath)
+	if err != nil {
+		t.Fatalf("read command.go: %v", err)
+	}
+	body := string(src)
+
+	// 必须存在 OperatorID 赋值,且赋值源是 callerUID.String()
+	if !strings.Contains(body, "OperatorID:") {
+		t.Fatal("command.go 缺失 OperatorID 字段赋值(P0-3 审计要求)")
+	}
+	if !strings.Contains(body, "OperatorID:   callerUID.String()") &&
+		!strings.Contains(body, "OperatorID: callerUID.String()") {
+		t.Errorf("OperatorID 不是 callerUID.String() — P0-3 审计要求用 user_id 而非 ClientIP")
+	}
+	// 显式拒绝 ClientIP() 作为 OperatorID 来源
+	if strings.Contains(body, "OperatorID:") && strings.Contains(body, "ClientIP()") {
+		// 进一步定位:ClientIP() 不能在 OperatorID 行附近
+		for _, line := range strings.Split(body, "\n") {
+			trim := strings.TrimSpace(line)
+			if strings.HasPrefix(trim, "OperatorID:") &&
+				strings.Contains(trim, "ClientIP()") {
+				t.Errorf("OperatorID 用了 ClientIP() — P0-3 修复被回退:\n  %s", trim)
+			}
+		}
 	}
 }

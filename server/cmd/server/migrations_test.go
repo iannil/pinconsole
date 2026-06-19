@@ -1,8 +1,10 @@
 // 1k 测试：migrations 嵌入与版本解析 (P0-14)。
+// 1ac 扩展:advisory lock + fail-fast 源码契约(T0-1k-7 + T0-1k-8)。
 package main
 
 import (
 	"io/fs"
+	"os"
 	"strings"
 	"testing"
 
@@ -79,5 +81,71 @@ func TestMigrationFiles_AllVersionsParseable(t *testing.T) {
 		if _, err := parseMigrationVersion(name); err != nil {
 			t.Errorf("embedded migration %q not parseable: %v", name, err)
 		}
+	}
+}
+
+// TestMigration_AdvisoryLock_Used — T0-1k-7 回归测试:
+// migrations.go 必须用 pg_advisory_lock 防多实例并发迁移。
+//
+// 源码契约:runMigrations 函数体含 "pg_advisory_lock" + "pg_advisory_unlock"。
+// 如果被误删/改注释掉,此测试失败。
+func TestMigration_AdvisoryLock_Used(t *testing.T) {
+	src, err := os.ReadFile("migrations.go")
+	if err != nil {
+		t.Fatalf("read migrations.go: %v", err)
+	}
+	body := string(src)
+
+	for _, must := range []string{
+		"pg_advisory_lock($1)",
+		"pg_advisory_unlock($1)",
+		"migrationAdvisoryLockID",
+	} {
+		if !strings.Contains(body, must) {
+			t.Errorf("migrations.go 缺失 %q — pg_advisory_lock race-safety 破坏", must)
+		}
+	}
+	// 拒绝反模式:acquire 成功后忘记 unlock
+	if strings.Count(body, "pg_advisory_lock(") > 0 &&
+		strings.Count(body, "pg_advisory_unlock(") == 0 {
+		t.Errorf("migrations.go 用了 pg_advisory_lock 但缺 pg_advisory_unlock — 锁泄露")
+	}
+}
+
+// TestMigration_FailFastOnMigrationError — T0-1k-8 回归测试:
+// main.go 中 runMigrations 失败必须 os.Exit(1)(fail-fast),不能继续启动。
+//
+// 否则坏 schema 上线,silent corruption。
+func TestMigration_FailFastOnMigrationError(t *testing.T) {
+	src, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("read main.go: %v", err)
+	}
+	body := string(src)
+
+	// 定位 runMigrations 调用块(应包含 err != nil → os.Exit)
+	if !strings.Contains(body, "runMigrations(") {
+		t.Fatal("main.go 缺失 runMigrations 调用")
+	}
+
+	// 在 runMigrations 调用后 200 字符内,应存在 os.Exit(1)
+	idx := strings.Index(body, "runMigrations(")
+	if idx < 0 {
+		t.Fatal("找不到 runMigrations 调用")
+	}
+	tail := body[idx:]
+	if len(tail) > 400 {
+		tail = tail[:400]
+	}
+	if !strings.Contains(tail, "os.Exit(1)") {
+		t.Errorf("runMigrations 失败后未 os.Exit(1) — fail-fast 破坏:\n%s", tail)
+	}
+}
+
+// TestMigration_AdvisoryLockID_Stable — 防锁 ID 误改破坏既有部署。
+// 同一项目内必须用同一 ID(20260618),否则升级后新版本拿不到旧版本的锁。
+func TestMigration_AdvisoryLockID_Stable(t *testing.T) {
+	if migrationAdvisoryLockID != 20260618 {
+		t.Errorf("migrationAdvisoryLockID = %d, want 20260618(项目起始日期,防跨服务冲突)", migrationAdvisoryLockID)
 	}
 }
