@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(1ad 完成 — 40/40 T1 关闭,7 个原 🔴 切片全部升 🟡/🟢;累计 28 T0 + 40 T1 + 2 代码 bug 修复)
+**最后更新**:2026-06-19(1ae 完成 — test-health-audit 9 项 P0+P1 修复:muation score 71.4%→100%, e2e flaky 20%→0%, +11 行为级测试;累计 28 T0 + 40 T1 + 2 代码 bug + 9 test-health 项)
 
 ---
 
@@ -161,8 +161,9 @@
 | v1-followups | e2e 后 5 个生产 bug fix | 🟡 | [impl](./reports/completed/2026-06-18-v1-followups.md) |
 | 1aa | TS 测试深化(admin 64 + SDK 48) | 🟢 strict | [impl](./reports/completed/2026-06-19-slice-1aa-ts-test-deepening.md) |
 | 1ab | TrustedProxies 加固(P1-5) | 🟢 strict | [impl](./reports/completed/2026-06-19-slice-1ab-trusted-proxies.md) |
+| 1ae | 测试健康度加固(9 项 P0+P1) | 🟢 touched | [audit](./audits/2026-06-19-test-health-audit.md) + [spec](./reports/completed/2026-06-19-slice-1ae-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ae-implementation.md) — mutation score 71.4%→100%, e2e flaky 20%→0%, 整体 verdict 🔴→🟡 |
 
-**累计**:🟢 ×21(4 strict + 1 aligned + 16 touched) / 🟡 ×10 / 🔴 ×0
+**累计**:🟢 ×22(4 strict + 1 aligned + 17 touched) / 🟡 ×10 / 🔴 ×0
 
 **1ac + 1ac-final + 1ad 完成统计**(2026-06-19):
 - 关闭 28/28 T0 + 40/40 T1(68/68 critical + important 路径覆盖)

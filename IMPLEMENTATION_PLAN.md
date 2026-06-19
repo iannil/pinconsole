@@ -3,12 +3,14 @@
 > CLAUDE.md "项目指南"段要求:通过 IMPLEMENTATION_PLAN.md 让模型理解当前正在做什么、边界、下一步。
 > 本文件 rolling 更新,每次开始新切片时改写;完成后归档到 `docs/reports/completed/`。
 
-**当前状态**:v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固完成(deep-audit P1-5 关闭)
+**当前状态**:v1 主干完全收口 + 1aa TS 测试深化 + 1ab TrustedProxies 加固 + 1ae 测试健康度加固完成(test-health-audit 9 项 P0+P1 修复)
 **最后更新**:2026-06-19
 
 ## 当前焦点
 
-**无活跃切片**。deep-audit 13 个 P0 + 关键 P1(P1-5 TrustedProxies)全部闭环。等待用户决定 post-v1 路线。
+**无活跃切片**。deep-audit 13 个 P0 + 关键 P1(P1-5 TrustedProxies) + test-health-audit 9 项全部闭环。等待用户决定 post-v1 路线。
+
+> **2026-06-19 test-health-audit 结果**:对 1ac+1ad 68 闭包做 4 维度审计(D1 badge 准确性 / D2 弱断言 / D3 mutation / D4 flakiness),整体 verdict 🔴。1ae 关闭 9 项 P0+P1(R1 operatorWS 行为级 + R2 erasure CASCADE 隔离 + R3a-e 5 项源码契约升级 + R4 e2e flaky 修复 + R5 虚标修复),mutation score 71.4%→100%, e2e flaky 20%→0%。整体 verdict 升 🔴→🟡。详见 [`docs/audits/2026-06-19-test-health-audit.md`](./docs/audits/2026-06-19-test-health-audit.md)。剩余 backlog:R3 ~30 项 + R6/R7/R8 留 post-v1。
 
 ## v1 已交付切片(完整清单)
 
@@ -47,8 +49,9 @@
 | v1-followups | e2e 后 5 个生产 bug fix(co-browse + visitor-sdk + v1-replay × 3) | 🟢 |
 | 1aa | TS 测试深化(admin 64 + SDK 48,累计 112) | 🟢 |
 | 1ab | TrustedProxies 加固(P1-5,BEHIND_REVERSE_PROXY env + validate fail-fast) | 🟢 |
+| 1ae | 测试健康度加固(9 项 P0+P1:muation score 71.4%→100%, e2e flaky 20%→0%) | 🟢 |
 
-**累计**:🟢 ×31 / 🔴 ×1(1h-backend spec partial)
+**累计**:🟢 ×32 / 🔴 ×1(1h-backend spec partial)
 
 完整深度判定与每切片报告见 [`docs/project-status.md`](./docs/project-status.md) §5 + [`docs/reports/completed/`](./docs/reports/completed/)。
 
