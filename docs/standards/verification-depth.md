@@ -98,7 +98,7 @@
 | 1e 双向通道 | 🟡 | 路由+审计断言缺(1ad) |
 | 1f 表单 + 跳转 | 🟡 | presence.navigated 缺(1ad) |
 | 1g 弹窗 + 聊天 | 🔴 | chat repo+WS 下行+XSS 缺(1ad) |
-| 1h 认证 + 多运营(后端) | 🟡 | **1ac 关闭 5/6 T0**,1h-2 operatorWS auth 留 known gap |
+| 1h 认证 + 多运营(后端) | 🟢 touched | **1ac-final 关闭全部 6/6 T0**(operatorWS 加 cookie session 鉴权) |
 | 1h-ui LoginView + 守卫 | 🟢 touched | **1ac 升 🟡 → 🟢**(fetchJson 401+SESSION_EXPIRED covered) |
 | 1i 反爬虫 | 🟢 touched | **1ac 升 🟡 → 🟢**(Redis fail-open covered) |
 | 1j i18n + 部署 + CI | 🟢 aligned | CI 测试覆盖好 |
@@ -125,7 +125,7 @@
 
 > **分布会变化**:本节 snapshot 可能滞后。永远以 `docs/project-status.md` §5 为准。
 
-> **2026-06-19 测试信心审计 + 1ac 进展**:审计发现 20 切片 badge 虚标 → 1ac 关闭 27/28 T0 + 1 known gap(1h-2 operatorWS auth)+ 1 代码 bug(deleteVisitor 缺 admin role)。剩余 4 个 🔴(1d/1g/1s + 部分 1h-backend)留 1ad。详见 [`audits/2026-06-19-test-confidence-audit.md`](../audits/2026-06-19-test-confidence-audit.md) + [`reports/completed/2026-06-19-slice-1ac-implementation.md`](../reports/completed/2026-06-19-slice-1ac-implementation.md)。
+> **2026-06-19 测试信心审计 + 1ac + 1ac-final 进展**:审计发现 20 切片 badge 虚标 → 1ac+1ac-final 关闭 28/28 T0 + 修复 2 个代码 bug(deleteVisitor 缺 admin role + operatorWS 完全无认证)。剩余 3 个 🔴(1d/1g/1s)留 1ad。详见 [`audits/2026-06-19-test-confidence-audit.md`](../audits/2026-06-19-test-confidence-audit.md) + [`reports/completed/2026-06-19-slice-1ac-implementation.md`](../reports/completed/2026-06-19-slice-1ac-implementation.md)。
 
 ## 4. 与完成报告的关系
 
