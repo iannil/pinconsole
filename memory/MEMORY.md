@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-19(1ac + 1ac-final 完成 — 28/28 T0 关闭 + 2 代码 bug 修复;前序:测试信心审计完成,20 切片 badge 实降)
+**最后更新**：2026-06-19(1ad 部分完成 — 30/40 T1 关闭 + 4 切片升 🟢 touched;前序:1ac+1ac-final 28/28 T0 关闭 + 2 代码 bug 修复)
 
 ---
 
@@ -42,20 +42,19 @@
 ### 当前阶段
 **v1 主干完全收口 + 测试信心审计 + 1ac 完成(2026-06-19)**。70+ commits 交付:1a-1ab 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
 
-**测试信心审计 + 1ac + 1ac-final**(2026-06-19):
-- 审计发现 31 切片 badge 系统性虚标 → 20 个应降级
-- 1ac+1ac-final 关闭 28/28 T0(100%)+ 修复 2 个代码 bug:
-  - `deleteVisitor` 缺 admin role(1ac 修)
-  - `operatorWS` 完全无认证(1ac-final 修,用 in-handler cookie session 方案)
-- 5 个切片升 🟢 touched(1i/1x/1h-ui/1y/1h-backend),2 个升 🟡(1k/1l)
-- 剩余 3 个 🔴(1d/1g/1s)留 1ad
+**测试信心审计 + 1ac + 1ac-final + 1ad**(2026-06-19):
+- 审计:31 切片 badge 系统性虚标 → 20 个应降级
+- 1ac + 1ac-final:28/28 T0(100%)+ 2 代码 bug 修复(deleteVisitor admin role + operatorWS auth)
+- 1ad:30/40 T1 关闭(13/13 1s + 3/3 1m + 3/3 1e + 4/4 1w + 2/2 1o + 1/2 1f + 1/5 1c + 附带 1d-2)
+- 9 个切片升 🟢 touched(1ac 5 + 1ad 4:1e/1m/1o/1w),1s 🔴→🟡
+- 剩余 3 个 🔴(1d/1g/1s)留 1ad 续集
 
-切片深度:🟢 ×15(4 strict + 1 aligned + 10 touched) / 🟡 ×9 / 🔴 ×4。
+切片深度:🟢 ×19(4 strict + 1 aligned + 14 touched) / 🟡 ×6 / 🔴 ×3。
 
-详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md) + [`docs/reports/completed/2026-06-19-slice-1ac-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ac-implementation.md)。
+详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md) + [`docs/reports/completed/2026-06-19-slice-1ac-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ac-implementation.md) + [`docs/reports/completed/2026-06-19-slice-1ad-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ad-implementation.md)。
 
 下一步候选(post-v1):
-- **1ad 测试信心加固 T1**(~30 小时)— 关闭 9 个 🟡 → 🟢
+- **1ad 续集**(~10 小时)— 关闭剩余 10 项 T1(1b/1c/1d/1g/1r TS + Vue 组件 v1-followups)
 - **post-v1 路线** — 自定义域名 / 页面编辑器 / Tauri(详见 [`PLAN.md`](../PLAN.md) §8)
 
 ### 范围边界

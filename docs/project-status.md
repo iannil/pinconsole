@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(1ac + 1ac-final 完成 — 28/28 T0 关闭 + 2 代码 bug 修复;前序:测试信心审计完成,20 切片 badge 实降)
+**最后更新**:2026-06-19(1ad 部分完成 — 关闭 30/40 T1 + 3 切片升 🟢 touched;前序:1ac+1ac-final 完成,28/28 T0 关闭)
 
 ---
 
@@ -29,11 +29,11 @@
 - ✅ e2e 后真实使用发现的 5 个生产 bug 全部修复([`reports/completed/2026-06-18-v1-followups.md`](./reports/completed/2026-06-18-v1-followups.md))
 - ✅ admin SPA 消费 flagged 字段 + prod-mode/docker-prod e2e CI(`a660622`)
 
-切片深度分布(v1 主干,2026-06-19 测试信心审计 + 1ac + 1ac-final 后):
+切片深度分布(v1 主干,2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad 后):
 
-- 🟢 verified-deep ×15(4 strict + 1 aligned + 10 touched)
-- 🟡 verified-shallow ×9
-- 🔴 implemented-unverified ×4(1d/1g/1s 未触及)
+- 🟢 verified-deep ×19(4 strict + 1 aligned + 14 touched)
+- 🟡 verified-shallow ×6
+- 🔴 implemented-unverified ×3(1d/1g/1s)
 - 全部切片已交付
 
 > **2026-06-19 测试信心审计结果**:`project-status.md` §5 此前自报 🟢 ×31,经 spec→test 对照实测,20 个切片应降级。审计方法详见 [`audits/2026-06-19-test-confidence-audit.md`](./audits/2026-06-19-test-confidence-audit.md)。降级原因:T0/T1 测试 gap 集中在认证/授权/GDPR/限流/可观测路径。修复 plan 见审计 §5。
@@ -134,7 +134,7 @@
 | 1b | 单向最小 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) |
 | 1c | rrweb 接入 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1c-implementation.md) |
 | 1d | 录像归档 | 🔴 | [impl](./reports/completed/2026-06-17-slice-1d-implementation.md) |
-| 1e | 双向通道 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) |
+| 1e | 双向通道 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) |
 | 1f | 表单 + 跳转 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1f-implementation.md) |
 | 1g | 弹窗 + 聊天 | 🔴 | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) |
 | 1h | 认证 + 多运营(后端) | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — **1ac-final 关闭全部 6/6 T0**(operatorWS 加 cookie session 鉴权) |
@@ -143,17 +143,17 @@
 | 1j | i18n + 部署 + CI | 🟢 aligned | [impl](./reports/completed/2026-06-17-slice-1j-implementation.md) |
 | 1k | 安全阻断栈 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1k-spec.md) + [impl](./reports/completed/2026-06-18-slice-1k-implementation.md) — 1ac 关闭 8/9 T0(剩 1k-9 e2e 范围) |
 | 1l | GDPR 合规 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1l-spec.md) + [impl](./reports/completed/2026-06-18-slice-1l-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 6/6 T0 + admin role bug 修复 |
-| 1m | 可观测性 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1m-spec.md) + [impl](./reports/completed/2026-06-18-slice-1m-implementation.md) |
+| 1m | 可观测性 | 🟢 touched | [spec](./reports/completed/2026-06-18-slice-1m-spec.md) + [impl](./reports/completed/2026-06-18-slice-1m-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) |
 | 1n | 测试深度 + 文档虚标修复 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1n-implementation.md) |
-| 1o | 生产硬化 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1o-implementation.md) — 1v R2 rubric 真实集成(代码层),per-sub cancel/leak 测试缺 |
+| 1o | 生产硬化 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1o-implementation.md) — 1v R2 rubric 真实集成(代码层)+ [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) per-sub cancel 接线覆盖 |
 | 1p | LLM friendly | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1p-implementation.md) |
 | 1q | 死代码 + 重复清理 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1q-implementation.md) |
 | 1r | i18n + logger 迁移 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1r-implementation.md) — 1ac 未触及 |
-| 1s | 可观测性深化 | 🔴 | [impl](./reports/completed/2026-06-18-slice-1s-implementation.md) — 1ac 未触及,lifecycle 集成点 13 个 T1 gap |
+| 1s | 可观测性深化 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1s-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) — 1ad 关闭 13/13 T1 lifecycle 接线契约;T0 deep integration 仍开 |
 | 1t | 测试覆盖补全 | 🟢 strict | [impl](./reports/completed/2026-06-18-slice-1t-implementation.md) |
 | 1u | god files 拆分 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1u-implementation.md) |
 | 1v | 审计后续修复 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1v-implementation.md) |
-| 1w | flagged session 接入 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1w-implementation.md) — 1ac 未触及 |
+| 1w | flagged session 接入 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1w-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) — 1ad 关闭 4/4 T1 warn + is_flagged 接线 |
 | 1x | 登录暴力破解防护 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1x-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 Lua 原子 |
 | 1y | visitor WS rate limit | 🟡 | [impl](./reports/completed/2026-06-18-slice-1y-visitor-ws-rate-limit.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 close+flag 接线契约 |
 | 1z | 生产就绪度补全 | 🟢 strict | [impl](./reports/completed/2026-06-18-slice-1z-prod-readiness-gaps.md) |
@@ -162,16 +162,15 @@
 | 1aa | TS 测试深化(admin 64 + SDK 48) | 🟢 strict | [impl](./reports/completed/2026-06-19-slice-1aa-ts-test-deepening.md) |
 | 1ab | TrustedProxies 加固(P1-5) | 🟢 strict | [impl](./reports/completed/2026-06-19-slice-1ab-trusted-proxies.md) |
 
-**累计**:🟢 ×15(4 strict + 1 aligned + 10 touched) / 🟡 ×9 / 🔴 ×4
+**累计**:🟢 ×19(4 strict + 1 aligned + 14 touched) / 🟡 ×6 / 🔴 ×3
 
-**1ac + 1ac-final 完成统计**(2026-06-19):
-- 关闭 28/28 T0(100%)
+**1ac + 1ac-final + 1ad 完成统计**(2026-06-19):
+- 关闭 28/28 T0 + 30/40 T1
 - 修复 2 个代码 bug:`deleteVisitor` 缺 admin role(1ac)+ `operatorWS` 完全无认证(1ac-final)
-- 5 个切片升 🟢 touched(1i/1x/1h-ui/1y/1h-backend)
-- 2 个切片升 🟡(1k/1l)
-- 剩余 4 个 🔴(1d/1g/1s + 1h-backend 升 🟢 后剩 0 个 1h 系列 🔴)留 1ad
+- 1ac 升 5 个切片 🟢 touched + 2 个 🟡;1ad 升 4 个切片 🟢 touched(1e/1m/1o/1w)+ 1s 🔴→🟡
+- 剩余 3 个 🔴(1d/1g/1s)留 1ad 续集 / 后续切片
 
-**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。**1ad 测试信心加固 T1**(2026-06-19 审计 §5 建议):~30 小时,关闭 9 个 🟡 → 🟢。
+**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。**1ad 续集**(2026-06-19 审计 §5 建议):~10 小时,关闭剩余 10 项 T1(主要 TS 端 + Vue 组件)。
 
 **累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。
 
