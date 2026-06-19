@@ -2,12 +2,15 @@
 //
 // 验证 GetVisitorByFingerprint 在 PG 返回 ErrNoRows 时 (nil, nil),
 // 而非 (nil, error) —— 这是 GDPR DELETE 端点幂等返回 200 visitor_not_found 的前提。
+//
+// 1ai-b 追加:CreateVisitor + GetVisitorByFingerprint PG 集成测试(真 PG + skip)。
 package storage
 
 import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -51,5 +54,95 @@ func TestGetVisitorByFingerprint_ErrNoRowsContract(t *testing.T) {
 	// 验证 pgx.ErrNoRows 可被 errors.Is 识别(防 pgx 升级改语义)。
 	if !errors.Is(pgx.ErrNoRows, pgx.ErrNoRows) {
 		t.Fatal("pgx.ErrNoRows self-identity broken — pgx 升级?")
+	}
+}
+
+// ============ 1ai-b:visitor_repo PG 集成测试(真 PG + skip)============
+
+// TestCreateVisitor_AndRetrieve_1aib — CreateVisitor → GetVisitorByFingerprint 字段一致。
+func TestCreateVisitor_AndRetrieve_1aib(t *testing.T) {
+	pool := helperPGPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	pg := &Postgres{Pool: pool}
+
+	fp := "1aib-visitor-" + uuid.New().String()[:8]
+	defer func() { _, _ = pool.Exec(ctx, `DELETE FROM visitors WHERE fingerprint = $1`, fp) }()
+
+	created, err := pg.CreateVisitor(ctx, DefaultTenantID, fp, "Mozilla/1aib", "10.0.0.1")
+	if err != nil {
+		t.Fatalf("CreateVisitor: %v", err)
+	}
+	if created == nil || created.ID == uuid.Nil {
+		t.Fatal("CreateVisitor returned nil/zero-ID visitor")
+	}
+	if created.Fingerprint != fp {
+		t.Errorf("Fingerprint = %q, want %q", created.Fingerprint, fp)
+	}
+	if created.UA == nil || *created.UA != "Mozilla/1aib" {
+		t.Errorf("UA = %v, want 'Mozilla/1aib'", created.UA)
+	}
+
+	fetched, err := pg.GetVisitorByFingerprint(ctx, DefaultTenantID, fp)
+	if err != nil {
+		t.Fatalf("GetVisitorByFingerprint: %v", err)
+	}
+	if fetched == nil {
+		t.Fatal("GetVisitorByFingerprint returned nil for existing visitor")
+	}
+	if fetched.ID != created.ID {
+		t.Errorf("ID mismatch: fetched=%s, created=%s", fetched.ID, created.ID)
+	}
+}
+
+// TestCreateVisitor_OnConflict_UpdatesLastSeen_1aib — 重复 CreateVisitor 触发
+// ON CONFLICT DO UPDATE,last_seen_at 刷新 + COALESCE 覆盖 ua。
+func TestCreateVisitor_OnConflict_UpdatesLastSeen_1aib(t *testing.T) {
+	pool := helperPGPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	pg := &Postgres{Pool: pool}
+
+	fp := "1aib-upsert-" + uuid.New().String()[:8]
+	defer func() { _, _ = pool.Exec(ctx, `DELETE FROM visitors WHERE fingerprint = $1`, fp) }()
+
+	first, err := pg.CreateVisitor(ctx, DefaultTenantID, fp, "ua-v1", "10.0.0.1")
+	if err != nil {
+		t.Fatalf("first CreateVisitor: %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond) // 让 last_seen_at 有可观察差异
+
+	second, err := pg.CreateVisitor(ctx, DefaultTenantID, fp, "ua-v2", "10.0.0.2")
+	if err != nil {
+		t.Fatalf("second CreateVisitor (upsert): %v", err)
+	}
+	if second.ID != first.ID {
+		t.Errorf("ON CONFLICT 应保留原 ID:second=%s, want first=%s", second.ID, first.ID)
+	}
+	if !second.LastSeenAt.After(first.LastSeenAt) {
+		t.Errorf("last_seen_at 未刷新:first=%v, second=%v", first.LastSeenAt, second.LastSeenAt)
+	}
+	// COALESCE(EXCLUDED.ua, visitors.ua):新 ua 非空应覆盖
+	if second.UA == nil || *second.UA != "ua-v2" {
+		t.Errorf("UA 未刷新:second.UA=%v, want 'ua-v2'", second.UA)
+	}
+}
+
+// TestGetVisitorByFingerprint_NotFound_ReturnsNil_1aib — 真 PG 验证 (nil, nil) 行为。
+// (1v 用 mock 验证契约,1ai-b 用真 PG 验证端到端)
+func TestGetVisitorByFingerprint_NotFound_ReturnsNil_1aib(t *testing.T) {
+	pool := helperPGPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	pg := &Postgres{Pool: pool}
+
+	missingFp := "1aib-missing-" + uuid.New().String()[:8]
+	v, err := pg.GetVisitorByFingerprint(ctx, DefaultTenantID, missingFp)
+	if err != nil {
+		t.Errorf("GetVisitorByFingerprint on missing: err = %v, want nil (1v 行为)", err)
+	}
+	if v != nil {
+		t.Errorf("GetVisitorByFingerprint on missing: v = %+v, want nil", v)
 	}
 }
