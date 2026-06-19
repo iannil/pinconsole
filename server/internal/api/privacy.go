@@ -150,6 +150,25 @@ func (h *PrivacyHandler) deleteVisitor(c *gin.Context) {
 		return
 	}
 
+	// 1ac T0-1l-5:GDPR Art.17 删除必须 admin only。
+	// 1ac 测试发现:此前代码无 role 校验,任意认证用户(operator 含)可删访客数据。
+	callerAny, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not_authenticated"})
+		return
+	}
+	callerUID, _ := callerAny.(uuid.UUID)
+	caller, err := h.stores.PG.GetUserByID(ctx, callerUID)
+	if err != nil || caller == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user_not_found"})
+		return
+	}
+	if caller.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "admin_required"})
+		return
+	}
+
+
 	// 1. 查 visitor + sessions
 	visitor, err := h.stores.PG.GetVisitorByFingerprint(ctx, storage.DefaultTenantID, fp)
 	if err != nil {
@@ -217,10 +236,10 @@ func (h *PrivacyHandler) deleteVisitor(c *gin.Context) {
 		_ = h.stores.Redis.Del(ctx, claimKey(sid))
 	}
 
-	callerUID, _ := c.Get("user_id")
+	callerLogUID, _ := c.Get("user_id")
 	h.logger.InfoContext(ctx, "visitor erased (GDPR Art.17)",
 		"fingerprint", fp,
-		"caller_user_id", callerUID,
+		"caller_user_id", callerLogUID,
 		"deleted_sessions", len(sessionIDs),
 		"deleted_minio_objects", minioDeleted,
 	)
