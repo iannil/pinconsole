@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(1ai 完成 — storage user_repo + session_repo PG 集成测试 11 个,storage 包覆盖 20.1%→39.2%(+19.1pp),user/session 全函数 100%;1ag+1ah+1aj+1ai 累计 +34 测试 + 2 代码 fix;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 11 storage-repo 项)
+**最后更新**:2026-06-20(1ai-b 完成 — storage visitor/command/event_blob repo PG 集成测试 11 个,storage 包覆盖 39.2%→57.8%(+18.6pp);1ag~1ai-b 累计 +45 测试 + 2 代码 fix;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo 项)
 
 ---
 
@@ -134,7 +134,7 @@
 | 1b | 单向最小 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) + [1ai](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-implementation.md) — session_repo PG 集成(CreateSession/Get/Touch/End/List 全覆盖) |
 | 1c | rrweb 接入 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1c-implementation.md) |
 | 1d | 录像归档 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1d-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) + [1ag](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-implementation.md) — 4 T0 + 5 T1 全部关闭 + replay HTTP 行为级(parseSince/UUID/since 拒绝路径) |
-| 1e | 双向通道 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) |
+| 1e | 双向通道 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) + [1ai-b](./reports/completed/2026-06-20-slice-1aib-storage-repos-b-implementation.md) — command_repo 全覆盖(Create/List/Delete + JSON round-trip) |
 | 1f | 表单 + 跳转 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1f-implementation.md) |
 | 1g | 弹窗 + 聊天 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) + [1ah](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — 5/5 T1 关闭 + chat repo PG + 1ah chat_http listMessages UUID 路径 |
 | 1h | 认证 + 多运营(后端) | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) + [1ag](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-implementation.md) + [1ah](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — **1ac-final 关闭全部 6/6 T0** + 1ag auth HTTP + 1ah claim HTTP(getClaim/release 行为级) |
@@ -167,6 +167,7 @@
 | 1ah | claim/chat handler 行为级测试 | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — 10 新测试,api 覆盖 25.5%→29.1%,getClaim 0%→83%、release 38%→76%、listMessages 0%→57% |
 | 1aj | 修 parseSince 负数 + ws_ratelimit flaky | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1aj-followup-bugs-spec.md) + [impl](./reports/completed/2026-06-19-slice-1aj-followup-bugs-implementation.md) — 1 新测试 + 4 测试 err-skip 改造,api 覆盖 29.1%→29.3%,1ag follow-up 关闭 |
 | 1ai | storage user+session repo PG 集成测试 | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-implementation.md) — 11 新测试,storage 覆盖 20.1%→39.2%,user_repo 100% + session_repo 核心 4 函数 100% |
+| 1ai-b | storage visitor/command/event_blob repo 测试 | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aib-storage-repos-b-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aib-storage-repos-b-implementation.md) — 11 新测试,storage 覆盖 39.2%→57.8%,visitor 100%、command 84-100%、event_blob 81-100% |
 
 **累计**:🟢 ×23(4 strict + 1 aligned + 18 touched) / 🟡 ×9 / 🔴 ×0
 
