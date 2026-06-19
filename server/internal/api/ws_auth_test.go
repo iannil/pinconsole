@@ -1,21 +1,25 @@
-// 1ac 续集测试:WS 同源 cookie + operatorWS auth gap 文档(审计 T0-1h-6 + T0-1h-2)。
+// 1ac + 1ac-final 测试:WS 同源校验 + operatorWS auth(审计 T0-1h-6 + T0-1h-2)。
 //
 // T0-1h-6:websocket.Accept 必须设 InsecureSkipVerify: false(同源校验),
 //   防止跨域 WS 滥用(CSWSH)。
 //
-// T0-1h-2:**发现代码 bug**:operatorWS 完全无认证检查。
-//   - 路由层:/ws/operator 不在 protected group 下
-//   - handler 层:operatorWS 不读 cookie/session,直接 Accept
-//   - 任意匿名客户端可连 WS 接收所有 visitor 事件流(隐私泄露)
-//
-//   此 bug 非 1ac 范围可修(需 API 设计决策:WS 鉴权 token 在 query/header/first message)。
-//   本测试用 t.Skip 占位,留作 1ac-final 或 1ad 修复。
+// T0-1h-2(1ac-final 已修复):operatorWS 此前完全无认证检查。
+//   修复:handler 内调 authenticateOperatorWS,校验 cookie session,失败返回 401。
+//   测试:无 cookie / 无效 session / 有效 session / devMode bypass / 接线源码契约。
 package api
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
 // TestWS_VisitorOriginCheck_Enabled — T0-1h-6:
@@ -75,30 +79,163 @@ func TestWS_OperatorOriginCheck_Enabled(t *testing.T) {
 	}
 }
 
-// TestWS_OperatorAuth_KnownGap — T0-1h-2 占位测试(known bug):
-//
-// operatorWS 当前无认证检查。此测试 SKIP,留作修复后启用。
-//
-// 期望行为(修复后):
-//   - 路由层:/ws/operator 应在 protected group 下,或
-//   - handler 层:operatorWS 应读 cookie 校验 session
-//
-// 当前行为:
-//   - 路由层:wsH.Register(r) 直接挂在 public r 上
-//   - handler 层:operatorWS 直接 Accept,无 cookie/session 检查
-//   - 注释:"hello 不强制；如果没有，直接当作 operator 上线"
-//
-// 风险:任意匿名客户端可连 /ws/operator,接收 tenant room 内全部 visitor 事件流,
-// 包括录像内容、co-browsing 命令、聊天消息广播。隐私 + 安全双重违规。
-//
-// 修复方向(任一):
-//   A. router.go: 把 wsH.Register(protected) — 但 WS upgrade 在 middleware 之前,
-//      需要确认 gin 支持在 group 下挂 WS route
-//   B. operatorWS 内部: Accept 前读 c.Cookie,校验 Redis session,
-//      校验失败拒绝 upgrade(返回 401)
-//   C. 用 query token: /ws/operator?token=xxx,token 是登录时签发的短期 WS token
-//
-// 推荐方案 B(与 cookie session 一致,无需新 token)。
-func TestWS_OperatorAuth_KnownGap(t *testing.T) {
-	t.Skip("known bug: operatorWS 无认证检查 — 见审计 T0-1h-2,留 1ad 修复(需 API 设计决策)")
+// TestWS_AuthenticateOperatorWS_NoCookie_Returns401 — T0-1h-2 修复验证:
+// 无 cookie 的请求应被拒绝(401 no_session),authenticateOperatorWS 返回 ok=false。
+func TestWS_AuthenticateOperatorWS_NoCookie_Returns401(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	// 不加 cookie
+
+	stores := &storage.Redis{Client: rdb}
+	_, ok := authenticateOperatorWS(c, stores, false /* prod mode */)
+	if ok {
+		t.Errorf("ok=true want false (no cookie should reject)")
+	}
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status=%d want 401 (no_session)", w.Code)
+	}
+	if !contains(w.Body.String(), "no_session") {
+		t.Errorf("body should contain no_session, got: %s", w.Body.String())
+	}
+}
+
+// TestWS_AuthenticateOperatorWS_InvalidSession_Returns401 —
+// 有 cookie 但 Redis 中 session 不存在/已过期 → 401 invalid_session。
+func TestWS_AuthenticateOperatorWS_InvalidSession_Returns401(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	c.Request.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "nonexistent-session-id"})
+
+	stores := &storage.Redis{Client: rdb}
+	_, ok := authenticateOperatorWS(c, stores, false)
+	if ok {
+		t.Errorf("ok=true want false (invalid session should reject)")
+	}
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status=%d want 401 (invalid_session)", w.Code)
+	}
+	if !contains(w.Body.String(), "invalid_session") {
+		t.Errorf("body should contain invalid_session, got: %s", w.Body.String())
+	}
+}
+
+// TestWS_AuthenticateOperatorWS_ValidSession_OK —
+// 有效 cookie + Redis 命中 → 返回 (user_id, true)。
+func TestWS_AuthenticateOperatorWS_ValidSession_OK(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	userID := uuid.New()
+	sessionID := "test-ws-auth-valid-session-1ac-final"
+	ctx := context.Background()
+	defer rdb.Del(ctx, sessionRedisKey(sessionID))
+	if err := rdb.Set(ctx, sessionRedisKey(sessionID), userID.String(), 5*time.Minute).Err(); err != nil {
+		t.Fatalf("seed session: %v", err)
+	}
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	c.Request.AddCookie(&http.Cookie{Name: sessionCookieName, Value: sessionID})
+
+	stores := &storage.Redis{Client: rdb}
+	gotUID, ok := authenticateOperatorWS(c, stores, false)
+	if !ok {
+		t.Errorf("ok=false want true (valid session)")
+	}
+	if gotUID != userID {
+		t.Errorf("gotUID=%s want %s", gotUID, userID)
+	}
+	// user_id 应已写入 gin ctx(供下游 handler 用)
+	ctxUID, exists := c.Get("user_id")
+	if !exists {
+		t.Errorf("c.Get(user_id) not exists after auth")
+	}
+	if uid, _ := ctxUID.(uuid.UUID); uid != userID {
+		t.Errorf("ctx user_id=%v want %s", ctxUID, userID)
+	}
+}
+
+// TestWS_AuthenticateOperatorWS_DevModeBypass —
+// devMode=true 且 dev build → 旁路(返回 uuid.Nil, true)。
+// 注:release build 下 tryDevBypass 恒 false,此测试在 release build 下不 bypass。
+func TestWS_AuthenticateOperatorWS_DevModeBypass(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	// 不加 cookie,但 devMode=true
+
+	// stores 可以是 nil,因 devMode bypass 不会触达 Redis
+	uid, ok := authenticateOperatorWS(c, nil, true /* devMode */)
+	if !isReleaseBuild {
+		// dev build: bypass 生效
+		if !ok {
+			t.Errorf("dev build + devMode: ok=false want true (bypass)")
+		}
+		if uid != uuid.Nil {
+			t.Errorf("dev build + devMode: uid=%s want uuid.Nil", uid)
+		}
+	} else {
+		// release build: bypass 不生效,无 cookie 应 401
+		if ok {
+			t.Errorf("release build: ok=true want false (no bypass, no cookie)")
+		}
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("release build: status=%d want 401", w.Code)
+		}
+	}
+}
+
+// TestWS_OperatorWS_WiresAuthentication — 源码契约:
+// operatorWS 必须在 websocket.Accept 前调 authenticateOperatorWS。
+// 防止后续重构误删 auth 检查。
+func TestWS_OperatorWS_WiresAuthentication(t *testing.T) {
+	src, err := os.ReadFile("ws.go")
+	if err != nil {
+		t.Fatalf("read ws.go: %v", err)
+	}
+	body := string(src)
+
+	idx := strings.Index(body, "func (h *WSHandler) operatorWS")
+	if idx < 0 {
+		t.Fatal("找不到 operatorWS 函数")
+	}
+	end := strings.Index(body[idx+1:], "\nfunc ")
+	if end < 0 {
+		end = len(body) - idx - 1
+	}
+	fnBody := body[idx : idx+1+end]
+
+	// 必须调 authenticateOperatorWS
+	if !strings.Contains(fnBody, "authenticateOperatorWS(") {
+		t.Errorf("operatorWS 缺失 authenticateOperatorWS 调用 — auth 接线破坏")
+	}
+
+	// 必须在 websocket.Accept 之前
+	idxAuth := strings.Index(fnBody, "authenticateOperatorWS(")
+	idxAccept := strings.Index(fnBody, "websocket.Accept(")
+	if idxAuth < 0 || idxAccept < 0 {
+		t.Fatal("找不到 auth 或 Accept 调用")
+	}
+	if idxAuth > idxAccept {
+		t.Errorf("authenticateOperatorWS (idx=%d) 在 websocket.Accept (idx=%d) 之后 — 顺序错,先 Accept 后 auth 等于无效", idxAuth, idxAccept)
+	}
+
+	// auth 失败时必须 return(不 Accept)
+	authCallBlock := fnBody[idxAuth:]
+	if !strings.Contains(authCallBlock, "if !authOK") {
+		t.Errorf("operatorWS 缺失 `if !authOK { return }` 守护")
+	}
 }

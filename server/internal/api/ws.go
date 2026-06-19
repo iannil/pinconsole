@@ -29,6 +29,9 @@ type WSHandler struct {
 	snapshots *recording.SnapshotCache
 	logger    *slog.Logger
 	maxMsg    int64
+	// devMode 控制 operatorWS 的 dev bypass(与 AuthMiddleware 一致)。
+	// release build 下 tryDevBypass 恒 false,即使 devMode=true 也不绕过。
+	devMode bool
 }
 
 // 1y P1-4:visitor WS rate limit 常量。
@@ -83,7 +86,7 @@ func checkWSRateLimit(ctx context.Context, rdb *redis.Client, sessionID string, 
 }
 
 // NewWSHandler 创建 WS handler。
-func NewWSHandler(h *hub.Hub, stores *storage.Stores, stream *recording.Stream, flusher *recording.Flusher, snapshots *recording.SnapshotCache, logger *slog.Logger) *WSHandler {
+func NewWSHandler(h *hub.Hub, stores *storage.Stores, stream *recording.Stream, flusher *recording.Flusher, snapshots *recording.SnapshotCache, logger *slog.Logger, devMode bool) *WSHandler {
 	return &WSHandler{
 		hub:       h,
 		stores:    stores,
@@ -92,6 +95,7 @@ func NewWSHandler(h *hub.Hub, stores *storage.Stores, stream *recording.Stream, 
 		snapshots: snapshots,
 		logger:    logger,
 		maxMsg:    1 << 20, // 1 MiB
+		devMode:   devMode,
 	}
 }
 
@@ -333,6 +337,14 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 //   4. read loop：subscribe / unsubscribe 命令
 //   5. 同时 select tenant room chan 与 session chan（已订阅的）
 func (h *WSHandler) operatorWS(c *gin.Context) {
+	// 1ac-final T0-1h-2 修复:operatorWS 必须校验 cookie session。
+	// 此前完全无认证,任意匿名客户端可连 /ws/operator 接收 visitor 事件流。
+	_, authOK := authenticateOperatorWS(c, h.stores.Redis, h.devMode)
+	if !authOK {
+		// authenticateOperatorWS 已写 401 响应
+		return
+	}
+
 	conn, err := websocket.Accept(c.Writer, c.Request, &websocket.AcceptOptions{
 		InsecureSkipVerify: false,
 	})

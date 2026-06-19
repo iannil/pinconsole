@@ -109,7 +109,7 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	privacyH.RegisterPublic(r)
 
 	// 1b/1c/1d：访客 WebSocket（公开）
-	wsH := NewWSHandler(opts.Hub, opts.Stores, opts.Stream, opts.Flusher, opts.Snapshots, opts.Logger)
+	wsH := NewWSHandler(opts.Hub, opts.Stores, opts.Stream, opts.Flusher, opts.Snapshots, opts.Logger, opts.Env != "prod")
 	wsH.Register(r)
 
 	// 1h：运营受保护端点（SERVER_ENV=dev 时自动绕过，便于 e2e）
