@@ -297,6 +297,11 @@ func parseSince(s string) (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
+	// 1aj:拒绝非正数 — Atoi 接受 "-1",会产生负 duration,语义无意义
+	// (查询"结束于 -24h 内"无结果但 SQL 不报错,可能被滥用)。
+	if num <= 0 {
+		return 0, fmt.Errorf("duration must be positive: %d", num)
+	}
 	switch unit {
 	case 'h':
 		return time.Duration(num) * time.Hour, nil

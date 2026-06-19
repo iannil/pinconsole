@@ -95,7 +95,22 @@ func TestParseSince_NonNumericPrefix_ReturnsError(t *testing.T) {
 	}
 }
 
-// 1aj:TestParseSince_RejectsNonPositive 在 1aj 切片加入(配合 parseSince 拒负数修复)。
+// TestParseSince_RejectsNonPositive — 1aj:负数与零必返 error。
+//
+// Atoi("-1") 不报错,parseSince 此前会返回 -24h 负 duration;
+// 零("0h")语义模糊(用户应传 "" 走默认)。
+// 两者都拒绝,符合"输入校验在边界"原则。
+func TestParseSince_RejectsNonPositive(t *testing.T) {
+	cases := []string{"-1d", "-12h", "-100d", "0h", "0d"}
+	for _, in := range cases {
+		t.Run(in, func(t *testing.T) {
+			got, err := parseSince(in)
+			if err == nil {
+				t.Errorf("parseSince(%q) = %v, want error (non-positive duration)", in, got)
+			}
+		})
+	}
+}
 
 // newReplayTestEngine 构造仅挂 replay 路由的 gin engine,不依赖 stores。
 // 用于测试 handler 在触达 stores 前的拒绝路径(参数解析、binding)。
