@@ -7,6 +7,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -178,4 +180,49 @@ func TestRedis_EvalLuaContract(t *testing.T) {
 	var r storage.Redis
 	_ = r.EvalLua
 	_ = fmt.Sprintf // 防 fmt import 在编译期被裁剪
+}
+
+// TestLoginThrottle_RecordFailureUsesLuaAtomic — 1ac T0-1x-1 回归测试。
+//
+// recordLoginFailure 必须用 Lua 脚本原子 INCR + EXPIRE,
+// 防并发场景下首次失败 race(两个并发请求同时 INCR 都看到 1 → 都不 EXPIRE → 永久 lockout)。
+//
+// 源码契约:auth.go 中 recordLoginFailure 必须含 EvalLua + 完整 Lua 脚本。
+func TestLoginThrottle_RecordFailureUsesLuaAtomic(t *testing.T) {
+	src, err := os.ReadFile("auth.go")
+	if err != nil {
+		t.Fatalf("read auth.go: %v", err)
+	}
+	body := string(src)
+
+	// 定位 recordLoginFailure 函数
+	idx := strings.Index(body, "func (h *AuthHandler) recordLoginFailure")
+	if idx < 0 {
+		t.Fatal("找不到 recordLoginFailure 函数")
+	}
+	// 截取该函数体(到下一个 func 或文件末)
+	end := strings.Index(body[idx+1:], "\nfunc ")
+	if end < 0 {
+		end = len(body) - idx - 1
+	}
+	fnBody := body[idx : idx+1+end]
+
+	for _, must := range []string{
+		"EvalLua",                       // 用 Lua 而非裸 INCR + EXPIRE
+		"redis.call('INCR'",             // Lua 内含 INCR
+		"redis.call('EXPIRE'",           // Lua 内含 EXPIRE
+		"if c == 1 then",                // 仅首次(返回 1)才 EXPIRE
+		"loginLockoutWindow.Seconds()", // TTL 参数
+	} {
+		if !strings.Contains(fnBody, must) {
+			t.Errorf("recordLoginFailure 缺失 %q — Lua 原子性破坏:\n%s", must, fnBody)
+		}
+	}
+
+	// 反模式检测:裸 INCR/EXPIRE 拆分调用会破坏原子性
+	if strings.Contains(fnBody, "rdb.Incr(") ||
+		strings.Contains(fnBody, "Client.Incr(") ||
+		strings.Contains(fnBody, "Redis.Incr(") {
+		t.Errorf("recordLoginFailure 用了裸 Incr — 应改为 Lua 原子 INCR+EXPIRE")
+	}
 }
