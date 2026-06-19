@@ -126,8 +126,7 @@ func (h *AuthHandler) login(c *gin.Context) {
 
 	// 设置 cookie
 	// 1k：prod 模式 Secure=true（HTTPS only）
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(sessionCookieName, sessionID, int(sessionTTL.Seconds()), "/", "", h.secureCookie, true)
+	h.setSessionCookie(c, sessionID, int(sessionTTL.Seconds()))
 
 	h.logger.InfoContext(ctx, "login success", "user_id", user.ID, "email", user.Email)
 
@@ -199,6 +198,19 @@ func (h *AuthHandler) logout(c *gin.Context) {
 	}
 	c.SetCookie(sessionCookieName, "", -1, "/", "", h.secureCookie, true)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+// setSessionCookie 抽出 login 的 cookie 设置逻辑(1ae R3b)。
+// 让测试可真调此方法 + 断言 Set-Cookie header 属性,而非 grep 源码字符串。
+//
+// 行为:
+//   - SameSite=Lax(防 CSRF)
+//   - Secure=h.secureCookie(prod 模式 true)
+//   - HttpOnly=true(防 XSS 偷 cookie)
+//   - MaxAge=sessionTTL(秒)
+func (h *AuthHandler) setSessionCookie(c *gin.Context, sessionID string, maxAge int) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(sessionCookieName, sessionID, maxAge, "/", "", h.secureCookie, true)
 }
 
 func (h *AuthHandler) me(c *gin.Context) {

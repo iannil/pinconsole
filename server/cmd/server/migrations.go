@@ -17,8 +17,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/iannil/marketing-monitor/internal/storage"
 	"github.com/iannil/marketing-monitor/migrations"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // migrationAdvisoryLockID 是 pg_advisory_lock 的固定 key（任意 int64）。
@@ -32,7 +32,7 @@ const migrationAdvisoryLockID = 20260618
 //  2. CREATE TABLE IF NOT EXISTS schema_migrations
 //  3. 按 version 顺序遍历 embedded up.sql，未应用的在事务里执行 + 记录版本
 //  4. pg_advisory_unlock（defer）
-func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error {
+func runMigrations(ctx context.Context, pool storage.PgxPool, logger *slog.Logger) error {
 	// 1. advisory lock
 	if _, err := pool.Exec(ctx, "SELECT pg_advisory_lock($1)", migrationAdvisoryLockID); err != nil {
 		return fmt.Errorf("acquire advisory lock: %w", err)

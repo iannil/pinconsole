@@ -6,12 +6,27 @@ import (
 	"log/slog"
 
 	"github.com/iannil/marketing-monitor/internal/config"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PgxPool 是 Postgres.Pool 的最小接口(1ae R2 引入)。
+// 仅声明 storage 包用到的 5 个方法 + Begin(migrations 用),让测试可注入事务包装器
+// (用 ALTER FK NO ACTION 验证 erasure 显式 DELETE 真生效)。
+// 生产代码用 *pgxpool.Pool 自动满足此接口。
+type PgxPool interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, optionsAndArgs ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, optionsAndArgs ...any) pgx.Row
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Ping(ctx context.Context) error
+	Close()
+}
+
 // Postgres 封装 PG 连接池。
 type Postgres struct {
-	Pool   *pgxpool.Pool
+	Pool   PgxPool
 	logger *slog.Logger
 }
 
