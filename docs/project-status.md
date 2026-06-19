@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-20(1ai-d 完成 — me+logout happy path 4 测试,auth.go me 40%→100%、logout 85.7%→100%,api 包 31.2%→31.8%;1ag~1ai-d 累计 +52 测试 + 2 代码 fix + 1 接口化重构;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 7 happy-path 项)
+**最后更新**:2026-06-20(1ai-e 完成 — ClaimHandler+ChatHandler.listMessages 接口化 + happy path 4 测试,claim 25%→78.1%、listMessages 57%→76.2%,api 包 31.8%→33.7%;1ag~1ai-e 累计 +56 测试 + 2 代码 fix + 2 接口化重构;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 11 happy-path 项)
 
 ---
 
@@ -170,6 +170,7 @@
 | 1ai-b | storage visitor/command/event_blob repo 测试 | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aib-storage-repos-b-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aib-storage-repos-b-implementation.md) — 11 新测试,storage 覆盖 39.2%→57.8%,visitor 100%、command 84-100%、event_blob 81-100% |
 | 1ai-c | AuthHandler 接口化 Phase 1 + login happy path | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aic-auth-handler-interface-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aic-auth-handler-interface-implementation.md) — 接口重构 + 3 happy path 测试 + 2 mock,auth.go login 37.8%→86.5%,api 覆盖 29.3%→31.2% |
 | 1ai-d | me+logout happy path | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aid-me-logout-happy-path-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aid-me-logout-happy-path-implementation.md) — 4 新测试,auth.go me 40%→100%、logout 85.7%→100%,AuthHandler 全 4 handler happy+拒绝路径全覆盖 |
+| 1ai-e | claim+chat listMessages 接口化 + happy path | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aie-claim-chat-interface-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aie-claim-chat-interface-implementation.md) — 3 新接口 + 4 happy path 测试,claim 25%→78.1%、listMessages 57%→76.2%,api 覆盖 31.8%→33.7% |
 
 **累计**:🟢 ×23(4 strict + 1 aligned + 18 touched) / 🟡 ×9 / 🔴 ×0
 
