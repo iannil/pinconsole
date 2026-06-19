@@ -17,13 +17,19 @@ import (
 )
 
 type ChatHandler struct {
-	stores *storage.Stores
-	hub    CommandHub
-	logger *slog.Logger
+	stores      *storage.Stores // 留给 postMessage + requireClaimOwnership(1ai-f 再重构)
+	messageRepo chatMessageRepo // 1ai-e:listMessages 用接口(从 stores.PG 抽取)
+	hub         CommandHub
+	logger      *slog.Logger
 }
 
 func NewChatHandler(stores *storage.Stores, h CommandHub, logger *slog.Logger) *ChatHandler {
-	return &ChatHandler{stores: stores, hub: h, logger: logger}
+	return &ChatHandler{
+		stores:      stores,
+		messageRepo: stores.PG, // 1ai-e:listMessages 走接口
+		hub:         h,
+		logger:      logger,
+	}
 }
 
 func (h *ChatHandler) Register(r gin.IRoutes) {
@@ -68,7 +74,7 @@ func (h *ChatHandler) listMessages(c *gin.Context) {
 	}
 	limit := int32(200)
 
-	msgs, err := h.stores.PG.ListChatMessagesBySession(ctx, sessionID, sinceID, limit)
+	msgs, err := h.messageRepo.ListChatMessagesBySession(ctx, sessionID, sinceID, limit)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "list messages failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})

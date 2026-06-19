@@ -120,7 +120,7 @@ func TestGetClaim_NotClaimed_ReturnsFalse(t *testing.T) {
 	defer rdb.Del(ctx, claimKey(sessionID))
 
 	h := &ClaimHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 		logger: testLogger(),
 	}
 	r := newClaimTestEngine(h)
@@ -154,7 +154,7 @@ func TestGetClaim_Claimed_ReturnsOwner(t *testing.T) {
 	}
 
 	h := &ClaimHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 		logger: testLogger(),
 	}
 	r := newClaimTestEngine(h)
@@ -203,7 +203,7 @@ func TestRelease_NonOwner_Returns403(t *testing.T) {
 	c.Set("user_id", callerUID)
 
 	h := &ClaimHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 		logger: testLogger(),
 	}
 	h.release(c)

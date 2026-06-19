@@ -28,12 +28,22 @@ end
 `
 
 type ClaimHandler struct {
-	stores *storage.Stores
-	logger *slog.Logger
+	// 1ai-e:用接口替代具体 *storage.Stores,解锁 mock 注入。
+	// *storage.Postgres / *storage.Redis 自动满足。
+	sessionRepo claimSessionRepo
+	redis       claimRedisStore
+	logger      *slog.Logger
 }
 
+// NewClaimHandler 创建 claim handler。
+//
+// 1ai-e:签名不变(仍接受 *storage.Stores),内部抽取 PG/Redis 适配接口。
 func NewClaimHandler(stores *storage.Stores, logger *slog.Logger) *ClaimHandler {
-	return &ClaimHandler{stores: stores, logger: logger}
+	return &ClaimHandler{
+		sessionRepo: stores.PG,
+		redis:       stores.Redis,
+		logger:      logger,
+	}
 }
 
 func (h *ClaimHandler) Register(r gin.IRoutes) {
@@ -70,7 +80,7 @@ func (h *ClaimHandler) claim(c *gin.Context) {
 	uid, _ := userID.(uuid.UUID)
 
 	// 1. PG session 存在性 + 未结束
-	sess, err := h.stores.PG.GetSession(ctx, sessionID)
+	sess, err := h.sessionRepo.GetSession(ctx, sessionID)
 	if err != nil || sess == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "session_not_found"})
 		return
@@ -81,7 +91,7 @@ func (h *ClaimHandler) claim(c *gin.Context) {
 	}
 
 	// 2. SET NX 原子获取
-	ok, err := h.stores.Redis.SetNX(ctx, claimKey(sessionID), []byte(uid.String()), claimTTL)
+	ok, err := h.redis.SetNX(ctx, claimKey(sessionID), []byte(uid.String()), claimTTL)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "claim SetNX failed", "session_id", sessionID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "claim_setnx_failed"})
@@ -89,7 +99,7 @@ func (h *ClaimHandler) claim(c *gin.Context) {
 	}
 	if !ok {
 		// NX 失败 → 已被 claim；返回当前 owner
-		ownerVal, _ := h.stores.Redis.Get(ctx, claimKey(sessionID))
+		ownerVal, _ := h.redis.Get(ctx, claimKey(sessionID))
 		ownerUID := ""
 		if ownerVal != nil {
 			if parsed, err := uuid.Parse(string(ownerVal)); err == nil {
@@ -126,7 +136,7 @@ func (h *ClaimHandler) release(c *gin.Context) {
 	uid, _ := userID.(uuid.UUID)
 
 	// Lua 原子：仅当 Redis owner == uid 才 DEL，返回删除条数（0 = 不匹配/不存在）
-	result, err := h.stores.Redis.EvalLua(ctx, releaseClaimLua,
+	result, err := h.redis.EvalLua(ctx, releaseClaimLua,
 		[]string{claimKey(sessionID)}, uid.String())
 	if err != nil {
 		h.logger.ErrorContext(ctx, "release EvalLua failed", "session_id", sessionID, "error", err)
@@ -155,7 +165,7 @@ func (h *ClaimHandler) getClaim(c *gin.Context) {
 		return
 	}
 
-	val, err := h.stores.Redis.Get(ctx, claimKey(sessionID))
+	val, err := h.redis.Get(ctx, claimKey(sessionID))
 	if err != nil {
 		h.logger.ErrorContext(ctx, "getClaim failed", "session_id", sessionID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "claim_lookup_failed"})

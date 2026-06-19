@@ -201,7 +201,7 @@ func TestLifecycle_Behavioral_RealHandlerEmitLogs(t *testing.T) {
 	c.Set("user_id", uuid.New())
 
 	h := &ClaimHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 		logger: logger,
 	}
 
@@ -247,7 +247,7 @@ func TestLifecycle_Behavioral_ReleaseHandler(t *testing.T) {
 	c.Set("user_id", uuid.New())
 
 	h := &ClaimHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 		logger: logger,
 	}
 
