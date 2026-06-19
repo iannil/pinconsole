@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(测试信心审计完成 — 20 切片 badge 实降,详见 [`audits/2026-06-19-test-confidence-audit.md`](./audits/2026-06-19-test-confidence-audit.md);前序:v1 主干完全收口 + 1aa/1ab,deep-audit P1-5 关闭)
+**最后更新**:2026-06-19(1ac 部分完成 — 关闭 13/28 T0 + 修 1 个代码 bug;前序:测试信心审计完成,20 切片 badge 实降)
 
 ---
 
@@ -141,8 +141,8 @@
 | 1h-ui | admin LoginView + 守卫 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1h-ui-spec.md) + [impl](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) |
 | 1i | 反爬虫 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1i-implementation.md) |
 | 1j | i18n + 部署 + CI | 🟢 aligned | [impl](./reports/completed/2026-06-17-slice-1j-implementation.md) |
-| 1k | 安全阻断栈 | 🔴 | [spec](./reports/completed/2026-06-18-slice-1k-spec.md) + [impl](./reports/completed/2026-06-18-slice-1k-implementation.md) |
-| 1l | GDPR 合规 | 🔴 | [spec](./reports/completed/2026-06-18-slice-1l-spec.md) + [impl](./reports/completed/2026-06-18-slice-1l-implementation.md) — 1v 已修 GDPR DELETE ErrNoRows(代码层),但级联/GC 回归测试仍缺 |
+| 1k | 安全阻断栈 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1k-spec.md) + [impl](./reports/completed/2026-06-18-slice-1k-implementation.md) — 1ac 关闭 8/9 T0(剩 1k-9 e2e 范围) |
+| 1l | GDPR 合规 | 🔴 | [spec](./reports/completed/2026-06-18-slice-1l-spec.md) + [impl](./reports/completed/2026-06-18-slice-1l-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 1l-1/5 + admin role bug 修复;1l-2/3/4(MinIO/Redis/GC)留下次 |
 | 1m | 可观测性 | 🟡 | [spec](./reports/completed/2026-06-18-slice-1m-spec.md) + [impl](./reports/completed/2026-06-18-slice-1m-implementation.md) |
 | 1n | 测试深度 + 文档虚标修复 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1n-implementation.md) |
 | 1o | 生产硬化 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1o-implementation.md) — 1v R2 rubric 真实集成(代码层),per-sub cancel/leak 测试缺 |
@@ -155,7 +155,7 @@
 | 1v | 审计后续修复 | 🟢 touched | [impl](./reports/completed/2026-06-18-slice-1v-implementation.md) |
 | 1w | flagged session 接入 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1w-implementation.md) |
 | 1x | 登录暴力破解防护 | 🟡 | [impl](./reports/completed/2026-06-18-slice-1x-implementation.md) |
-| 1y | visitor WS rate limit | 🔴 | [impl](./reports/completed/2026-06-18-slice-1y-visitor-ws-rate-limit.md) |
+| 1y | visitor WS rate limit | 🟡 | [impl](./reports/completed/2026-06-18-slice-1y-visitor-ws-rate-limit.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 close+flag 接线契约 |
 | 1z | 生产就绪度补全 | 🟢 strict | [impl](./reports/completed/2026-06-18-slice-1z-prod-readiness-gaps.md) |
 | v1-e2e | 全量 e2e acceptance | 🟡 | [impl](./reports/completed/2026-06-18-v1-e2e-acceptance.md) |
 | v1-followups | e2e 后 5 个生产 bug fix | 🟡 | [impl](./reports/completed/2026-06-18-v1-followups.md) |
