@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-19(1af 完成 — R3 续做 6 group:23 新行为级测试,D1 PASS 率 ~55%→~75%, 整体 verdict 🟡→🟢;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health 项)
+**最后更新**:2026-06-19(1ai 完成 — storage user_repo + session_repo PG 集成测试 11 个,storage 包覆盖 20.1%→39.2%(+19.1pp),user/session 全函数 100%;1ag+1ah+1aj+1ai 累计 +34 测试 + 2 代码 fix;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 11 storage-repo 项)
 
 ---
 
@@ -131,13 +131,13 @@
 | 子切片 | 内容 | 深度 | 报告 |
 |---|---|---|---|
 | 1a | 仓库骨架 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1a-implementation.md) |
-| 1b | 单向最小 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) |
+| 1b | 单向最小 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1b-implementation.md) + [1ai](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-implementation.md) — session_repo PG 集成(CreateSession/Get/Touch/End/List 全覆盖) |
 | 1c | rrweb 接入 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1c-implementation.md) |
-| 1d | 录像归档 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1d-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) — 4 T0 + 5 T1 全部关闭(源码契约级) |
+| 1d | 录像归档 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1d-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) + [1ag](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-implementation.md) — 4 T0 + 5 T1 全部关闭 + replay HTTP 行为级(parseSince/UUID/since 拒绝路径) |
 | 1e | 双向通道 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1e-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) |
 | 1f | 表单 + 跳转 | 🟡 | [impl](./reports/completed/2026-06-17-slice-1f-implementation.md) |
-| 1g | 弹窗 + 聊天 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) — 5/5 T1 关闭 + chat repo PG 集成 |
-| 1h | 认证 + 多运营(后端) | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — **1ac-final 关闭全部 6/6 T0**(operatorWS 加 cookie session 鉴权) |
+| 1g | 弹窗 + 聊天 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1g-implementation.md) + [1ad](./reports/completed/2026-06-19-slice-1ad-implementation.md) + [1ah](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — 5/5 T1 关闭 + chat repo PG + 1ah chat_http listMessages UUID 路径 |
+| 1h | 认证 + 多运营(后端) | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1h-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) + [1ag](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-implementation.md) + [1ah](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — **1ac-final 关闭全部 6/6 T0** + 1ag auth HTTP + 1ah claim HTTP(getClaim/release 行为级) |
 | 1h-ui | admin LoginView + 守卫 | 🟢 touched | [spec](./reports/completed/2026-06-18-slice-1h-ui-spec.md) + [impl](./reports/completed/2026-06-18-slice-1h-ui-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) |
 | 1i | 反爬虫 | 🟢 touched | [impl](./reports/completed/2026-06-17-slice-1i-implementation.md) + [1ac](./reports/completed/2026-06-19-slice-1ac-implementation.md) — 1ac 关闭 fail-open |
 | 1j | i18n + 部署 + CI | 🟢 aligned | [impl](./reports/completed/2026-06-17-slice-1j-implementation.md) |
@@ -163,6 +163,10 @@
 | 1ab | TrustedProxies 加固(P1-5) | 🟢 strict | [impl](./reports/completed/2026-06-19-slice-1ab-trusted-proxies.md) |
 | 1ae | 测试健康度加固(9 项 P0+P1) | 🟢 touched | [audit](./audits/2026-06-19-test-health-audit.md) + [spec](./reports/completed/2026-06-19-slice-1ae-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ae-implementation.md) — mutation score 71.4%→100%, e2e flaky 20%→0%, 整体 verdict 🔴→🟡 |
 | 1af | 测试健康度深化(R3 续做 6 group) | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1af-spec.md) + [impl](./reports/completed/2026-06-19-slice-1af-implementation.md) — 23 新行为级测试,D1 PASS 率 ~55%→~75%, 整体 verdict 🟡→🟢 |
+| 1ag | api handler 行为级测试(auth+replay) | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ag-api-handler-behavioral-tests-implementation.md) — 12 新测试,api 覆盖 20%→25.5%,1d/1h 升 🟢 touched |
+| 1ah | claim/chat handler 行为级测试 | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ah-claim-chat-handler-tests-implementation.md) — 10 新测试,api 覆盖 25.5%→29.1%,getClaim 0%→83%、release 38%→76%、listMessages 0%→57% |
+| 1aj | 修 parseSince 负数 + ws_ratelimit flaky | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1aj-followup-bugs-spec.md) + [impl](./reports/completed/2026-06-19-slice-1aj-followup-bugs-implementation.md) — 1 新测试 + 4 测试 err-skip 改造,api 覆盖 29.1%→29.3%,1ag follow-up 关闭 |
+| 1ai | storage user+session repo PG 集成测试 | 🟢 touched | [spec](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-spec.md) + [impl](./reports/completed/2026-06-19-slice-1ai-storage-repo-tests-implementation.md) — 11 新测试,storage 覆盖 20.1%→39.2%,user_repo 100% + session_repo 核心 4 函数 100% |
 
 **累计**:🟢 ×23(4 strict + 1 aligned + 18 touched) / 🟡 ×9 / 🔴 ×0
 
