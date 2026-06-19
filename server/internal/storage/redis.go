@@ -87,3 +87,10 @@ func (r *Redis) Get(ctx context.Context, key string) ([]byte, error) {
 func (r *Redis) Del(ctx context.Context, key string) error {
 	return r.Client.Del(ctx, key).Err()
 }
+
+// TTL 返回 key 的剩余生存时间(秒级精度)。
+// key 不存在返回 -1(无 TTL)或 -2(key 不存在),与 go-redis 一致。
+// 1ai-c:加此方法替代 auth.go 直接调 Client.TTL,让接口化重构可行。
+func (r *Redis) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.Client.TTL(ctx, key).Result()
+}
