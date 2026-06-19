@@ -231,6 +231,153 @@ func TestLifecycle_Behavioral_RealHandlerEmitLogs(t *testing.T) {
 	}
 }
 
+// TestLifecycle_Behavioral_ReleaseHandler — 1af G1 (LIF-03):
+// 验证 release handler 真调时产出 "Release" span 的 Lifecycle 日志。
+func TestLifecycle_Behavioral_ReleaseHandler(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/sessions/00000000-0000-0000-0000-000000000000/release", nil)
+	c.Set("user_id", uuid.New())
+
+	h := &ClaimHandler{
+		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		logger: logger,
+	}
+
+	defer func() { _ = recover() }()
+	h.release(c)
+
+	logs := parseLifecycleLogs(&buf)
+	hasStart, hasEnd := false, false
+	for _, l := range logs {
+		if l["span"] == "Release" {
+			if l["event_type"] == string(observability.EventFunctionStart) {
+				hasStart = true
+			}
+			if l["event_type"] == string(observability.EventFunctionEnd) {
+				hasEnd = true
+			}
+		}
+	}
+	if !hasStart {
+		t.Errorf("release handler 未产生 Lifecycle Function_Start 日志 — LIF-03 接线破坏")
+	}
+	if !hasEnd {
+		t.Errorf("release handler 未产生 Lifecycle Function_End 日志 — defer 漏调")
+	}
+}
+
+// TestLifecycle_Behavioral_PostMessageHandler — 1af G1 (LIF-04):
+// 验证 chat postMessage handler 真调时产出 "PostMessage" span 的 Lifecycle 日志。
+//
+// 即使 handler 因 claim check 失败而 early-return,Lifecycle 仍应记录(它是 defer)。
+func TestLifecycle_Behavioral_PostMessageHandler(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	sessionID := uuid.Nil
+	c.Params = append(c.Params, gin.Param{Key: "id", Value: sessionID.String()})
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/sessions/"+sessionID.String()+"/messages", nil)
+	c.Set("user_id", uuid.New())
+
+	h := &ChatHandler{
+		stores: &storage.Stores{
+			Redis: &storage.Redis{Client: rdb},
+		},
+		logger: logger,
+	}
+
+	defer func() { _ = recover() }()
+	h.postMessage(c)
+
+	logs := parseLifecycleLogs(&buf)
+	hasStart, hasEnd := false, false
+	for _, l := range logs {
+		if l["span"] == "PostMessage" {
+			if l["event_type"] == string(observability.EventFunctionStart) {
+				hasStart = true
+			}
+			if l["event_type"] == string(observability.EventFunctionEnd) {
+				hasEnd = true
+			}
+		}
+	}
+	if !hasStart {
+		t.Errorf("postMessage handler 未产生 Lifecycle Function_Start 日志 — LIF-04 接线破坏")
+	}
+	if !hasEnd {
+		t.Errorf("postMessage handler 未产生 Lifecycle Function_End 日志 — defer 漏调")
+	}
+}
+
+// TestLifecycle_Behavioral_PostCommandHandler — 1af G1 (LIF-01):
+// 验证 command postCommand handler 真调时产出 "PostCommand" span 的 Lifecycle 日志。
+func TestLifecycle_Behavioral_PostCommandHandler(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	sessionID := uuid.Nil
+	c.Params = append(c.Params, gin.Param{Key: "id", Value: sessionID.String()})
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/sessions/"+sessionID.String()+"/commands", nil)
+	c.Set("user_id", uuid.New())
+
+	h := &CommandHandler{
+		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		logger: logger,
+	}
+
+	defer func() { _ = recover() }()
+	h.postCommand(c)
+
+	logs := parseLifecycleLogs(&buf)
+	hasStart, hasEnd := false, false
+	for _, l := range logs {
+		if l["span"] == "PostCommand" {
+			if l["event_type"] == string(observability.EventFunctionStart) {
+				hasStart = true
+			}
+			if l["event_type"] == string(observability.EventFunctionEnd) {
+				hasEnd = true
+			}
+		}
+	}
+	if !hasStart {
+		t.Errorf("postCommand handler 未产生 Lifecycle Function_Start 日志 — LIF-01 接线破坏")
+	}
+	if !hasEnd {
+		t.Errorf("postCommand handler 未产生 Lifecycle Function_End 日志 — defer 漏调")
+	}
+}
+
+// hasLifecycleSpan helper:从 logs 中找指定 span + event_type。
+func hasLifecycleSpan(logs []map[string]any, span, eventType string) bool {
+	for _, l := range logs {
+		if l["span"] == span && l["event_type"] == eventType {
+			return true
+		}
+	}
+	return false
+}
+
 // parseLifecycleLogs 解析 buffer 中的 JSON 日志(每行一条)。
 func parseLifecycleLogs(buf *bytes.Buffer) []map[string]any {
 	var out []map[string]any
