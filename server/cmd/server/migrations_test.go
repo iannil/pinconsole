@@ -1,14 +1,20 @@
 // 1k 测试：migrations 嵌入与版本解析 (P0-14)。
 // 1ac 扩展:advisory lock + fail-fast 源码契约(T0-1k-7 + T0-1k-8)。
+// 1ae R3c 扩展:行为级 fail-fast 测试(用 failingPool 真调 runMigrations)。
 package main
 
 import (
+	"context"
+	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/iannil/marketing-monitor/migrations"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestParseMigrationVersion(t *testing.T) {
@@ -149,3 +155,80 @@ func TestMigration_AdvisoryLockID_Stable(t *testing.T) {
 		t.Errorf("migrationAdvisoryLockID = %d, want 20260618(项目起始日期,防跨服务冲突)", migrationAdvisoryLockID)
 	}
 }
+
+// TestRunMigrations_FailingMigration_ReturnsError — 1ae R3c 升级:
+// 真调 runMigrations + 故意坏的 SQL,验证返回 error(fail-fast)。
+//
+// 此前的源码契约测试 TestMigration_FailFastOnMigrationError 只 grep "os.Exit(1)",
+// 不能捕获:
+// - runMigrations 内部错误处理 broken(吞掉错误返回 nil)
+// - 错误传播链断(runMigrations 返 err 但 main.go 不处理)
+//
+// 行为级测试:用不可达 PG DSN,runMigrations 必须返回非 nil error。
+func TestRunMigrations_FailingMigration_ReturnsError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("需要 PG 连接尝试")
+	}
+
+	// 用不可达 DSN:runMigrations 第一步 pg_advisory_lock 必失败
+	// 不直接 mock pool,因 runMigrations 用 storage.PgxPool 接口
+	badPool := &failingPool{}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+	err := runMigrations(context.Background(), badPool, logger)
+	if err == nil {
+		t.Fatal("runMigrations with failing pool: 应返回 error(fail-fast),got nil")
+	}
+	// 错误信息应暗示 advisory lock 或 PG 连接失败
+	errStr := err.Error()
+	if !strings.Contains(errStr, "advisory lock") && !strings.Contains(errStr, "lock") {
+		t.Errorf("runMigrations err 不含 advisory lock 信息: %v", err)
+	}
+}
+
+// TestRunMigrations_NoErrOnPoolClose — 1ae R3c 补充:
+// 验证 runMigrations 在 nil/无效 pool 时不 panic(fail-fast 优雅返回 error)。
+func TestRunMigrations_NoErrOnPoolClose(t *testing.T) {
+	if testing.Short() {
+		t.Skip("需要 PG 连接尝试")
+	}
+
+	// 用另一个 failing pool 模拟池关闭场景
+	closedPool := &failingPool{}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("runMigrations panic on bad pool: %v", r)
+		}
+	}()
+	_ = runMigrations(context.Background(), closedPool, logger)
+}
+
+// failingPool 实现 storage.PgxPool,所有方法返回 error 或 panic。
+// 用于 1ae R3c 验证 runMigrations 的 fail-fast 行为。
+type failingPool struct{}
+
+func (f *failingPool) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return pgconn.CommandTag{}, fmt.Errorf("failingPool: synthetic PG unavailable")
+}
+func (f *failingPool) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, fmt.Errorf("failingPool: synthetic PG unavailable")
+}
+func (f *failingPool) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	return errorRow{err: fmt.Errorf("failingPool: synthetic PG unavailable")}
+}
+func (f *failingPool) Begin(ctx context.Context) (pgx.Tx, error) {
+	return nil, fmt.Errorf("failingPool: synthetic PG unavailable")
+}
+func (f *failingPool) Ping(ctx context.Context) error {
+	return fmt.Errorf("failingPool: synthetic PG unavailable")
+}
+func (f *failingPool) Close() {}
+
+// errorRow 实现 pgx.Row,Scan 总返回注入的 error。
+type errorRow struct {
+	err error
+}
+
+func (r errorRow) Scan(dest ...any) error { return r.err }

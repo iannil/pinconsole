@@ -239,3 +239,72 @@ func TestWS_OperatorWS_WiresAuthentication(t *testing.T) {
 		t.Errorf("operatorWS 缺失 `if !authOK { return }` 守护")
 	}
 }
+
+// TestOperatorWS_NoCookie_Returns401_Behavioral — 1ae 升级 T0-1h-2 行为级:
+// 真调 operatorWS handler(不是 authenticateOperatorWS 函数本身),
+// 断言无 cookie 时整个 handler 返回 401 + 不进入 websocket.Accept。
+//
+// 此测试解决 audit M4 SURVIVED:源码契约测试不能检测 dead code(如把 auth 调用
+// 包进 if false)。行为级测试必须真正触发 handler 执行路径。
+func TestOperatorWS_NoCookie_Returns401_Behavioral(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	c.Request.Header.Set("Origin", "http://localhost:8080") // 同源,过 OriginCheck
+
+	h := &WSHandler{
+		stores:  &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		devMode: false, // prod mode,无 bypass
+		// hub/stream/flusher/snapshots 不需要:auth 失败应在到达 Accept 前返回
+	}
+
+	h.operatorWS(c)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("operatorWS no-cookie: status=%d want 401 (behavioral: handler must invoke auth check)", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "no_session") && !strings.Contains(body, "invalid_session") {
+		t.Errorf("operatorWS no-cookie: body should contain no_session/invalid_session error, got: %s", body)
+	}
+	// 关键:WebSocket Upgrade 不应发生 — 响应不应有 Upgrade headers
+	if got := w.Header().Get("Upgrade"); got != "" {
+		t.Errorf("operatorWS no-cookie: Upgrade header set (%q) — WebSocket Accept 不应在 auth 失败时被调用", got)
+	}
+	if got := w.Header().Get("Connection"); got == "Upgrade" {
+		t.Errorf("operatorWS no-cookie: Connection=Upgrade — 同上")
+	}
+}
+
+// TestOperatorWS_InvalidSession_Returns401_Behavioral — 1ae 新增:
+// 带无效 cookie session 时,handler 也必须 401,不进入 Accept。
+func TestOperatorWS_InvalidSession_Returns401_Behavioral(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	c.Request.Header.Set("Origin", "http://localhost:8080")
+	// 加一个不在 Redis 中的 session cookie
+	c.Request.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "nonexistent-session-id"})
+
+	h := &WSHandler{
+		stores:  &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		devMode: false,
+	}
+
+	h.operatorWS(c)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("operatorWS invalid-session: status=%d want 401", w.Code)
+	}
+	if got := w.Header().Get("Upgrade"); got != "" {
+		t.Errorf("operatorWS invalid-session: Upgrade header set — Accept 不应被调用")
+	}
+}

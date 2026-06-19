@@ -4,13 +4,19 @@
 //   验证:fetch 401 → unauthorizedHandler 被调 → auth store user=null + error='SESSION_EXPIRED'
 //
 // T0-1h-ui-3:SESSION_EXPIRED 后,LoginView 显示 session_expired 文案
-//   验证:auth.error === 'SESSION_EXPIRED' 时,UI 显示对应的 i18n 文案 key
-//   (LoginView 读 error,匹配 'SESSION_EXPIRED' 时显示 i18n 'login.error_session_expired')
+//   验证:mount 真 LoginView + 设 auth.error='SESSION_EXPIRED' → 渲染 i18n 文案"会话已过期"
+//   (1ae 升级:从 inline 重写 conditional 的 trivial test 改为真 mount + i18n 实例 + DOM 断言)
 //
 // 不测:App.vue mount fetchMe(T0-1h-ui-2)— 需 Vue mount 测试 + window.location 模拟,
 //   1aa 已有 router.test.ts 覆盖 ensureAuthInit timing,等价 cover 此路径。
+
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createPinia, setActivePinia } from 'pinia';
+import { createPinia, setActivePinia, type Pinia } from 'pinia';
+import { mount, flushPromises } from '@vue/test-utils';
+import { createI18n } from 'vue-i18n';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 vi.mock('../src/api/auth', () => ({
   postLogin: vi.fn(),
@@ -19,10 +25,15 @@ vi.mock('../src/api/auth', () => ({
 }));
 
 import { useAuthStore } from '../src/stores/auth';
+import LoginView from '../src/views/LoginView.vue';
+import zhCN from '../src/i18n/zh-CN';
+import enUS from '../src/i18n/en-US';
 
 describe('1ac: SESSION_EXPIRED + fetchJson 401 handler', () => {
+  let pinia: Pinia;
   beforeEach(() => {
-    setActivePinia(createPinia());
+    pinia = createPinia();
+    setActivePinia(pinia);
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -68,24 +79,69 @@ describe('1ac: SESSION_EXPIRED + fetchJson 401 handler', () => {
     expect(auth.error).toBe('SESSION_EXPIRED');
   });
 
-  it('SESSION_EXPIRED 在 error 中 LoginView 应显示特殊文案(非 invalid_credentials)', async () => {
-    // 此测试验证 SESSION_EXPIRED 错误码不被当成普通凭证错误显示
-    // LoginView.vue 代码: error === 'SESSION_EXPIRED' ? t('login.error_session_expired') : t('login.error_credentials')
+  it('SESSION_EXPIRED 时 LoginView mount 后渲染特殊 i18n 文案', async () => {
+    // 1ae 升级 T0-1h-ui-3:从 trivial inline 重写 → 真 mount LoginView + 真 i18n + DOM 文本断言
+    // 防止 LoginView.vue 改 errorText conditional 后测试仍能捕获
     const auth = useAuthStore();
-
-    // 模拟 session 过期路径
     (auth as unknown as { user: unknown }).user = null;
     (auth as unknown as { error: string }).error = 'SESSION_EXPIRED';
 
-    expect(auth.error).toBe('SESSION_EXPIRED');
-    expect(auth.error).not.toBe('invalid_credentials');
+    const i18n = createI18n({
+      legacy: false,
+      locale: 'zh-CN',
+      fallbackLocale: 'en-US',
+      messages: { 'zh-CN': zhCN, 'en-US': enUS },
+    });
 
-    // 验证 LoginView 的 i18n key 选择逻辑
-    // (直接复用 LoginView 的 conditional logic,不引入完整 Vue mount)
-    const expectedKey = auth.error === 'SESSION_EXPIRED'
-      ? 'login.error_session_expired'
-      : 'login.error_credentials';
-    expect(expectedKey).toBe('login.error_session_expired');
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/login', component: LoginView }],
+    });
+    await router.push('/login');
+    await router.isReady();
+
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [i18n, router, pinia],
+      },
+    });
+    await flushPromises();
+
+    // 关键断言:渲染的 DOM 必须包含 SESSION_EXPIRED 对应的 i18n 文案
+    expect(wrapper.text()).toContain('会话已过期,请重新登录');
+    // 且不能错误地显示 invalid_credentials 文案
+    expect(wrapper.text()).not.toContain('邮箱或密码错误');
+  });
+
+  it('invalid_credentials 时 LoginView mount 后渲染凭证错误文案', async () => {
+    // 1ae 新增:对照测试 invalid_credentials 分支
+    const auth = useAuthStore();
+    (auth as unknown as { user: unknown }).user = null;
+    (auth as unknown as { error: string }).error = 'invalid_credentials';
+
+    const i18n = createI18n({
+      legacy: false,
+      locale: 'zh-CN',
+      fallbackLocale: 'en-US',
+      messages: { 'zh-CN': zhCN, 'en-US': enUS },
+    });
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/login', component: LoginView }],
+    });
+    await router.push('/login');
+    await router.isReady();
+
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [i18n, router, pinia],
+      },
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('邮箱或密码错误');
+    expect(wrapper.text()).not.toContain('会话已过期');
   });
 
   it('fetchJson 200 不触发 unauthorizedHandler(正常路径)', async () => {

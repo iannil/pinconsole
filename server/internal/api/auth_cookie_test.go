@@ -8,9 +8,13 @@
 package api
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 // TestAuthCookie_HttpOnly_AlwaysTrue — T0-1h-1: cookie HttpOnly 必须为 true。
@@ -129,5 +133,78 @@ func TestAuthCookie_SessionCookieName_Constant(t *testing.T) {
 func TestAuthCookie_SessionTTL_Constant(t *testing.T) {
 	if sessionTTL != 24*60*60*1_000_000_000 { // 24h in nanoseconds
 		t.Errorf("sessionTTL = %v, want 24h", sessionTTL)
+	}
+}
+
+// TestSetSessionCookie_Behavioral_ProdMode — 1ae R3b 升级:
+// 真调 setSessionCookie + 断言 Set-Cookie header 属性(Secure/HttpOnly/SameSite/MaxAge)。
+//
+// 此前的源码契约测试只能 grep "h.secureCookie, true)" 字符串,不能捕获:
+// - SetSameSite 被误删(CSRF 风险)
+// - SetCookie 第 7 参数(httpOnly)被改为 false
+// - maxAge 计算错误
+//
+// 行为级测试通过 gin 的真 cookie 序列化,验证 header 输出。
+func TestSetSessionCookie_Behavioral_ProdMode(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+	h := &AuthHandler{secureCookie: true}
+	h.setSessionCookie(c, "test-session-id", int(sessionTTL.Seconds()))
+
+	setCookie := w.Header().Get("Set-Cookie")
+	if setCookie == "" {
+		t.Fatal("Set-Cookie header missing")
+	}
+
+	// 必须包含 session id
+	if !strings.Contains(setCookie, "mm_session=test-session-id") {
+		t.Errorf("Set-Cookie 不含 session id: %s", setCookie)
+	}
+
+	// 必须 Secure(prod 模式)
+	if !strings.Contains(setCookie, "; Secure") {
+		t.Errorf("Set-Cookie 缺 Secure 属性(prod 模式必须): %s", setCookie)
+	}
+
+	// 必须 HttpOnly
+	if !strings.Contains(setCookie, "; HttpOnly") {
+		t.Errorf("Set-Cookie 缺 HttpOnly 属性(XSS 防护): %s", setCookie)
+	}
+
+	// 必须 SameSite=Lax
+	if !strings.Contains(setCookie, "; SameSite=Lax") {
+		t.Errorf("Set-Cookie 缺 SameSite=Lax(CSRF 防护): %s", setCookie)
+	}
+
+	// 必须 MaxAge=86400(24h)
+	if !strings.Contains(setCookie, "; Max-Age=86400") {
+		t.Errorf("Set-Cookie 缺 Max-Age=86400(24h): %s", setCookie)
+	}
+}
+
+// TestSetSessionCookie_Behavioral_DevMode — 1ae R3b 补充:
+// dev 模式 Secure=false(让 HTTP localhost 能用 cookie)。
+func TestSetSessionCookie_Behavioral_DevMode(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+	h := &AuthHandler{secureCookie: false}
+	h.setSessionCookie(c, "dev-session", 3600)
+
+	setCookie := w.Header().Get("Set-Cookie")
+
+	// dev 模式不能设 Secure(否则 HTTP localhost 登录失败)
+	if strings.Contains(setCookie, "; Secure") {
+		t.Errorf("dev 模式 Set-Cookie 不应含 Secure: %s", setCookie)
+	}
+
+	// HttpOnly 必须仍 true(dev 模式也不能弱化)
+	if !strings.Contains(setCookie, "; HttpOnly") {
+		t.Errorf("dev 模式 Set-Cookie 仍必须有 HttpOnly: %s", setCookie)
 	}
 }

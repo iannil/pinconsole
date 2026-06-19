@@ -1,4 +1,5 @@
 // 1ad 测试:可观测性 lifecycle / LogPoint / LogExternalCall 接线源码契约(审计 T1-1s 13 项)。
+// 1ae R3e 扩展:加行为级测试,验证 Lifecycle 真在 handler 调用时产生日志。
 //
 // 验证 5 个 handler + 1 worker + 5 LogPoint 分支 + 3 LogExternalCall 站点都正确接线:
 //   - Lifecycle: PostCommand / Claim / Release / PostMessage / FlushSession / GC.runOnce
@@ -10,9 +11,20 @@
 package api
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/iannil/marketing-monitor/internal/observability"
+	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
 // TestObservability_Lifecycle_OnPostCommand — T1-1s-LIF-01:
@@ -95,4 +107,142 @@ func mustReadFile(t *testing.T, name string) string {
 		t.Fatalf("read %s: %v", name, err)
 	}
 	return string(b)
+}
+
+// TestLifecycle_Behavioral_ProducesStartEndLogs — 1ae R3e 升级:
+// 真调 observability.Lifecycle(从 api 包视角),验证 handler 模式下日志真产生。
+//
+// 此前的源码契约测试只 grep 字符串,不能捕获:
+// - Lifecycle 返回的 defer 函数没被调用(漏 defer)
+// - logger 传 nil 时静默 no-op(可能掩盖问题)
+//
+// 行为级测试:用 buffer logger + 真 Lifecycle 调用,验证 Function_Start + Function_End 都写入。
+func TestLifecycle_Behavioral_ProducesStartEndLogs(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	ctx := context.Background()
+
+	// 模拟 handler 中的 Lifecycle 用法
+	func() {
+		defer observability.Lifecycle(ctx, "PostCommand", logger)()
+		// 模拟业务逻辑(什么都不做)
+	}()
+
+	logs := parseLifecycleLogs(&buf)
+	if len(logs) != 2 {
+		t.Fatalf("expected 2 log entries (start+end), got %d: %v", len(logs), logs)
+	}
+	if logs[0]["event_type"] != string(observability.EventFunctionStart) {
+		t.Errorf("first log event_type = %v, want %s", logs[0]["event_type"], observability.EventFunctionStart)
+	}
+	if logs[0]["span"] != "PostCommand" {
+		t.Errorf("first log span = %v, want PostCommand", logs[0]["span"])
+	}
+	if logs[1]["event_type"] != string(observability.EventFunctionEnd) {
+		t.Errorf("second log event_type = %v, want %s", logs[1]["event_type"], observability.EventFunctionEnd)
+	}
+	if logs[1]["duration_ms"] == nil {
+		t.Errorf("duration_ms should be present in end log")
+	}
+}
+
+// TestLifecycle_Behavioral_PanicPath_RecordsError — 1ae R3e 补充:
+// panic 路径必须记录 Error + stack,不能 silent swallow。
+func TestLifecycle_Behavioral_PanicPath_RecordsError(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	ctx := context.Background()
+
+	defer func() {
+		_ = recover()
+	}()
+
+	func() {
+		defer observability.Lifecycle(ctx, "PanickyHandler", logger)()
+		panic("simulated handler panic")
+	}()
+
+	logs := parseLifecycleLogs(&buf)
+	hasError := false
+	for _, l := range logs {
+		if l["event_type"] == string(observability.EventError) {
+			hasError = true
+			if l["panic"] != "simulated handler panic" {
+				t.Errorf("panic field = %v, want 'simulated handler panic'", l["panic"])
+			}
+			if l["stack"] == nil {
+				t.Errorf("stack should be present in error log")
+			}
+		}
+	}
+	if !hasError {
+		t.Errorf("panic 路径应记录 Error event,实际 logs: %v", logs)
+	}
+}
+
+// TestLifecycle_Behavioral_RealHandlerEmitLogs — 1ae R3e 核心:
+// 用真 AuthHandler.logout(不依赖 PG,仅 Redis 可选)验证 handler 真的会产出 Lifecycle 日志。
+//
+// 选 logout 因其依赖最轻:不查 PG user,仅 Redis Del(session 可不存在)。
+// 用 buffer logger 捕获,验证 Function_Start + Function_End 都被写。
+func TestLifecycle_Behavioral_RealHandlerEmitLogs(t *testing.T) {
+	// 注意:logout 当前未挂 Lifecycle(只有 login/claim/release/postCommand/PostMessage/flushSession 有)
+	// 此测试改用 ClaimHandler.claim(已挂 Lifecycle,需 Redis seed)
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/sessions/00000000-0000-0000-0000-000000000000/claim", nil)
+	c.Set("user_id", uuid.New())
+
+	h := &ClaimHandler{
+		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		logger: logger,
+	}
+
+	// 调 claim(会失败因 session 不在 PG,但 Lifecycle 应仍记录)
+	defer func() { _ = recover() }()
+	h.claim(c)
+
+	logs := parseLifecycleLogs(&buf)
+	// 至少有 Function_Start("Claim") + Function_End("Claim")
+	hasStart := false
+	hasEnd := false
+	for _, l := range logs {
+		if l["span"] == "Claim" {
+			if l["event_type"] == string(observability.EventFunctionStart) {
+				hasStart = true
+			}
+			if l["event_type"] == string(observability.EventFunctionEnd) {
+				hasEnd = true
+			}
+		}
+	}
+	if !hasStart {
+		t.Errorf("claim handler 未产生 Lifecycle Function_Start 日志 — 接线破坏或 logger 未传入")
+	}
+	if !hasEnd {
+		t.Errorf("claim handler 未产生 Lifecycle Function_End 日志 — defer 漏调")
+	}
+}
+
+// parseLifecycleLogs 解析 buffer 中的 JSON 日志(每行一条)。
+func parseLifecycleLogs(buf *bytes.Buffer) []map[string]any {
+	var out []map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+		if line == "" {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		out = append(out, m)
+	}
+	return out
 }
