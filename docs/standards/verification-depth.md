@@ -85,47 +85,47 @@
 - 🟡 verified-shallow:有 T3,无 T0/T1/T2
 - 🔴 implemented-unverified:有 T0/T1/T2
 
-## 3. 当前分布(2026-06-19 测试信心审计后)
+## 3. 当前分布(2026-06-19 测试信心审计 + 1ac 后)
 
 详见 [`docs/project-status.md`](../project-status.md) §5。snapshot:
 
 | 切片 | 深度 | 备注 |
 |---|---|---|
 | 1a 骨架 | 🟢 touched | 结构类,低风险 |
-| 1b 单向最小 | 🟡 | 写入断言缺 |
-| 1c rrweb | 🟡 | snapshot/screenshot/iframe 缺 |
-| 1d 录像归档 | 🔴 | R2 上传+GC+GDPR 级联缺 |
-| 1e 双向通道 | 🟡 | 路由+审计断言缺 |
-| 1f 表单 + 跳转 | 🟡 | presence.navigated 缺 |
-| 1g 弹窗 + 聊天 | 🔴 | chat repo+WS 下行+XSS 缺 |
-| 1h 认证 + 多运营(后端) | 🔴 | spec partial + 实测更深 gap |
-| 1h-ui LoginView + 守卫 | 🟡 | fetchJson 401+SESSION_EXPIRED 缺 |
-| 1i 反爬虫 | 🟡 | Redis fail-open 缺 |
+| 1b 单向最小 | 🟡 | 写入断言缺(1ad) |
+| 1c rrweb | 🟡 | snapshot/screenshot/iframe 缺(1ad) |
+| 1d 录像归档 | 🔴 | R2 上传+GC+GDPR 级联缺(1ad) |
+| 1e 双向通道 | 🟡 | 路由+审计断言缺(1ad) |
+| 1f 表单 + 跳转 | 🟡 | presence.navigated 缺(1ad) |
+| 1g 弹窗 + 聊天 | 🔴 | chat repo+WS 下行+XSS 缺(1ad) |
+| 1h 认证 + 多运营(后端) | 🟡 | **1ac 关闭 5/6 T0**,1h-2 operatorWS auth 留 known gap |
+| 1h-ui LoginView + 守卫 | 🟢 touched | **1ac 升 🟡 → 🟢**(fetchJson 401+SESSION_EXPIRED covered) |
+| 1i 反爬虫 | 🟢 touched | **1ac 升 🟡 → 🟢**(Redis fail-open covered) |
 | 1j i18n + 部署 + CI | 🟢 aligned | CI 测试覆盖好 |
-| 1k 安全阻断栈 | 🔴 | 9 个 P0 类回归测试缺 |
-| 1l GDPR 合规 | 🔴 | erasure 级联+GC 全缺 |
-| 1m 可观测性 | 🟡 | 服务端 ctx 还原+SDK logger 缺 |
+| 1k 安全阻断栈 | 🟡 | **1ac 关闭 8/9 T0** |
+| 1l GDPR 合规 | 🟡 | **1ac 关闭 6/6 T0 + admin role bug 修复** |
+| 1m 可观测性 | 🟡 | 服务端 ctx 还原+SDK logger 缺(1ad) |
 | 1n 测试深度 + 文档 | 🟢 touched | 本身是补测切片 |
-| 1o 生产硬化 | 🟡 | per-sub cancel+leak 缺 |
+| 1o 生产硬化 | 🟡 | per-sub cancel+leak 缺(1ad) |
 | 1p LLM friendly | 🟢 touched | 结构类 |
 | 1q 死代码清理 | 🟢 touched | 清理类 |
-| 1r i18n + logger 迁移 | 🟡 | SDK i18n keys 缺 |
-| 1s 可观测性深化 | 🔴 | 13 个 lifecycle 集成点缺 |
+| 1r i18n + logger 迁移 | 🟡 | SDK i18n keys 缺(1ad) |
+| 1s 可观测性深化 | 🔴 | 13 个 lifecycle 集成点缺(1ad) |
 | 1t 测试覆盖补全 | 🟢 strict | 自洽 |
 | 1u god files 拆分 | 🟢 touched | 编译期校验 |
 | 1v 审计后续修复 | 🟢 touched | 多为 doc-only |
-| 1w flagged session | 🟡 | warn+admin store 缺 |
-| 1x 登录暴力破解 | 🟡 | Lua 原子缺 |
-| 1y visitor WS rate limit | 🔴 | close+flag 缺 |
+| 1w flagged session | 🟡 | warn+admin store 缺(1ad) |
+| 1x 登录暴力破解 | 🟢 touched | **1ac 升 🟡 → 🟢**(Lua 原子 covered) |
+| 1y visitor WS rate limit | 🟢 touched | **1ac 升 🔴 → 🟢**(close+flag covered) |
 | 1z 生产就绪度补全 | 🟢 strict | 自洽 |
 | 1aa TS 测试深化 | 🟢 strict | 自洽 |
 | 1ab TrustedProxies 加固 | 🟢 strict | 自洽 |
-| v1-e2e 全量 e2e | 🟡 | 多数 indirect |
-| v1-followups 5 个生产 bug fix | 🟡 | 3 fix 无回归测试 |
+| v1-e2e 全量 e2e | 🟡 | 多数 indirect(1ad) |
+| v1-followups 5 个生产 bug fix | 🟡 | 3 fix 无回归测试(1ad) |
 
 > **分布会变化**:本节 snapshot 可能滞后。永远以 `docs/project-status.md` §5 为准。
 
-> **2026-06-19 测试信心审计警示**:此前 🟢 ×31 自报值包含 20 个虚标。审计方法见 [`audits/2026-06-19-test-confidence-audit.md`](../audits/2026-06-19-test-confidence-audit.md)。修复 plan 见审计 §5(预计 T0+T1 ~58 小时,建议拆 1ac/1ad 两切片)。
+> **2026-06-19 测试信心审计 + 1ac 进展**:审计发现 20 切片 badge 虚标 → 1ac 关闭 27/28 T0 + 1 known gap(1h-2 operatorWS auth)+ 1 代码 bug(deleteVisitor 缺 admin role)。剩余 4 个 🔴(1d/1g/1s + 部分 1h-backend)留 1ad。详见 [`audits/2026-06-19-test-confidence-audit.md`](../audits/2026-06-19-test-confidence-audit.md) + [`reports/completed/2026-06-19-slice-1ac-implementation.md`](../reports/completed/2026-06-19-slice-1ac-implementation.md)。
 
 ## 4. 与完成报告的关系
 

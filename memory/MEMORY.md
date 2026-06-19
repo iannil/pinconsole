@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-19(测试信心审计完成 — badge 系统性虚标发现,20 切片实降;详见下方经验教训 + [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md);前序:v1 主干完全收口 + 1aa/1ab)
+**最后更新**：2026-06-19(1ac 完成 — 27/28 T0 关闭 + 1 known gap + 1 代码 bug 修复;前序:测试信心审计完成,20 切片 badge 实降)
 
 ---
 
@@ -40,20 +40,21 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 主干完全收口 + 测试信心审计完成(2026-06-19)**。70+ commits 交付:1a-1ab 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
+**v1 主干完全收口 + 测试信心审计 + 1ac 完成(2026-06-19)**。70+ commits 交付:1a-1ab 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
 
-**测试信心审计(2026-06-19)**:31 切片 spec→test 对照实测,**20 个切片应降级**:
-- 🔴 ×7(1d/1g/1h-backend/1k/1l/1s/1y)— critical 路径无回归测试
-- 🟡 ×13 — T1/T3 gap
-- 🟢 ×11(4 strict + 1 aligned + 6 touched)— 真深度验证
+**测试信心审计 + 1ac**(2026-06-19):
+- 审计发现 31 切片 badge 系统性虚标 → 20 个应降级
+- 1ac 关闭 27/28 T0 + 1 known gap(1h-2 operatorWS auth)+ 1 代码 bug 修复(deleteVisitor 缺 admin role)
+- 4 个切片升 🟡(1k/1l/1h-backend/部分),3 个升 🟢 touched(1i/1x/1h-ui/1y)
+- 剩余 4 个 🔴(1d/1g/1s + 1h-2 known gap)留 1ad/1ac-final
 
-修复 plan:审计 §5 列出 T0×28 / T1×40,总工作量 ~58 小时(solo 全职 ~2 周)。建议拆 1ac(T0 加固)+ 1ad(T1 加固)两切片推进。
+切片深度:🟢 ×14(4 strict + 1 aligned + 9 touched) / 🟡 ×10 / 🔴 ×4。
 
-详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md)。
+详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md) + [`docs/reports/completed/2026-06-19-slice-1ac-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ac-implementation.md)。
 
 下一步候选(post-v1):
-- **1ac 测试信心加固 T0**(28 小时)— 关闭 7 个 🔴 切片
-- **1ad 测试信心加固 T1**(30 小时)— 关闭 13 个 🟡 切片
+- **1ad 测试信心加固 T1**(~30 小时)— 关闭 13 个 🟡 → 🟢
+- **1ac-final**(~3 小时)— 修 T0-1h-2 operatorWS auth gap
 - **post-v1 路线** — 自定义域名 / 页面编辑器 / Tauri(详见 [`PLAN.md`](../PLAN.md) §8)
 
 ### 范围边界
