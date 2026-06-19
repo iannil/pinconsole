@@ -145,19 +145,19 @@ func TestLogin_WrongPassword_Returns401_Behavioral(t *testing.T) {
 
 // TestLogin_HandlerConstructibleWithRedis — 1ae R3a 副验:
 // AuthHandler 必须能用 Redis 构造(防止未来重构把 stores 字段移走后 login nil deref)。
+//
+// 1ai-c:字段从 stores *storage.Stores 改为 redis authRedisStore(接口),
+// 测试同步更新。
 func TestLogin_HandlerConstructibleWithRedis(t *testing.T) {
 	rdb := helperRedisIfAvailable(t)
 	defer rdb.Close()
 
 	h := &AuthHandler{
-		stores:       &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis:        &storage.Redis{Client: rdb},
 		logger:       nil,
 		secureCookie: false,
 	}
-	if h.stores == nil || h.stores.Redis == nil {
-		t.Fatal("AuthHandler 构造后 stores.Redis 不能为 nil — login 会 nil deref")
-	}
-	if h.stores.Redis.Client == nil {
-		t.Fatal("Redis.Client 不能为 nil")
+	if h.redis == nil {
+		t.Fatal("AuthHandler 构造后 redis 不能为 nil — login 会 nil deref")
 	}
 }

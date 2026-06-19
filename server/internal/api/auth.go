@@ -29,15 +29,26 @@ const (
 )
 
 type AuthHandler struct {
-	stores       *storage.Stores
-	logger       *slog.Logger
+	// 1ai-c:用接口替代具体 *storage.Stores,解锁 mock 注入。
+	// *storage.Postgres / *storage.Redis 自动满足接口。
+	userRepo    authUserRepo
+	redis       authRedisStore
+	logger      *slog.Logger
 	secureCookie bool // 1k：prod 模式下 cookie Secure=true
 }
 
 // NewAuthHandler 创建 auth handler。
 // secureCookie 控制是否在 SetCookie 时启用 Secure flag（prod 模式下必须 true）。
+//
+// 1ai-c:签名不变(仍接受 *storage.Stores),内部抽取 PG/Redis 适配接口。
+// 调用方(router.go)无需改动。
 func NewAuthHandler(stores *storage.Stores, logger *slog.Logger, secureCookie bool) *AuthHandler {
-	return &AuthHandler{stores: stores, logger: logger, secureCookie: secureCookie}
+	return &AuthHandler{
+		userRepo:    stores.PG,
+		redis:       stores.Redis,
+		logger:      logger,
+		secureCookie: secureCookie,
+	}
 }
 
 func (h *AuthHandler) Register(r gin.IRoutes) {
@@ -94,7 +105,7 @@ func (h *AuthHandler) login(c *gin.Context) {
 	}
 
 	// 查 user
-	user, err := h.stores.PG.GetUserByEmail(ctx, storage.DefaultTenantID, req.Email)
+	user, err := h.userRepo.GetUserByEmail(ctx, storage.DefaultTenantID, req.Email)
 	if err != nil {
 		h.logger.WarnContext(ctx, "login: user not found", "email", req.Email, "error", err)
 		h.recordLoginFailure(ctx, throttleKey)
@@ -110,7 +121,7 @@ func (h *AuthHandler) login(c *gin.Context) {
 	}
 
 	// 1x P1-3:登录成功清零计数器(防偶然失败锁定正常用户)
-	if err := h.stores.Redis.Del(ctx, throttleKey); err != nil {
+	if err := h.redis.Del(ctx, throttleKey); err != nil {
 		h.logger.WarnContext(ctx, "login throttle clear failed", "error", err)
 	}
 
@@ -118,7 +129,7 @@ func (h *AuthHandler) login(c *gin.Context) {
 	sessionID := generateSessionID()
 	sessionKey := sessionRedisKey(sessionID)
 	sessionVal := user.ID.String()
-	if err := h.stores.Redis.Set(ctx, sessionKey, []byte(sessionVal), sessionTTL); err != nil {
+	if err := h.redis.Set(ctx, sessionKey, []byte(sessionVal), sessionTTL); err != nil {
 		h.logger.ErrorContext(ctx, "login: redis set failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "session_error"})
 		return
@@ -141,7 +152,7 @@ func (h *AuthHandler) login(c *gin.Context) {
 // checkLoginThrottle 检查 email+IP 是否被锁定。
 // 返回 (locked, retryAfter秒, err)。Redis 故障时返回 (false, 0, err) 让调用方 fail-open。
 func (h *AuthHandler) checkLoginThrottle(ctx context.Context, key string) (bool, int64, error) {
-	val, err := h.stores.Redis.Get(ctx, key)
+	val, err := h.redis.Get(ctx, key)
 	if err != nil {
 		return false, 0, err
 	}
@@ -158,7 +169,7 @@ func (h *AuthHandler) checkLoginThrottle(ctx context.Context, key string) (bool,
 		return false, 0, nil
 	}
 	// 已锁定;查 TTL 算 retry-after
-	ttl, err := h.stores.Redis.Client.TTL(ctx, key).Result()
+	ttl, err := h.redis.TTL(ctx, key)
 	if err != nil {
 		return true, int64(loginLockoutWindow.Seconds()), nil // 兜底
 	}
@@ -177,7 +188,7 @@ if c == 1 then
   redis.call('EXPIRE', KEYS[1], ARGV[1])
 end
 return c`
-	if _, err := h.stores.Redis.EvalLua(ctx, luaScript,
+	if _, err := h.redis.EvalLua(ctx, luaScript,
 		[]string{key}, int(loginLockoutWindow.Seconds())); err != nil {
 		h.logger.WarnContext(ctx, "record login failure failed (fail-open)", "error", err)
 	}
@@ -194,7 +205,7 @@ func (h *AuthHandler) logout(c *gin.Context) {
 
 	sessionID, err := c.Cookie(sessionCookieName)
 	if err == nil && sessionID != "" {
-		_ = h.stores.Redis.Del(ctx, sessionRedisKey(sessionID))
+		_ = h.redis.Del(ctx, sessionRedisKey(sessionID))
 	}
 	c.SetCookie(sessionCookieName, "", -1, "/", "", h.secureCookie, true)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
@@ -220,7 +231,7 @@ func (h *AuthHandler) me(c *gin.Context) {
 		return
 	}
 	uid := userID.(uuid.UUID)
-	user, err := h.stores.PG.GetUserByID(c.Request.Context(), uid)
+	user, err := h.userRepo.GetUserByID(c.Request.Context(), uid)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user_not_found"})
 		return

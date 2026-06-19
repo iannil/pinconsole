@@ -102,7 +102,7 @@ func TestLogin_Locked_Returns429_WithRetryAfter(t *testing.T) {
 	defer rdb.Del(ctx, key)
 
 	h := &AuthHandler{
-		stores:       &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis:        &storage.Redis{Client: rdb},
 		logger:       testLogger(),
 		secureCookie: false,
 	}

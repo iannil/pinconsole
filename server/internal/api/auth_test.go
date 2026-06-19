@@ -56,7 +56,7 @@ func TestLoginThrottle_LockAfter5Failures(t *testing.T) {
 
 	// 构造 AuthHandler(只需 stores.Redis.Client)
 	h := &AuthHandler{
-		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis: &storage.Redis{Client: rdb},
 	}
 
 	// 失败 5 次后应被锁
@@ -104,7 +104,7 @@ func TestLoginThrottle_DelOnSuccess(t *testing.T) {
 	key := loginThrottleKey("success-test-1x@example.com", "10.99.99.2")
 	defer rdb.Del(ctx, key)
 
-	h := &AuthHandler{stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}}}
+	h := &AuthHandler{redis: &storage.Redis{Client: rdb}}
 
 	// 失败 3 次
 	for i := 0; i < 3; i++ {
@@ -145,7 +145,7 @@ func TestLoginThrottle_IsolationByIpAndEmail(t *testing.T) {
 	key3 := loginThrottleKey("other@example.com", "10.99.99.10") // 不同 email
 	defer rdb.Del(ctx, key1, key2, key3)
 
-	h := &AuthHandler{stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}}}
+	h := &AuthHandler{redis: &storage.Redis{Client: rdb}}
 
 	// key1 锁定,key2/key3 不应受影响
 	for i := 0; i < loginMaxAttempts; i++ {
