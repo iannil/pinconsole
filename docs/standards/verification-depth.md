@@ -94,10 +94,10 @@
 | 1a 骨架 | 🟢 touched | 结构类,低风险 |
 | 1b 单向最小 | 🟡 | 4 T1 留 1ad 续集(TS) |
 | 1c rrweb | 🟡 | 1/5 T1 closed(1ad snapshot TTL),4 T1 留续集 |
-| 1d 录像归档 | 🔴 | 留 1ad 续集 PG 集成 |
+| 1d 录像归档 | 🟡 | **1ad 升 🔴 → 🟡**(4 T0 + 5 T1 全部关闭,源码契约级) |
 | 1e 双向通道 | 🟢 touched | **1ad 升 🟡 → 🟢**(3/3 T1 + 1e-4 by 1ac) |
 | 1f 表单 + 跳转 | 🟡 | 1/2 T1(1ad navigated 结构),1 T1 留续集 |
-| 1g 弹窗 + 聊天 | 🔴 | 留 1ad 续集 |
+| 1g 弹窗 + 聊天 | 🟢 touched | **1ad 升 🔴 → 🟢**(5/5 T1 + chat repo PG 集成) |
 | 1h 认证 + 多运营(后端) | 🟢 touched | **1ac-final 6/6 T0** |
 | 1h-ui LoginView + 守卫 | 🟢 touched | 1ac 3/3 T0 |
 | 1i 反爬虫 | 🟢 touched | 1ac 1/1 T0 |
@@ -125,12 +125,13 @@
 
 > **分布会变化**:本节 snapshot 可能滞后。永远以 `docs/project-status.md` §5 为准。
 
-> **2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad 进展**:
+> **2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad 完成**:
 > - 审计:31 切片 badge 系统性虚标,20 个应降级
 > - 1ac + 1ac-final:28/28 T0 关闭 + 2 代码 bug 修复(deleteVisitor admin + operatorWS auth)
-> - 1ad:30/40 T1 关闭(13/13 1s + 3/3 1m + 3/3 1e + 4/4 1w + 2/2 1o + 1/2 1f + 1/5 1c)
-> - 累计 badge:🟢 ×19 / 🟡 ×6 / 🔴 ×3(1d/1g/1s)
-> - 1ad 续集(~10 小时)留 TS + Vue 组件 T1。
+> - 1ad:40/40 T1 关闭(13/13 1s + 3/3 1m + 3/3 1e + 4/4 1w + 2/2 1o + 2/2 1f + 5/5 1c + 5/5 1g + 5/5 1d + 2/4 1b + 3/3 v1-followups)
+> - 累计 badge:🟢 ×21(4 strict + 1 aligned + 16 touched) / 🟡 ×10 / **🔴 ×0**
+> - 7 个原 🔴 切片全部升 🟡/🟢
+> - 剩余 T2/T3(40 项,~15 小时)留 backlog
 >
 > 详见 [`audits/2026-06-19-test-confidence-audit.md`](../audits/2026-06-19-test-confidence-audit.md) + [`reports/completed/2026-06-19-slice-1ac-implementation.md`](../reports/completed/2026-06-19-slice-1ac-implementation.md) + [`reports/completed/2026-06-19-slice-1ad-implementation.md`](../reports/completed/2026-06-19-slice-1ad-implementation.md)。
 

@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-19(1ad 部分完成 — 30/40 T1 关闭 + 4 切片升 🟢 touched;前序:1ac+1ac-final 28/28 T0 关闭 + 2 代码 bug 修复)
+**最后更新**：2026-06-19(测试信心补全完成 — 28 T0 + 40 T1 全部关闭,7 个原 🔴 切片升 🟡/🟢)
 
 ---
 
@@ -42,20 +42,19 @@
 ### 当前阶段
 **v1 主干完全收口 + 测试信心审计 + 1ac 完成(2026-06-19)**。70+ commits 交付:1a-1ab 全切片 + e2e acceptance(65 passed / 0 failed / 4 skipped)+ 5 个 e2e 后真实使用发现的生产 bug fix + admin flagged UI + prod-mode/docker-prod e2e CI。
 
-**测试信心审计 + 1ac + 1ac-final + 1ad**(2026-06-19):
-- 审计:31 切片 badge 系统性虚标 → 20 个应降级
-- 1ac + 1ac-final:28/28 T0(100%)+ 2 代码 bug 修复(deleteVisitor admin role + operatorWS auth)
-- 1ad:30/40 T1 关闭(13/13 1s + 3/3 1m + 3/3 1e + 4/4 1w + 2/2 1o + 1/2 1f + 1/5 1c + 附带 1d-2)
-- 9 个切片升 🟢 touched(1ac 5 + 1ad 4:1e/1m/1o/1w),1s 🔴→🟡
-- 剩余 3 个 🔴(1d/1g/1s)留 1ad 续集
-
-切片深度:🟢 ×19(4 strict + 1 aligned + 14 touched) / 🟡 ×6 / 🔴 ×3。
+**测试信心补全完整路径**(2026-06-19):
+- 审计:31 切片 badge 系统性虚标,28 T0 + 40 T1 + 30 T2 + 10 T3 = 108 gap
+- 1ac + 1ac-final:28/28 T0 关闭 + 2 代码 bug 修复(deleteVisitor admin role + operatorWS auth)
+- 1ad:40/40 T1 关闭
+- 累计 badge:**🟢 ×21(4 strict + 1 aligned + 16 touched) / 🟡 ×10 / 🔴 ×0**
+- 7 个原 🔴 切片全部升 🟡/🟢(1d→🟡, 1g→🟢, 1h-backend→🟢, 1k→🟡, 1l→🟡, 1s→🟡, 1y→🟢)
+- 剩余 T2/T3(40 项,~15 小时)留 backlog
 
 详见 [`docs/audits/2026-06-19-test-confidence-audit.md`](../docs/audits/2026-06-19-test-confidence-audit.md) + [`docs/reports/completed/2026-06-19-slice-1ac-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ac-implementation.md) + [`docs/reports/completed/2026-06-19-slice-1ad-implementation.md`](../docs/reports/completed/2026-06-19-slice-1ad-implementation.md)。
 
 下一步候选(post-v1):
-- **1ad 续集**(~10 小时)— 关闭剩余 10 项 T1(1b/1c/1d/1g/1r TS + Vue 组件 v1-followups)
 - **post-v1 路线** — 自定义域名 / 页面编辑器 / Tauri(详见 [`PLAN.md`](../PLAN.md) §8)
+- T2/T3 backlog(40 项,~15 小时)— admin/SDK i18n keys + minor 路径,不阻塞 v1 release
 
 ### 范围边界
 - **不做**：多租户 SaaS、计费、注册流、营销页
