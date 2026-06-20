@@ -1,8 +1,8 @@
 // Package api：隐私合规端点(1l-privacy-gdpr)。
 //
-//   GET  /api/privacy/consent?fingerprint=xxx  公开,查 consent 状态
-//   POST /api/privacy/consent                  公开,写 consent
-//   DELETE /api/privacy/visitor/:fingerprint   admin 认证,级联删除访客(GDPR Art.17)
+//	GET  /api/privacy/consent?fingerprint=xxx  公开,查 consent 状态
+//	POST /api/privacy/consent                  公开,写 consent
+//	DELETE /api/privacy/visitor/:fingerprint   admin 认证,级联删除访客(GDPR Art.17)
 package api
 
 import (
@@ -168,7 +168,6 @@ func (h *PrivacyHandler) deleteVisitor(c *gin.Context) {
 		return
 	}
 
-
 	// 1. 查 visitor + sessions
 	visitor, err := h.stores.PG.GetVisitorByFingerprint(ctx, storage.DefaultTenantID, fp)
 	if err != nil {
@@ -244,9 +243,9 @@ func (h *PrivacyHandler) deleteVisitor(c *gin.Context) {
 		"deleted_minio_objects", minioDeleted,
 	)
 	c.JSON(http.StatusOK, gin.H{
-		"ok":                   true,
-		"fingerprint":          fp,
-		"deleted_sessions":     len(sessionIDs),
+		"ok":                    true,
+		"fingerprint":           fp,
+		"deleted_sessions":      len(sessionIDs),
 		"deleted_minio_objects": minioDeleted,
 	})
 }

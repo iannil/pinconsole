@@ -87,8 +87,8 @@ func TestMe_UserNotFound_Returns401(t *testing.T) {
 }
 
 // TestLogout_DeletesRedisSession — 带 cookie 的 logout 应:
-//   1. Redis.Del 被调 1 次(删除 session:sessionID)
-//   2. 返 200 + 清 cookie(MaxAge<0)
+//  1. Redis.Del 被调 1 次(删除 session:sessionID)
+//  2. 返 200 + 清 cookie(MaxAge<0)
 //
 // 此前 1ag 的 TestLogout_ClearsCookie_AndReturns200 未注入 redis,
 // 无法断言 Del 副作用(防 logout 不删 Redis 的回归)。

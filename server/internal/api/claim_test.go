@@ -189,10 +189,10 @@ func TestClaim_ClaimTTL_Constant(t *testing.T) {
 // 脚本必须包含 GET + DEL + 比对逻辑。
 func TestClaim_ReleaseClaimLua_Contract(t *testing.T) {
 	for _, must := range []string{
-		"redis.call('GET'",       // 读 owner
-		"ARGV[1]",                // 比对 caller
-		"redis.call('DEL'",       // 删除
-		"return 0",               // 失败路径
+		"redis.call('GET'", // 读 owner
+		"ARGV[1]",          // 比对 caller
+		"redis.call('DEL'", // 删除
+		"return 0",         // 失败路径
 	} {
 		if !contains(releaseClaimLua, must) {
 			t.Errorf("releaseClaimLua missing %q (script broken):\n%s", must, releaseClaimLua)

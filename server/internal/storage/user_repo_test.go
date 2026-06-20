@@ -69,8 +69,8 @@ func TestCreateUser_AndRetrieve(t *testing.T) {
 //
 // PG 行为:`ON CONFLICT DO NOTHING` + `RETURNING` 在冲突时**不返回行**,
 // pgx 的 QueryRow.Scan 返回 ErrNoRows。本测试验证此行为:
-//   1. 二次 CreateUser 返回 error
-//   2. 原行未被覆盖(GetUserByEmail 仍返回 first 的字段)
+//  1. 二次 CreateUser 返回 error
+//  2. 原行未被覆盖(GetUserByEmail 仍返回 first 的字段)
 func TestCreateUser_OnConflict_NoOp(t *testing.T) {
 	pool := helperPGPool(t)
 	defer pool.Close()

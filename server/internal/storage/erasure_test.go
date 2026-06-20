@@ -297,5 +297,5 @@ func (t txAsPool) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 func (t txAsPool) Begin(ctx context.Context) (pgx.Tx, error) {
 	return nil, fmt.Errorf("txAsPool.Begin not supported in test context")
 }
-func (t txAsPool) Ping(ctx context.Context) error            { return nil }
-func (t txAsPool) Close()                                   {}
+func (t txAsPool) Ping(ctx context.Context) error { return nil }
+func (t txAsPool) Close()                         {}

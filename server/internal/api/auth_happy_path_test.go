@@ -28,11 +28,11 @@ import (
 
 // mockUserRepo 是 authUserRepo 的手写 mock。
 type mockUserRepo struct {
-	byEmail map[string]*storage.User // email → user(模拟 PG 查询)
-	byID    map[uuid.UUID]*storage.User
+	byEmail    map[string]*storage.User // email → user(模拟 PG 查询)
+	byID       map[uuid.UUID]*storage.User
 	byEmailErr error // 模拟 PG error
 	byIDErr    error
-	mu sync.Mutex
+	mu         sync.Mutex
 	emailCalls int
 	idCalls    int
 }
@@ -60,11 +60,11 @@ func (m *mockUserRepo) GetUserByID(ctx context.Context, id uuid.UUID) (*storage.
 // mockRedisStore 是 authRedisStore 的手写 mock。
 // 记录调用以让测试断言 recordLoginFailure 被调等。
 type mockRedisStore struct {
-	mu sync.Mutex
-	data    map[string][]byte
-	ttl     map[string]time.Duration
-	setCalls    int
-	delCalls    int
+	mu           sync.Mutex
+	data         map[string][]byte
+	ttl          map[string]time.Duration
+	setCalls     int
+	delCalls     int
 	evalLuaCalls int
 	getCalls     int
 	ttlCalls     int
@@ -174,9 +174,9 @@ func TestLogin_Success_Returns200_SetCookie_Body(t *testing.T) {
 	mockRedis := newMockRedisStore()
 
 	h := &AuthHandler{
-		userRepo:    mockUsers,
-		redis:       mockRedis,
-		logger:      testLogger(),
+		userRepo:     mockUsers,
+		redis:        mockRedis,
+		logger:       testLogger(),
 		secureCookie: false,
 	}
 	r := newAuthTestEngine(h)
@@ -230,9 +230,9 @@ func TestLogin_WrongPassword_Returns401_NoCookie(t *testing.T) {
 	mockRedis := newMockRedisStore()
 
 	h := &AuthHandler{
-		userRepo:    mockUsers,
-		redis:       mockRedis,
-		logger:      testLogger(),
+		userRepo:     mockUsers,
+		redis:        mockRedis,
+		logger:       testLogger(),
 		secureCookie: false,
 	}
 	r := newAuthTestEngine(h)
@@ -274,9 +274,9 @@ func TestLogin_UserNotFound_Returns401_RecordsFailure(t *testing.T) {
 	mockRedis := newMockRedisStore()
 
 	h := &AuthHandler{
-		userRepo:    mockUsers,
-		redis:       mockRedis,
-		logger:      testLogger(),
+		userRepo:     mockUsers,
+		redis:        mockRedis,
+		logger:       testLogger(),
 		secureCookie: false,
 	}
 	r := newAuthTestEngine(h)

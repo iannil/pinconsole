@@ -1,10 +1,10 @@
 // Package api：授权检查 helper（1k P0-3）。
 //
 // claim ownership 检查模式：
-//   1. 从 ctx 取 user_id（AuthMiddleware 注入）
-//   2. 从 URL 取 session_id
-//   3. （可选）查 PG 确认 session 存在且未结束
-//   4. 查 Redis claim:session:{id}，比对 owner UID
+//  1. 从 ctx 取 user_id（AuthMiddleware 注入）
+//  2. 从 URL 取 session_id
+//  3. （可选）查 PG 确认 session 存在且未结束
+//  4. 查 Redis claim:session:{id}，比对 owner UID
 //
 // 失败时写入 HTTP 响应并返回 ok=false，调用方应直接 return。
 package api

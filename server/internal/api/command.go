@@ -1,9 +1,9 @@
 // Package api：co-browsing 命令端点（切片 1e）。
 //
 // 运营通过 POST /api/sessions/:id/command 发送命令。服务端：
-//   1. 写 PG co_browsing_commands（审计）
-//   2. 包装为 envelope（type=command）
-//   3. hub.SendCommandToVisitor 下发到访客
+//  1. 写 PG co_browsing_commands（审计）
+//  2. 包装为 envelope（type=command）
+//  3. hub.SendCommandToVisitor 下发到访客
 package api
 
 import (
@@ -35,7 +35,7 @@ type CommandHandler struct {
 	// stores 保留(requireClaimOwnership helper 仍接受 *storage.Stores,1ai-g 再重构)。
 	stores         *storage.Stores
 	sessionRepo    claimSessionRepo // 复用 1ai-e 接口
-	redis          claimRedisStore   // 复用 1ai-e 接口
+	redis          claimRedisStore  // 复用 1ai-e 接口
 	commandRepo    commandRepo
 	hub            CommandHub
 	logger         *slog.Logger

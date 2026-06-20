@@ -1,11 +1,13 @@
 // 1ac + 1ac-final 测试:WS 同源校验 + operatorWS auth(审计 T0-1h-6 + T0-1h-2)。
 //
 // T0-1h-6:websocket.Accept 必须设 InsecureSkipVerify: false(同源校验),
-//   防止跨域 WS 滥用(CSWSH)。
+//
+//	防止跨域 WS 滥用(CSWSH)。
 //
 // T0-1h-2(1ac-final 已修复):operatorWS 此前完全无认证检查。
-//   修复:handler 内调 authenticateOperatorWS,校验 cookie session,失败返回 401。
-//   测试:无 cookie / 无效 session / 有效 session / devMode bypass / 接线源码契约。
+//
+//	修复:handler 内调 authenticateOperatorWS,校验 cookie session,失败返回 401。
+//	测试:无 cookie / 无效 session / 有效 session / devMode bypass / 接线源码契约。
 package api
 
 import (

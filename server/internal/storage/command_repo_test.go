@@ -140,12 +140,12 @@ func TestCreateCoBrowsingCommand_NullNodeID(t *testing.T) {
 	// 同样验证 non-nil 路径
 	nodeID := int32(42)
 	cmd2, err := pg.CreateCoBrowsingCommand(ctx, CoBrowsingCommand{
-		TenantID:    DefaultTenantID,
-		SessionID:   session.ID,
-		OperatorID:  "op",
-		CommandType: "cursor_highlight",
+		TenantID:     DefaultTenantID,
+		SessionID:    session.ID,
+		OperatorID:   "op",
+		CommandType:  "cursor_highlight",
 		TargetNodeID: &nodeID,
-		Payload:     []byte(`{}`),
+		Payload:      []byte(`{}`),
 	})
 	if err != nil {
 		t.Fatalf("CreateCoBrowsingCommand with TargetNodeID=42: %v", err)

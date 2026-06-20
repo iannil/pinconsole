@@ -42,9 +42,9 @@ func TestLogin_UsesBcryptCompareHashAndPassword(t *testing.T) {
 	fnBody := body[idx : idx+1+end]
 
 	for _, must := range []string{
-		"bcrypt.CompareHashAndPassword",  // 必须用 bcrypt 库
-		"user.PasswordHash",              // 比对存储 hash
-		"req.Password",                   // 比对用户输入
+		"bcrypt.CompareHashAndPassword", // 必须用 bcrypt 库
+		"user.PasswordHash",             // 比对存储 hash
+		"req.Password",                  // 比对用户输入
 	} {
 		if !strings.Contains(fnBody, must) {
 			t.Errorf("login handler 缺失 %q — bcrypt 密码验证路径破坏", must)
@@ -102,10 +102,10 @@ func TestLogin_FailureRecordsThrottle(t *testing.T) {
 // - 错误处理 broken 但字符串仍存在
 //
 // 行为级测试:用 bcrypt 库生成真 hash,断言:
-//   1. 错密码 → CompareHashAndPassword 返回 error
-//   2. 正确密码 → 通过
-//   3. 参数顺序错 → error(audit 重点反模式)
-//   4. hash 不是明文
+//  1. 错密码 → CompareHashAndPassword 返回 error
+//  2. 正确密码 → 通过
+//  3. 参数顺序错 → error(audit 重点反模式)
+//  4. hash 不是明文
 //
 // 注:完整的 handler-level 测试需要 mock PG user_repo(类似 1ae R2 的 PgxPool interface),
 // 留 follow-up。本测试覆盖 bcrypt 路径的语义正确性。

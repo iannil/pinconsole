@@ -141,7 +141,7 @@ func TestLoginThrottle_IsolationByIpAndEmail(t *testing.T) {
 
 	email := "iso@example.com"
 	key1 := loginThrottleKey(email, "10.99.99.10")
-	key2 := loginThrottleKey(email, "10.99.99.11") // 不同 IP
+	key2 := loginThrottleKey(email, "10.99.99.11")               // 不同 IP
 	key3 := loginThrottleKey("other@example.com", "10.99.99.10") // 不同 email
 	defer rdb.Del(ctx, key1, key2, key3)
 
@@ -208,10 +208,10 @@ func TestLoginThrottle_RecordFailureUsesLuaAtomic(t *testing.T) {
 	fnBody := body[idx : idx+1+end]
 
 	for _, must := range []string{
-		"EvalLua",                       // 用 Lua 而非裸 INCR + EXPIRE
-		"redis.call('INCR'",             // Lua 内含 INCR
-		"redis.call('EXPIRE'",           // Lua 内含 EXPIRE
-		"if c == 1 then",                // 仅首次(返回 1)才 EXPIRE
+		"EvalLua",                      // 用 Lua 而非裸 INCR + EXPIRE
+		"redis.call('INCR'",            // Lua 内含 INCR
+		"redis.call('EXPIRE'",          // Lua 内含 EXPIRE
+		"if c == 1 then",               // 仅首次(返回 1)才 EXPIRE
 		"loginLockoutWindow.Seconds()", // TTL 参数
 	} {
 		if !strings.Contains(fnBody, must) {

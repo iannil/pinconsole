@@ -108,12 +108,12 @@ func (h *WSHandler) Register(r gin.IRoutes) {
 // visitorWS 处理 SDK 的 WebSocket 连接。
 //
 // 流程：
-//   1. accept WS
-//   2. 等待 hello 消息（含 visitor_id + session_id）
-//   3. 验证 session_id 存在
-//   4. hub.VisitorOnline（注册 session chan + 广播 presence.online）
-//   5. 启动 read loop：每个 MsgEvent 写 Redis Stream + PublishEvent
-//   6. 连接断开：hub.VisitorOffline + DB EndSession
+//  1. accept WS
+//  2. 等待 hello 消息（含 visitor_id + session_id）
+//  3. 验证 session_id 存在
+//  4. hub.VisitorOnline（注册 session chan + 广播 presence.online）
+//  5. 启动 read loop：每个 MsgEvent 写 Redis Stream + PublishEvent
+//  6. 连接断开：hub.VisitorOffline + DB EndSession
 func (h *WSHandler) visitorWS(c *gin.Context) {
 	conn, err := websocket.Accept(c.Writer, c.Request, &websocket.AcceptOptions{
 		// v1 同源（admin 也走同源），不留跨域口子（与 PLAN.md 一致）
@@ -331,11 +331,11 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 // operatorWS 处理 admin 的 WebSocket 连接。
 //
 // 流程：
-//   1. accept WS
-//   2. 等待 hello（可选，1b 不强制 capabilities）
-//   3. 默认加入 room:tenant:<id> 接收 presence
-//   4. read loop：subscribe / unsubscribe 命令
-//   5. 同时 select tenant room chan 与 session chan（已订阅的）
+//  1. accept WS
+//  2. 等待 hello（可选，1b 不强制 capabilities）
+//  3. 默认加入 room:tenant:<id> 接收 presence
+//  4. read loop：subscribe / unsubscribe 命令
+//  5. 同时 select tenant room chan 与 session chan（已订阅的）
 func (h *WSHandler) operatorWS(c *gin.Context) {
 	// 1ac-final T0-1h-2 修复:operatorWS 必须校验 cookie session。
 	// 此前完全无认证,任意匿名客户端可连 /ws/operator 接收 visitor 事件流。
@@ -369,7 +369,7 @@ func (h *WSHandler) operatorWS(c *gin.Context) {
 
 	// 启动 read loop（独立 goroutine）
 	type subMsg struct {
-		action   string // subscribe / unsubscribe
+		action    string // subscribe / unsubscribe
 		sessionID uuid.UUID
 	}
 	cmdCh := make(chan subMsg, 16)

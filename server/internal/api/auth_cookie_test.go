@@ -94,10 +94,10 @@ func TestAuthCookie_SecureCookieField(t *testing.T) {
 	body := string(src)
 
 	for _, must := range []string{
-		"secureCookie",          // 字段名
-		"NewAuthHandler",        // 构造器
-		"secureCookie bool",     // 字段类型
-		"h.secureCookie",        // 使用方式
+		"secureCookie",      // 字段名
+		"NewAuthHandler",    // 构造器
+		"secureCookie bool", // 字段类型
+		"h.secureCookie",    // 使用方式
 	} {
 		if !strings.Contains(body, must) {
 			t.Errorf("auth.go 缺失 %q — Secure flag threading 破坏", must)

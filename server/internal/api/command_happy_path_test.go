@@ -53,8 +53,8 @@ func TestCommandRegister_Routes(t *testing.T) {
 func TestPostCommand_NoUserID_Returns401(t *testing.T) {
 	h := &CommandHandler{
 		// stores 完整(供 requireClaimOwnership 用),但因 user_id 检查在前不会触达
-		stores:      &storage.Stores{},
-		logger:      testLogger(),
+		stores: &storage.Stores{},
+		logger: testLogger(),
 	}
 	r := newCommandTestEngine(h)
 
@@ -92,9 +92,9 @@ func TestPostCommand_NotClaimOwner_Returns403(t *testing.T) {
 	}
 
 	h := &CommandHandler{
-		stores:      &storage.Stores{Redis: &storage.Redis{Client: rdb}},
-		redis:       &storage.Redis{Client: rdb},
-		logger:      testLogger(),
+		stores: &storage.Stores{Redis: &storage.Redis{Client: rdb}},
+		redis:  &storage.Redis{Client: rdb},
+		logger: testLogger(),
 	}
 
 	gin.SetMode(gin.TestMode)
@@ -123,10 +123,10 @@ func TestPostCommand_NotClaimOwner_Returns403(t *testing.T) {
 // 编译时契约:防 CommandHandler 字段在 1ai-g 重构时被误删。
 func TestCommandHandler_FieldsContract(t *testing.T) {
 	h := &CommandHandler{}
-	_ = h.stores       // 1ai-g 删除
-	_ = h.sessionRepo  // 1ai-f 新增
-	_ = h.redis        // 1ai-f 新增
-	_ = h.commandRepo  // 1ai-f 新增
+	_ = h.stores      // 1ai-g 删除
+	_ = h.sessionRepo // 1ai-f 新增
+	_ = h.redis       // 1ai-f 新增
+	_ = h.commandRepo // 1ai-f 新增
 	_ = h.hub
 	_ = h.allowedDomains
 }

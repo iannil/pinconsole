@@ -19,7 +19,7 @@ import (
 
 const (
 	sessionCookieName = "mm_session"
-	sessionTTL         = 24 * time.Hour
+	sessionTTL        = 24 * time.Hour
 
 	// 1x P1-3:登录暴力破解防护阈值。
 	// 同一 email+IP 在 loginLockoutWindow 内失败 loginMaxAttempts 次后,
@@ -31,9 +31,9 @@ const (
 type AuthHandler struct {
 	// 1ai-c:用接口替代具体 *storage.Stores,解锁 mock 注入。
 	// *storage.Postgres / *storage.Redis 自动满足接口。
-	userRepo    authUserRepo
-	redis       authRedisStore
-	logger      *slog.Logger
+	userRepo     authUserRepo
+	redis        authRedisStore
+	logger       *slog.Logger
 	secureCookie bool // 1k：prod 模式下 cookie Secure=true
 }
 
@@ -44,9 +44,9 @@ type AuthHandler struct {
 // 调用方(router.go)无需改动。
 func NewAuthHandler(stores *storage.Stores, logger *slog.Logger, secureCookie bool) *AuthHandler {
 	return &AuthHandler{
-		userRepo:    stores.PG,
-		redis:       stores.Redis,
-		logger:      logger,
+		userRepo:     stores.PG,
+		redis:        stores.Redis,
+		logger:       logger,
 		secureCookie: secureCookie,
 	}
 }

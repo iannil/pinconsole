@@ -81,8 +81,8 @@ func TestGC_DeleteSessionsEndedBefore(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name    string
-		sid     uuid.UUID
+		name     string
+		sid      uuid.UUID
 		wantGone bool
 	}{
 		{"old ended (48h ago)", oldSession, true},

@@ -29,7 +29,7 @@ func TestTrustedProxies_Empty_XFFIgnored(t *testing.T) {
 	r := newTrustedProxyTestRouter([]string{})
 
 	req := httptest.NewRequest(http.MethodGet, "/_test/clientip", nil)
-	req.RemoteAddr = "203.0.113.5:12345" // 模拟直接暴露下的客户端 IP
+	req.RemoteAddr = "203.0.113.5:12345"          // 模拟直接暴露下的客户端 IP
 	req.Header.Set("X-Forwarded-For", "10.0.0.1") // 伪造 XFF
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -48,7 +48,7 @@ func TestTrustedProxies_TrustedProxy_XFFParsed(t *testing.T) {
 	r := newTrustedProxyTestRouter([]string{"127.0.0.1"})
 
 	req := httptest.NewRequest(http.MethodGet, "/_test/clientip", nil)
-	req.RemoteAddr = "127.0.0.1:12345" // 反代的源 IP
+	req.RemoteAddr = "127.0.0.1:12345"                // 反代的源 IP
 	req.Header.Set("X-Forwarded-For", "203.0.113.99") // 真实客户端 IP
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)

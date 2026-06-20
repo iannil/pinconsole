@@ -71,7 +71,7 @@ func TestCreateSession_AndRetrieve(t *testing.T) {
 	}
 }
 
-// TestCreateSession_NullUA_NullIP — 空字符串 ua/ip 必须存为 NULL,而非 ''。
+// TestCreateSession_NullUA_NullIP — 空字符串 ua/ip 必须存为 NULL,而非 ”。
 //
 // 防回归:CreateSession 用 `if ua != "" { uaArg = ua }` 模式,
 // 误改成直接传 "" 会破坏 admin UI 显示。

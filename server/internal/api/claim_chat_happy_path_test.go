@@ -61,9 +61,9 @@ func (m *mockChatMessageRepo) ListChatMessagesBySession(ctx context.Context, ses
 // 复用 1ai-c 的 mockRedisStore,加 setnxResult 字段。
 type mockRedisStoreForClaim struct {
 	*mockRedisStore
-	mu           sync.Mutex
-	setnxResult  bool // 控制 SetNX 返回值
-	setnxCalls   int
+	mu          sync.Mutex
+	setnxResult bool // 控制 SetNX 返回值
+	setnxCalls  int
 }
 
 func (m *mockRedisStoreForClaim) SetNX(ctx context.Context, key string, value []byte, ttl time.Duration) (bool, error) {
@@ -91,9 +91,9 @@ func TestClaim_Success_Returns200_ClaimedBy(t *testing.T) {
 	mockSessions := &mockSessionRepo{
 		sessions: map[uuid.UUID]*storage.Session{
 			sessionID: {
-				ID:       sessionID,
-				Status:   "active",
-				EndedAt:  pgtype.Timestamptz{}, // Valid=false 表示未结束
+				ID:      sessionID,
+				Status:  "active",
+				EndedAt: pgtype.Timestamptz{}, // Valid=false 表示未结束
 			},
 		},
 	}

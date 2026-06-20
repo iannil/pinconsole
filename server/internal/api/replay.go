@@ -119,12 +119,12 @@ func (h *ReplayHandler) listEndedSessions(c *gin.Context) {
 
 // replayEventsResponse 是 GET /api/sessions/:id/replay 响应。
 type replayEventsResponse struct {
-	SessionID string                   `json:"session_id"`
-	Events    []map[string]any         `json:"events"`
-	Total     int64                    `json:"total"`
-	Offset    int                      `json:"offset"`
-	Limit     int                      `json:"limit"`
-	HasMore   bool                     `json:"has_more"`
+	SessionID string           `json:"session_id"`
+	Events    []map[string]any `json:"events"`
+	Total     int64            `json:"total"`
+	Offset    int              `json:"offset"`
+	Limit     int              `json:"limit"`
+	HasMore   bool             `json:"has_more"`
 }
 
 // getSessionReplay 返回某 session 的完整事件流（分页）。
