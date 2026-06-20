@@ -1,7 +1,7 @@
 {
   "name": "@pinconsole/visitor-sdk",
   "version": "0.1.0",
-  "description": "Visitor-side SDK for marketing-monitor (rrweb capture + WebSocket transport + operator command reception)",
+  "description": "Visitor-side SDK for pinconsole (rrweb capture + WebSocket transport + operator command reception)",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./dist/sdk.js",

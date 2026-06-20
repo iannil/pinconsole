@@ -41,7 +41,7 @@ function loadEnv(): DBConfig {
     pgPassword: 'mm_dev',
     pgHost: 'localhost',
     pgPort: 5432,
-    pgDatabase: 'marketing_monitor',
+    pgDatabase: 'pinconsole',
     redisHost: 'localhost',
     redisPort: 6379,
   };

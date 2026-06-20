@@ -22,7 +22,7 @@ function psqlQuery(sql: string): string {
     [
       'compose', 'exec', '-T',
       'postgres',
-      'psql', '-U', 'mm', '-d', 'marketing_monitor',
+      'psql', '-U', 'mm', '-d', 'pinconsole',
       '-t', '-A', '-c', sql,
     ],
     { encoding: 'utf-8' },
