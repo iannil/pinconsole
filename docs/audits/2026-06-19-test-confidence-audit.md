@@ -1,4 +1,4 @@
-# 测试信心审计:marketing-monitor v1 + 1aa/1ab
+# 测试信心审计:pinconsole v1 + 1aa/1ab
 
 **审计时间**:2026-06-19
 **审计范围**:31 个 🟢/🔴 切片的 spec→test 对照 + 4 高风险切片 mutation spot-check + 支撑维度(覆盖/速度/维护)

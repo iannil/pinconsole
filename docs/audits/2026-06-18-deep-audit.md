@@ -1,4 +1,4 @@
-# 全栈深度审计:marketing-monitor v1 交付物
+# 全栈深度审计:pinconsole v1 交付物
 
 **审计时间**：2026-06-18
 **审计范围**：v1 全部交付物(server 38 Go 文件 + admin 22 Vue/TS + visitor-sdk 17 TS + e2e 10 spec + DB migrations + Dockerfile/CI/compose + 全部 docs/Markdown)
@@ -15,7 +15,7 @@
 
 12 个 P0 阻断中,最严重的 3 个构成完整接管链:
 1. **`SERVER_ENV=dev` 是配置默认值**,忘配时所有 protected 端点对匿名完全开放(`middleware.go:17-23`、`config.go:19`)
-2. **默认 admin 凭据 `admin@marketing-monitor.local / changeme123`** 在 users 表为空时 silent seed(`config.go:24-25`、`main.go:135-153`)
+2. **默认 admin 凭据 `admin@pinconsole.local / changeme123`** 在 users 表为空时 silent seed(`config.go:24-25`、`main.go:135-153`)
 3. **command/chat/claim 端点提取了 `user_id` 但完全不用于权限校验**,任何认证用户可对任意 session 下发 navigate/fill_input/chat(`command.go:71-147`、`chat.go:85-141`、`claim.go:37-67`)
 
 GDPR 合规上 v1 **不合规**(按键监听无 consent、无 erasure 端点、GC 只清 1/5 表),在欧盟/加州部署即违法。
@@ -72,7 +72,7 @@ GDPR 合规上 v1 **不合规**(按键监听无 consent、无 erasure 端点、G
 
 ### [P0-2 CWE-916/CWE-522] 默认 admin `changeme123` + silent seed
 - **文件**:`server/internal/config/config.go:24-25`、`server/cmd/server/main.go:135-153`
-- **问题**:`AdminEmail` 默认 `admin@marketing-monitor.local`,`AdminPassword` 默认 `changeme123`。`seedAdminUser` 在 users 表为空时自动建管理员,**无任何强制改密**。`.env.example` 未列出此变量。
+- **问题**:`AdminEmail` 默认 `admin@pinconsole.local`,`AdminPassword` 默认 `changeme123`。`seedAdminUser` 在 users 表为空时自动建管理员,**无任何强制改密**。`.env.example` 未列出此变量。
 - **影响**:任何默认部署上线 → 攻击者用文档化默认凭据直接登录获 admin。
 - **修复方向**:
   1. `Env=="prod"` 时若 `AdminPassword=="changeme123"` → `os.Exit(1)`
@@ -599,49 +599,49 @@ GDPR 合规上 v1 **不合规**(按键监听无 consent、无 erasure 端点、G
 
 ### 安全 / 部署(P0)
 
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/config/config.go`(P0-1, P0-2, P1-9)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/middleware.go`(P0-1)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/router.go`(P0-1, P1-5)
-- `/Users/rong.zhu/Code/marketing-monitor/server/cmd/server/main.go`(P0-2, P1-1, P1-6)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/command.go`(P0-3, P2-1)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/chat.go`(P0-3)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/claim.go`(P0-3, P0-4, P1-24, P2-27)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/auth.go`(P1-2, P1-3)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/api/ws.go`(P0-3 DoS, P1-4, P1-6, P1-8, P2-26)
-- `/Users/rong.zhu/Code/marketing-monitor/visitor-sdk/src/ui/popup.ts`(P0-8)
-- `/Users/rong.zhu/Code/marketing-monitor/visitor-sdk/src/commands/handler.ts`(P0-5, P1-23)
-- `/Users/rong.zhu/Code/marketing-monitor/visitor-sdk/src/index.ts`(P0-5)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/recording/gc.go`(P0-6)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/storage/queries.go`(P0-6 缺 Delete 方法)
-- `/Users/rong.zhu/Code/marketing-monitor/docker-compose.yml`(P0-7, P2-6, P2-7)
-- `/Users/rong.zhu/Code/marketing-monitor/server/migrations/*.down.sql`(P0-13)
-- `/Users/rong.zhu/Code/marketing-monitor/Makefile`(P0-13, P0-14)
-- `/Users/rong.zhu/Code/marketing-monitor/.github/workflows/ci.yml`(P0-14, P2-8, P2-9)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/config/config.go`(P0-1, P0-2, P1-9)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/middleware.go`(P0-1)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/router.go`(P0-1, P1-5)
+- `/Users/rong.zhu/Code/pinconsole/server/cmd/server/main.go`(P0-2, P1-1, P1-6)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/command.go`(P0-3, P2-1)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/chat.go`(P0-3)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/claim.go`(P0-3, P0-4, P1-24, P2-27)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/auth.go`(P1-2, P1-3)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/api/ws.go`(P0-3 DoS, P1-4, P1-6, P1-8, P2-26)
+- `/Users/rong.zhu/Code/pinconsole/visitor-sdk/src/ui/popup.ts`(P0-8)
+- `/Users/rong.zhu/Code/pinconsole/visitor-sdk/src/commands/handler.ts`(P0-5, P1-23)
+- `/Users/rong.zhu/Code/pinconsole/visitor-sdk/src/index.ts`(P0-5)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/recording/gc.go`(P0-6)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/storage/queries.go`(P0-6 缺 Delete 方法)
+- `/Users/rong.zhu/Code/pinconsole/docker-compose.yml`(P0-7, P2-6, P2-7)
+- `/Users/rong.zhu/Code/pinconsole/server/migrations/*.down.sql`(P0-13)
+- `/Users/rong.zhu/Code/pinconsole/Makefile`(P0-13, P0-14)
+- `/Users/rong.zhu/Code/pinconsole/.github/workflows/ci.yml`(P0-14, P2-8, P2-9)
 
 ### 文档虚标(P0)
 
-- `/Users/rong.zhu/Code/marketing-monitor/README.md`(P0-10)
-- `/Users/rong.zhu/Code/marketing-monitor/docs/README.md`(P0-11)
-- `/Users/rong.zhu/Code/marketing-monitor/docs/reports/completed/2026-06-17-slice-1j-implementation.md`(P0-12)
-- `/Users/rong.zhu/Code/marketing-monitor/docs/project-status.md`(§5 badge 降级建议)
+- `/Users/rong.zhu/Code/pinconsole/README.md`(P0-10)
+- `/Users/rong.zhu/Code/pinconsole/docs/README.md`(P0-11)
+- `/Users/rong.zhu/Code/pinconsole/docs/reports/completed/2026-06-17-slice-1j-implementation.md`(P0-12)
+- `/Users/rong.zhu/Code/pinconsole/docs/project-status.md`(§5 badge 降级建议)
 
 ### 测试(P0/P1)
 
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/antiscrape/ratelimit_test.go`(P0-9)
-- `/Users/rong.zhu/Code/marketing-monitor/e2e/tests/1{e,f,g}-*.spec.ts`(P1-11)
-- `/Users/rong.zhu/Code/marketing-monitor/e2e/tests/1b-realtime.spec.ts`(P1-12)
-- `/Users/rong.zhu/Code/marketing-monitor/e2e/tests/1c-rrweb.spec.ts`(P1-13)
-- `/Users/rong.zhu/Code/marketing-monitor/e2e/tests/1e-cobrowse.spec.ts`(P1-14)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/antiscrape/ratelimit_test.go`(P0-9)
+- `/Users/rong.zhu/Code/pinconsole/e2e/tests/1{e,f,g}-*.spec.ts`(P1-11)
+- `/Users/rong.zhu/Code/pinconsole/e2e/tests/1b-realtime.spec.ts`(P1-12)
+- `/Users/rong.zhu/Code/pinconsole/e2e/tests/1c-rrweb.spec.ts`(P1-13)
+- `/Users/rong.zhu/Code/pinconsole/e2e/tests/1e-cobrowse.spec.ts`(P1-14)
 
 ### 可观测性 / LLM 改写(P1)
 
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/logging/{middleware,handler}.go`(P1-15, P1-16)
-- `/Users/rong.zhu/Code/marketing-monitor/server/internal/proto/envelope.go`(P1-21)
-- `/Users/rong.zhu/Code/marketing-monitor/IMPLEMENTATION_PLAN.md`(P1-17,应新建)
-- `/Users/rong.zhu/Code/marketing-monitor/{server/internal/proto,visitor-sdk/src/proto,admin/src/proto}/`(P1-18)
-- `/Users/rong.zhu/Code/marketing-monitor/docs/standards/change-safety.md`(P1-19,应新建)
-- `/Users/rong.zhu/Code/marketing-monitor/admin/src/utils/time.ts`(P1-22)
-- `/Users/rong.zhu/Code/marketing-monitor/visitor-sdk/src/ui/chatWidget.ts`(P1-23)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/logging/{middleware,handler}.go`(P1-15, P1-16)
+- `/Users/rong.zhu/Code/pinconsole/server/internal/proto/envelope.go`(P1-21)
+- `/Users/rong.zhu/Code/pinconsole/IMPLEMENTATION_PLAN.md`(P1-17,应新建)
+- `/Users/rong.zhu/Code/pinconsole/{server/internal/proto,visitor-sdk/src/proto,admin/src/proto}/`(P1-18)
+- `/Users/rong.zhu/Code/pinconsole/docs/standards/change-safety.md`(P1-19,应新建)
+- `/Users/rong.zhu/Code/pinconsole/admin/src/utils/time.ts`(P1-22)
+- `/Users/rong.zhu/Code/pinconsole/visitor-sdk/src/ui/chatWidget.ts`(P1-23)
 
 ---
 
@@ -691,7 +691,7 @@ grep -rn '\.TraceID' server/internal/
 grep -l 'DROP TABLE' server/migrations/*.down.sql
 
 # 15. schema_migrations 表不存在确认(docker compose up 后)
-docker compose exec postgres psql -U mm -d marketing_monitor -c '\dt schema_migrations'
+docker compose exec postgres psql -U mm -d pinconsole -c '\dt schema_migrations'
 ```
 
 ---

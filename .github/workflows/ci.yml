@@ -67,10 +67,10 @@ jobs:
         run: pnpm test:js
 
       - name: Build admin
-        run: pnpm --filter @marketing-monitor/admin build
+        run: pnpm --filter @pinconsole/admin build
 
       - name: Build SDK
-        run: pnpm --filter @marketing-monitor/visitor-sdk build
+        run: pnpm --filter @pinconsole/visitor-sdk build
 
       - name: Verify Go release build (embeds frontend)
         run: |
@@ -112,7 +112,7 @@ jobs:
           context: .
           file: server/Dockerfile
           push: false
-          tags: marketing-monitor:ci
+          tags: pinconsole:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -144,20 +144,20 @@ jobs:
         run: |
           # 应用 up
           for f in server/migrations/*.up.sql; do
-            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+            docker compose exec -T postgres psql -U mm -d pinconsole -f /dev/stdin < "$f"
           done
           # 验证 schema_migrations 表不存在（手动 psql -f 模式）
-          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users|chat_messages|co_browsing_commands|event_blobs'
+          docker compose exec -T postgres psql -U mm -d pinconsole -c '\dt' | grep -E 'sessions|visitors|users|chat_messages|co_browsing_commands|event_blobs'
           # 跑一遍 down(逃生门已设)
           for f in $(ls server/migrations/*.down.sql | tac); do
-            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+            docker compose exec -T postgres psql -U mm -d pinconsole -f /dev/stdin < "$f"
           done
           # 再跑 up,验证可重放
           for f in server/migrations/*.up.sql; do
-            docker compose exec -T postgres psql -U mm -d marketing_monitor -f /dev/stdin < "$f"
+            docker compose exec -T postgres psql -U mm -d pinconsole -f /dev/stdin < "$f"
           done
           # 再次验证表存在
-          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users'
+          docker compose exec -T postgres psql -U mm -d pinconsole -c '\dt' | grep -E 'sessions|visitors|users'
 
       - name: 验证 server 启动自动应用 migrations (1k P0-14)
         env:
@@ -169,7 +169,7 @@ jobs:
           MINIO_SECRET_KEY: mm_dev_secret
         run: |
           # 重置 DB (模拟 fresh DB)
-          docker compose exec -T postgres psql -U mm -d marketing_monitor -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+          docker compose exec -T postgres psql -U mm -d pinconsole -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
           # 构建 dev binary
           cd server && go build -tags dev -o /tmp/mm-server ./cmd/server
           # 启动 server (后台),应自动跑 migrations 创建表
@@ -177,9 +177,9 @@ jobs:
           SERVER_PID=$!
           sleep 5
           # 验证表存在
-          docker compose exec -T postgres psql -U mm -d marketing_monitor -c '\dt' | grep -E 'sessions|visitors|users|schema_migrations'
+          docker compose exec -T postgres psql -U mm -d pinconsole -c '\dt' | grep -E 'sessions|visitors|users|schema_migrations'
           # 验证 schema_migrations 表记录数 = migrations 数
-          COUNT=$(docker compose exec -T postgres psql -U mm -d marketing_monitor -t -c "SELECT COUNT(*) FROM schema_migrations")
+          COUNT=$(docker compose exec -T postgres psql -U mm -d pinconsole -t -c "SELECT COUNT(*) FROM schema_migrations")
           if [ "$COUNT" -lt "4" ]; then
             echo "schema_migrations 记录数 $COUNT < 4,失败"
             kill $SERVER_PID || true
@@ -202,7 +202,7 @@ jobs:
     needs: [go-check, js-check]
     env:
       SERVER_ENV: dev
-      ADMIN_EMAIL: admin@marketing-monitor.local
+      ADMIN_EMAIL: admin@pinconsole.local
       ADMIN_PASSWORD: ci-strong-password-123
       PG_PASSWORD: mm_dev
       MINIO_ACCESS_KEY: mm_dev
@@ -228,12 +228,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm --filter @marketing-monitor/e2e exec playwright install --with-deps chromium
+        run: pnpm --filter @pinconsole/e2e exec playwright install --with-deps chromium
 
       - name: Build frontend
         run: |
-          pnpm --filter @marketing-monitor/admin build
-          pnpm --filter @marketing-monitor/visitor-sdk build
+          pnpm --filter @pinconsole/admin build
+          pnpm --filter @pinconsole/visitor-sdk build
 
       - name: Stage embed assets
         run: |
@@ -250,7 +250,7 @@ jobs:
         run: |
           cat > .env <<EOF
           SERVER_ENV=dev
-          ADMIN_EMAIL=admin@marketing-monitor.local
+          ADMIN_EMAIL=admin@pinconsole.local
           ADMIN_PASSWORD=ci-strong-password-123
           PG_PASSWORD=mm_dev
           MINIO_ACCESS_KEY=mm_dev
@@ -300,7 +300,7 @@ jobs:
     needs: e2e-dev
     env:
       SERVER_ENV: prod
-      ADMIN_EMAIL: admin@marketing-monitor.local
+      ADMIN_EMAIL: admin@pinconsole.local
       ADMIN_PASSWORD: ci-strong-password-123
       PG_PASSWORD: mm_dev
       MINIO_ACCESS_KEY: mm_dev
@@ -327,12 +327,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm --filter @marketing-monitor/e2e exec playwright install --with-deps chromium
+        run: pnpm --filter @pinconsole/e2e exec playwright install --with-deps chromium
 
       - name: Build frontend
         run: |
-          pnpm --filter @marketing-monitor/admin build
-          pnpm --filter @marketing-monitor/visitor-sdk build
+          pnpm --filter @pinconsole/admin build
+          pnpm --filter @pinconsole/visitor-sdk build
 
       - name: Stage embed assets
         run: |
@@ -349,7 +349,7 @@ jobs:
         run: |
           cat > .env <<EOF
           SERVER_ENV=prod
-          ADMIN_EMAIL=admin@marketing-monitor.local
+          ADMIN_EMAIL=admin@pinconsole.local
           ADMIN_PASSWORD=ci-strong-password-123
           PG_PASSWORD=mm_dev
           MINIO_ACCESS_KEY=mm_dev
@@ -370,7 +370,7 @@ jobs:
 
       - name: Run prod-mode gated e2e
         # 只跑含 "prod-mode" 的 describe(1k-prod 场景1 + 1l-prod × 2)
-        run: pnpm --filter @marketing-monitor/e2e exec playwright test --grep "prod-mode"
+        run: pnpm --filter @pinconsole/e2e exec playwright test --grep "prod-mode"
         env:
           CI: true
           SKIP_MM_WEBSERVER: "1"
@@ -404,7 +404,7 @@ jobs:
         env:
           SERVER_PORT: "8090"
           SERVER_ENV: prod
-          ADMIN_EMAIL: admin@marketing-monitor.local
+          ADMIN_EMAIL: admin@pinconsole.local
           ADMIN_PASSWORD: ci-strong-password-123
           PG_PASSWORD: mm_dev
           MINIO_ACCESS_KEY: mm_dev

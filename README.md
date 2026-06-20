@@ -26,8 +26,8 @@
 ## 快速开始
 
 ```bash
-git clone https://github.com/iannil/marketing-monitor
-cd marketing-monitor
+git clone https://github.com/iannil/pinconsole
+cd pinconsole
 
 # 1. 复制环境配置
 cp .env.example .env
@@ -37,8 +37,8 @@ docker compose up -d
 
 # 3. 安装前端依赖 + 构建嵌入
 pnpm install
-pnpm --filter @marketing-monitor/admin build
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/admin build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 4. 构建 + 启动 release 单二进制(server 启动时自动应用 migrations)
 mkdir -p server/cmd/server/embedded/{admin,sdk,landing}
@@ -61,7 +61,7 @@ docker compose --profile prod up -d --build
 ```
 
 默认 admin 凭据（env var 可配）：
-- Email: `admin@marketing-monitor.local`
+- Email: `admin@pinconsole.local`
 - Password: 部署时由 `ADMIN_PASSWORD` 强制要求(prod 模式拒绝 `changeme123`)
 
 ## v1 已知限制(部署前必读)

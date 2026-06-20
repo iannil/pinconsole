@@ -36,7 +36,7 @@ else
 endif
 
 help: ## 显示所有可用目标
-	@echo "$(C_GREEN)marketing-monitor$(C_RESET) - 切片 1a 仓库骨架"
+	@echo "$(C_GREEN)pinconsole$(C_RESET) - 切片 1a 仓库骨架"
 	@echo ""
 	@echo "用法: make [target]"
 	@echo ""
@@ -85,7 +85,7 @@ test-js: ## JS 单元测试（Vitest）
 	pnpm -r --if-present test
 
 test-e2e: ## E2E 测试（Playwright）
-	pnpm --filter @marketing-monitor/e2e test
+	pnpm --filter @pinconsole/e2e test
 
 # ============================================================
 # Lint 与格式化
@@ -131,7 +131,7 @@ docker-logs: ## 跟踪容器日志
 # 不再用 golang-migrate CLI（其 schema_migrations 形状 version+dirty 与 server 不兼容）。
 # 详见 docs/audits/2026-06-18-1k-1u-regression.md §4 新-2。
 
-PG_URL ?= postgres://mm:mm_dev@localhost:5432/marketing_monitor?sslmode=disable
+PG_URL ?= postgres://mm:mm_dev@localhost:5432/pinconsole?sslmode=disable
 
 migrate-up: ## [DEPRECATED] 由 server 启动时自动跑；保留入口仅为兼容
 	@echo "$(C_YELLOW)⚠️  migrate-up 已废弃：server 启动时自动应用 migrations。$(C_RESET)"

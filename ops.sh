@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# marketing-monitor 运维脚本
+# pinconsole 运维脚本
 # 用法：./ops.sh {start|stop|restart|status|logs|build|migrate|clean}
 set -euo pipefail
 
@@ -9,7 +9,7 @@ cd "$SCRIPT_DIR"
 
 SERVER_BIN="${SERVER_BIN:-server/bin/server}"
 PID_FILE=".server.pid"
-LOG_FILE="/tmp/marketing-monitor-server.log"
+LOG_FILE="/tmp/pinconsole-server.log"
 COMPOSE="docker compose"
 HEALTH_URL="http://localhost:${SERVER_PORT:-8080}/healthz"
 
@@ -81,15 +81,15 @@ cmd_migrate_reset() {
     warn "重置数据库（DROP ALL）..."
     # 1v:加 visitor_consents（1l 表）+ schema_migrations（防 golang-migrate CLI 残留脏表）。
     # 不再调 cmd_migrate；启动 server 时 server 自家 migrator 会在干净 DB 上跑全套。
-    $COMPOSE exec -T postgres psql -U "${PG_USER:-mm}" -d "${PG_DB:-marketing_monitor}" \
+    $COMPOSE exec -T postgres psql -U "${PG_USER:-mm}" -d "${PG_DB:-pinconsole}" \
         -c "DROP TABLE IF EXISTS visitor_consents, chat_messages, co_browsing_commands, event_blobs, users, sessions, visitors, schema_migrations CASCADE;" || true
     info "数据库已清空。下次 ./ops.sh start 时 server 会自动跑全部 migrations。"
 }
 
 cmd_build() {
     info "构建前端..."
-    pnpm --filter @marketing-monitor/admin build 2>&1 | tail -3
-    pnpm --filter @marketing-monitor/visitor-sdk build 2>&1 | tail -3
+    pnpm --filter @pinconsole/admin build 2>&1 | tail -3
+    pnpm --filter @pinconsole/visitor-sdk build 2>&1 | tail -3
 
     info "暂存前端产物到 embed 目录..."
     rm -rf server/cmd/server/embedded/admin server/cmd/server/embedded/sdk server/cmd/server/embedded/landing
@@ -249,7 +249,7 @@ cmd_clean() {
 # ===== 入口 =====
 
 show_help() {
-    echo -e "${CYAN}marketing-monitor 运维脚本${NC}"
+    echo -e "${CYAN}pinconsole 运维脚本${NC}"
     echo ""
     echo "用法: ./ops.sh <命令>"
     echo ""
@@ -269,7 +269,7 @@ show_help() {
     echo "  SERVER_PORT     server 端口（默认 8080）"
     echo "  SERVER_BIN      二进制路径（默认 server/bin/server）"
     echo "  PG_USER         PG 用户（默认 mm）"
-    echo "  PG_DB           PG 库名（默认 marketing_monitor）"
+    echo "  PG_DB           PG 库名（默认 pinconsole）"
     echo ""
     echo "示例:"
     echo "  ./ops.sh start       # 一键启动"

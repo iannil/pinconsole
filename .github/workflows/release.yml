@@ -39,8 +39,8 @@ jobs:
 
       - name: Build admin + SDK
         run: |
-          pnpm --filter @marketing-monitor/admin build
-          pnpm --filter @marketing-monitor/visitor-sdk build
+          pnpm --filter @pinconsole/admin build
+          pnpm --filter @pinconsole/visitor-sdk build
 
       - name: Stage frontend into embed path
         run: |
@@ -66,7 +66,7 @@ jobs:
           go build \
             -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
-            -o ../dist/marketing-monitor-linux-amd64 \
+            -o ../dist/pinconsole-linux-amd64 \
             ./cmd/server
 
       - name: Build Linux arm64
@@ -79,7 +79,7 @@ jobs:
           go build \
             -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
-            -o ../dist/marketing-monitor-linux-arm64 \
+            -o ../dist/pinconsole-linux-arm64 \
             ./cmd/server
 
       - name: Build macOS arm64
@@ -92,14 +92,14 @@ jobs:
           go build \
             -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
-            -o ../dist/marketing-monitor-darwin-arm64 \
+            -o ../dist/pinconsole-darwin-arm64 \
             ./cmd/server
 
       # ===== 压缩二进制 =====
       - name: Archive binaries
         run: |
           cd dist
-          for f in marketing-monitor-*; do
+          for f in pinconsole-*; do
             tar -czf "$f.tar.gz" "$f"
             sha256sum "$f" > "$f.sha256"
             sha256sum "$f.tar.gz" > "$f.tar.gz.sha256"
@@ -110,15 +110,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/marketing-monitor-linux-amd64
-            dist/marketing-monitor-linux-amd64.tar.gz
-            dist/marketing-monitor-linux-amd64.sha256
-            dist/marketing-monitor-linux-arm64
-            dist/marketing-monitor-linux-arm64.tar.gz
-            dist/marketing-monitor-linux-arm64.sha256
-            dist/marketing-monitor-darwin-arm64
-            dist/marketing-monitor-darwin-arm64.tar.gz
-            dist/marketing-monitor-darwin-arm64.sha256
+            dist/pinconsole-linux-amd64
+            dist/pinconsole-linux-amd64.tar.gz
+            dist/pinconsole-linux-amd64.sha256
+            dist/pinconsole-linux-arm64
+            dist/pinconsole-linux-arm64.tar.gz
+            dist/pinconsole-linux-arm64.sha256
+            dist/pinconsole-darwin-arm64
+            dist/pinconsole-darwin-arm64.tar.gz
+            dist/pinconsole-darwin-arm64.sha256
           generate_release_notes: true
           fail_on_unmatched_files: true
 

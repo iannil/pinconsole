@@ -64,7 +64,7 @@
 ## 6. 仓库布局（提案）
 
 ```
-marketing-monitor/
+pinconsole/
 ├── server/                # Go monolith
 │   ├── cmd/               # main.go
 │   ├── internal/
