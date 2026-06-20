@@ -222,9 +222,9 @@ func TestDeleteCoBrowsingCommandsOlderThan(t *testing.T) {
 		TenantID: DefaultTenantID, SessionID: session.ID, OperatorID: "op",
 		CommandType: "click", Payload: []byte(`{}`),
 	})
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond) // 1ai-h:增大 sleep 避免 PG 时钟漂移导致边界 flaky
 	threshold := time.Now()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	new1, _ := pg.CreateCoBrowsingCommand(ctx, CoBrowsingCommand{
 		TenantID: DefaultTenantID, SessionID: session.ID, OperatorID: "op",
 		CommandType: "scroll", Payload: []byte(`{}`),

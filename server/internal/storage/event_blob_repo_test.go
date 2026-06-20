@@ -133,9 +133,9 @@ func TestListEventBlobsOlderThan_FiltersAndLimits(t *testing.T) {
 		}
 		oldIDs = append(oldIDs, b.ID)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond) // 1ai-h:增大 sleep 避免 PG 时钟漂移导致边界 flaky
 	threshold := time.Now()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	var newIDs []uuid.UUID
 	for i := 2; i < 4; i++ {
 		b, err := pg.CreateEventBlob(ctx, makeEventBlob(session.ID, int32(i)))
