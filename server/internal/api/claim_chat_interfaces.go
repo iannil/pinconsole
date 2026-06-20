@@ -34,3 +34,9 @@ type claimRedisStore interface {
 type chatMessageRepo interface {
 	ListChatMessagesBySession(ctx context.Context, sessionID uuid.UUID, sinceID int64, limit int32) ([]storage.ChatMessage, error)
 }
+
+// commandRepo 是 CommandHandler.postCommand 需要的命令写入接口(1ai-f)。
+// *storage.Postgres 自动满足。
+type commandRepo interface {
+	CreateCoBrowsingCommand(ctx context.Context, cmd storage.CoBrowsingCommand) (*storage.CoBrowsingCommand, error)
+}

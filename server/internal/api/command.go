@@ -31,13 +31,20 @@ type CommandHub interface {
 
 // CommandHandler 处理 co-browsing 命令端点。
 type CommandHandler struct {
-	stores          *storage.Stores
-	hub             CommandHub
-	logger          *slog.Logger
-	allowedDomains  []string // 1f：额外允许的域名
+	// 1ai-f:用接口替代具体 *storage.Stores,解锁 mock 注入。
+	// stores 保留(requireClaimOwnership helper 仍接受 *storage.Stores,1ai-g 再重构)。
+	stores         *storage.Stores
+	sessionRepo    claimSessionRepo // 复用 1ai-e 接口
+	redis          claimRedisStore   // 复用 1ai-e 接口
+	commandRepo    commandRepo
+	hub            CommandHub
+	logger         *slog.Logger
+	allowedDomains []string // 1f：额外允许的域名
 }
 
 // NewCommandHandler 创建 command handler。
+//
+// 1ai-f:签名不变,内部抽取 PG/Redis 适配接口。
 func NewCommandHandler(stores *storage.Stores, h CommandHub, allowedDomains string, logger *slog.Logger) *CommandHandler {
 	domains := []string{}
 	for _, d := range strings.Split(allowedDomains, ",") {
@@ -46,7 +53,15 @@ func NewCommandHandler(stores *storage.Stores, h CommandHub, allowedDomains stri
 			domains = append(domains, d)
 		}
 	}
-	return &CommandHandler{stores: stores, hub: h, logger: logger, allowedDomains: domains}
+	return &CommandHandler{
+		stores:         stores, // 留给 requireClaimOwnership(1ai-g 再删)
+		sessionRepo:    stores.PG,
+		redis:          stores.Redis,
+		commandRepo:    stores.PG,
+		hub:            h,
+		logger:         logger,
+		allowedDomains: domains,
+	}
 }
 
 // Register 注册路由。
@@ -137,7 +152,7 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 
 	// 写 PG 审计(1k P0-3:OperatorID 用 user_id 而非 ClientIP,修复审计污染)
 	payloadBytes, _ := json.Marshal(req.Payload)
-	_, err = h.stores.PG.CreateCoBrowsingCommand(ctx, storage.CoBrowsingCommand{
+	_, err = h.commandRepo.CreateCoBrowsingCommand(ctx, storage.CoBrowsingCommand{
 		TenantID:     storage.DefaultTenantID,
 		SessionID:    sessionID,
 		OperatorID:   callerUID.String(),
