@@ -26,12 +26,12 @@ importers:
 
   admin:
     dependencies:
-      '@marketing-monitor/proto':
-        specifier: workspace:*
-        version: link:../packages/proto
       '@msgpack/msgpack':
         specifier: ^3.1.3
         version: 3.1.3
+      '@pinconsole/proto':
+        specifier: workspace:*
+        version: link:../packages/proto
       pinia:
         specifier: ^2.2.4
         version: 2.3.1(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3))
@@ -117,12 +117,12 @@ importers:
 
   visitor-sdk:
     dependencies:
-      '@marketing-monitor/proto':
-        specifier: workspace:*
-        version: link:../packages/proto
       '@msgpack/msgpack':
         specifier: ^3.1.3
         version: 3.1.3
+      '@pinconsole/proto':
+        specifier: workspace:*
+        version: link:../packages/proto
       rrweb:
         specifier: ^2.0.0-alpha.18
         version: 2.0.1

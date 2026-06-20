@@ -3,8 +3,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { VisitorPresence } from '../composables/useWs';
-import type { Envelope } from '@marketing-monitor/proto';
-import type { EventPayload } from '@marketing-monitor/proto';
+import type { Envelope } from '@pinconsole/proto';
+import type { EventPayload } from '@pinconsole/proto';
 
 interface VisitorListItem {
   sessionId: string;

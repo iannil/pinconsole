@@ -7,8 +7,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { encode, decode } from '@msgpack/msgpack';
-import type { Envelope } from '@marketing-monitor/proto';
-import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
+import type { Envelope } from '@pinconsole/proto';
+import { PROTOCOL_VERSION } from '@pinconsole/proto';
 import { WSTransport } from '../src/transport/ws';
 
 class MockWebSocket {

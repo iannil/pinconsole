@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useVisitorsStore } from '../src/stores/visitors';
 import type { VisitorPresence } from '../src/composables/useWs';
-import type { Envelope } from '@marketing-monitor/proto';
+import type { Envelope } from '@pinconsole/proto';
 
 const basePresence = (over: Partial<VisitorPresence>): VisitorPresence => ({
   event: 'online',

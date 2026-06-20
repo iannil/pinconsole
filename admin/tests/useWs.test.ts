@@ -11,8 +11,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { defineComponent, h } from 'vue';
 import { mount } from '@vue/test-utils';
 import { encode } from '@msgpack/msgpack';
-import type { Envelope, PresencePayload } from '@marketing-monitor/proto';
-import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
+import type { Envelope, PresencePayload } from '@pinconsole/proto';
+import { PROTOCOL_VERSION } from '@pinconsole/proto';
 import { useWs, type UseWsOptions } from '../src/composables/useWs';
 
 class MockWebSocket {

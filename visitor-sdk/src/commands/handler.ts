@@ -1,8 +1,8 @@
 // 命令处理器：接收 envelope.command → 执行 → 临时锁定 → ESC 监听
 // 详见 docs/progress/2026-06-17-slice-1e-spec.md + 1f-spec.md（Toast）
 
-import type { Envelope } from '@marketing-monitor/proto';
-import type { CommandPayload } from '@marketing-monitor/proto';
+import type { Envelope } from '@pinconsole/proto';
+import type { CommandPayload } from '@pinconsole/proto';
 import { OperatorCursor } from './cursor';
 import { NodeMap } from './nodeMap';
 import { OperatorToast } from './toast';

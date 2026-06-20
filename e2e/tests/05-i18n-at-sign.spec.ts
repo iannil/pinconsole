@@ -1,7 +1,7 @@
 // 切片 1z P0:i18n `@` SyntaxError regression
 //
 // 审计发现:vue-i18n v10 把 `@` 解析为 linked-message 引用,
-// `admin@example.com` / `admin@marketing-monitor.local` 触发
+// `admin@example.com` / `admin@pinconsole.local` 触发
 // INVALID_LINKED_FORMAT 编译错误(error code 10)。
 //
 // 修复(1z P0):
@@ -38,7 +38,7 @@ test.describe('1z P0: i18n @ SyntaxError', () => {
 
     // 2. hint 必须含完整 admin email({email} 插值生效)
     const hintText = await page.locator('.default-hint').textContent();
-    expect(hintText, 'default-hint must contain full admin email').toContain('admin@marketing-monitor.local');
+    expect(hintText, 'default-hint must contain full admin email').toContain('admin@pinconsole.local');
 
     // 3. 给 vue-i18n 编译 + 渲染充分时间(编译错误是异步报出的)
     await page.waitForTimeout(500);

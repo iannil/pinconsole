@@ -49,7 +49,7 @@ import { useAuthStore } from '../stores/auth';
 // 默认 admin 邮箱(与 server config.AdminEmail 默认值同步)。
 // 抽为常量而非 i18n key:vue-i18n 把 `@` 解析为 linked-message 引用,
 // 写在 message 里会触发 INVALID_LINKED_FORMAT 编译错误。
-const DEFAULT_ADMIN_EMAIL = 'admin@marketing-monitor.local';
+const DEFAULT_ADMIN_EMAIL = 'admin@pinconsole.local';
 
 const { t } = useI18n();
 const route = useRoute();

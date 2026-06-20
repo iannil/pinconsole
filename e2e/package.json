@@ -1,5 +1,5 @@
 {
-  "name": "@marketing-monitor/e2e",
+  "name": "@pinconsole/e2e",
   "version": "0.1.0",
   "private": true,
   "type": "module",

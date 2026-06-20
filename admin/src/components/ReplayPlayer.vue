@@ -4,7 +4,7 @@
 
 import { ref, watch, onUnmounted, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { EventPayload } from '@marketing-monitor/proto';
+import type { EventPayload } from '@pinconsole/proto';
 
 const { t } = useI18n();
 

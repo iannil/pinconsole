@@ -1,7 +1,7 @@
 // rrweb 采集器：封装 rrweb v2 record() + 韧性
 // 详见 docs/progress/2026-06-17-slice-1c-spec.md §SDK 韧性
 
-import type { EventPayload, RRWebEvent } from '@marketing-monitor/proto';
+import type { EventPayload, RRWebEvent } from '@pinconsole/proto';
 import { sdkLogger } from '../logging';
 
 // rrweb v2 alpha 的 record 模块动态 import（与 PLAN.md "动态 import" 一致，

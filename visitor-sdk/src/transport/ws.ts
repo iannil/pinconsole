@@ -12,8 +12,8 @@ import type {
   AckPayload,
   ErrorPayload,
   PresencePayload,
-} from '@marketing-monitor/proto';
-import { PROTOCOL_VERSION } from '@marketing-monitor/proto';
+} from '@pinconsole/proto';
+import { PROTOCOL_VERSION } from '@pinconsole/proto';
 import { sdkLogger, generateTraceId } from '../logging';
 
 // 1z:trace_id 继承窗口。命令到达后,接下来 N 个事件或 M 毫秒内的事件 envelope

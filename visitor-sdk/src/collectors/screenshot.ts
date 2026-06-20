@@ -1,7 +1,7 @@
 // 选择性截图：检测 canvas/WebGL/跨域 iframe，触发 1fps WebP q70 截图
 // 详见 docs/progress/2026-06-17-slice-1c-spec.md §选择性截图触发
 
-import type { EventPayload } from '@marketing-monitor/proto';
+import type { EventPayload } from '@pinconsole/proto';
 
 export interface ScreenshotCollectorOptions {
   /** 截图频率（毫秒），默认 1000（1fps） */

@@ -28,7 +28,7 @@ const PROJECT_ROOT = resolve(__dirname, '..', '..');
 const ENV = readFileSync(resolve(PROJECT_ROOT, '.env'), 'utf-8');
 const ADMIN_EMAIL_FOR_TEST =
   ENV.match(/^ADMIN_EMAIL\s*=\s*(.+?)\s*$/m)?.[1]?.replace(/^["']|["']$/g, '') ??
-  'admin@marketing-monitor.local';
+  'admin@pinconsole.local';
 const ADMIN_PASSWORD_FOR_TEST =
   ENV.match(/^ADMIN_PASSWORD\s*=\s*(.+?)\s*$/m)?.[1]?.replace(/^["']|["']$/g, '') ?? '';
 

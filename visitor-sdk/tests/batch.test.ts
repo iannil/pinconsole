@@ -3,7 +3,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Batch } from '../src/batch';
-import type { EventPayload } from '@marketing-monitor/proto';
+import type { EventPayload } from '@pinconsole/proto';
 
 const sampleEvent = (i: number): EventPayload => ({
   type: 2,

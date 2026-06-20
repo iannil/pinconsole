@@ -55,7 +55,7 @@ type Config struct {
 	// 1f：navigate 命令允许的额外域名（逗号分隔）
 	NavigateAllowedDomains string `env:"NAVIGATE_ALLOWED_DOMAINS" envDefault:""`
 	// 1h：初始 admin 用户（1k：无默认密码，启动校验）
-	AdminEmail    string `env:"ADMIN_EMAIL" envDefault:"admin@marketing-monitor.local"`
+	AdminEmail    string `env:"ADMIN_EMAIL" envDefault:"admin@pinconsole.local"`
 	AdminPassword string `env:"ADMIN_PASSWORD"`
 	// 1k：bcrypt cost（项目要求 ≥ 12）
 	BCryptCost int `env:"BCRYPT_COST" envDefault:"12"`

@@ -39,7 +39,7 @@ interface EnvConfig {
 
 function loadEnv(): EnvConfig {
   const envPath = resolve(PROJECT_ROOT, '.env');
-  let adminEmail = 'admin@marketing-monitor.local';
+  let adminEmail = 'admin@pinconsole.local';
   let adminPassword = '';
   try {
     const raw = readFileSync(envPath, 'utf-8');
