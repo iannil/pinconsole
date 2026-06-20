@@ -37,10 +37,10 @@
 
 ```bash
 # 1. SDK 编译
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 2. Admin 编译
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/admin build
 
 # 3. Go 测试(不受影响)
 cd server && go test ./... -count=1

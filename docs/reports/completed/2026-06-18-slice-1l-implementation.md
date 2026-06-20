@@ -75,8 +75,8 @@ cd server && go test ./... -count=1 -race
 cd server && go test ./internal/privacy/ -v
 
 # 4. SDK + Admin 编译
-pnpm --filter @marketing-monitor/visitor-sdk build
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/visitor-sdk build
+pnpm --filter @pinconsole/admin build
 
 # 5. e2e
 cd e2e && pnpm test 1l-privacy

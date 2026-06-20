@@ -68,7 +68,7 @@ cd server && go build ./...                         # dev build
 cd server && go build -tags release ./...           # release build
 
 # 4. SDK TS 编译
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 5. go vet
 cd server && go vet ./...

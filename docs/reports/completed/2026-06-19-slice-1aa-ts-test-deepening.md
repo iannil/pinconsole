@@ -49,15 +49,15 @@ deep-audit P2-12 指出 admin 和 visitor-sdk 各只有 2 个 vitest 测试,其�
 
 ```bash
 # 单测
-pnpm --filter @marketing-monitor/admin test         # 64/64 passed
-pnpm --filter @marketing-monitor/visitor-sdk test   # 48/48 passed
+pnpm --filter @pinconsole/admin test         # 64/64 passed
+pnpm --filter @pinconsole/visitor-sdk test   # 48/48 passed
 
 # 累计
 pnpm test:js                                       # 112/112 passed (admin 64 + SDK 48)
 
 # 类型检查(无错误输出 = 通过)
-pnpm --filter @marketing-monitor/admin exec vue-tsc --noEmit
-pnpm --filter @marketing-monitor/visitor-sdk exec tsc --noEmit
+pnpm --filter @pinconsole/admin exec vue-tsc --noEmit
+pnpm --filter @pinconsole/visitor-sdk exec tsc --noEmit
 ```
 
 **预期结果**(2026-06-19 实测):

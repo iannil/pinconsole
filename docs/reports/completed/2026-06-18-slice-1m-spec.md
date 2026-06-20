@@ -51,7 +51,7 @@ cd server && go test ./internal/observability/ -count=1 -v
 # 服务端日志中应含 envelope.trace_id;SDK 端 console 也应含同 trace_id
 
 # SDK 编译
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 ```
 
 ## 估时

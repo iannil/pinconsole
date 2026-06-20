@@ -321,7 +321,7 @@ make build
 ### 4. MinIO 录像快照
 
 访客持续触发事件 → 后端达到 1000 events 或 30s → 触发 flush → 检查：
-- `mc ls local/marketing-monitor/sessions/<sid>/` 有 blob 文件
+- `mc ls local/pinconsole/sessions/<sid>/` 有 blob 文件
 - `SELECT * FROM event_blobs WHERE session_id = '...'` 有记录
 - `sha256sum <blob>` 与 `event_blobs.checksum_sha256` 一致
 

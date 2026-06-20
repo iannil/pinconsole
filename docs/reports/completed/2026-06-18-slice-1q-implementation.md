@@ -37,11 +37,11 @@
 cd server && go test ./... -count=1 -race
 
 # 2. Admin build(验证 Element Plus 移除不破坏)
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/admin build
 # bundle 大幅缩小:index.js 1098KB → 159KB
 
 # 3. SDK build
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 4. 验证死代码全清
 grep -rn "FlushSessionNow\|TouchVisitor\|CountEventBlobsBySession\|isFullSnapshotEnvelope\|pingEvery\|NewRouter\b" server/ --include='*.go'

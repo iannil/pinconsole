@@ -50,7 +50,7 @@
 - [ ] `go test ./internal/storage/` 全绿(预计 +11 测试,真 PG 不可用时全 skip)
 - [ ] `go test ./...` 全绿(无 regression)
 - [ ] storage 包覆盖率:**20.1% → ≥35%**(user+session 函数从 0% → 80%+)
-- [ ] PG 可用性:本地 docker PG(`marketing-monitor-postgres-1`)在跑,测试真执行
+- [ ] PG 可用性:本地 docker PG(`pinconsole-postgres-1`)在跑,测试真执行
 
 ### 不在本切片范围
 

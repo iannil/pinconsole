@@ -58,7 +58,7 @@ cd server && go test ./internal/proto/... ./internal/hub/... ./internal/recordin
 # → all ok
 
 # 2. 前端构建
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/admin build
 # → ReplayList/ReplayViewer/sessions 独立 chunk
 
 # 3. release 二进制
@@ -69,7 +69,7 @@ cd server && CGO_ENABLED=0 go build -tags release -o bin/server ./cmd/server
 docker compose up -d
 docker compose exec postgres psql -U mm -d marketing_monitor < server/migrations/000001_init.up.sql
 ./server/bin/server &
-pnpm --filter @marketing-monitor/e2e test --reporter=list
+pnpm --filter @pinconsole/e2e test --reporter=list
 # → 18 passed
 ```
 

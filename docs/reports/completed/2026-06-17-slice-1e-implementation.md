@@ -66,8 +66,8 @@ cd server && go test ./internal/proto/... ./internal/hub/... ./internal/recordin
 # → all ok
 
 # 2. 前端构建
-pnpm --filter @marketing-monitor/visitor-sdk build  # 306 KB
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/visitor-sdk build  # 306 KB
+pnpm --filter @pinconsole/admin build
 
 # 3. release 二进制
 cd server && CGO_ENABLED=0 go build -tags release -o bin/server ./cmd/server
@@ -80,7 +80,7 @@ docker compose exec postgres psql -U mm -d marketing_monitor \
 docker compose exec postgres psql -U mm -d marketing_monitor \
   -f /dev/stdin < server/migrations/000002_cobrowsing.up.sql
 ./server/bin/server &
-pnpm --filter @marketing-monitor/e2e test --reporter=list
+pnpm --filter @pinconsole/e2e test --reporter=list
 # → 23 passed
 ```
 

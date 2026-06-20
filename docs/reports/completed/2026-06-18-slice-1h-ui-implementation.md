@@ -30,7 +30,7 @@
 
 ```bash
 # 1. Admin 编译
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/admin build
 
 # 2. e2e
 cd e2e && pnpm test 1h-ui
@@ -42,7 +42,7 @@ cd admin && pnpm dev
 # 4. 手动验证(prod 模式)
 SERVER_ENV=prod ADMIN_PASSWORD=strong ./server
 # 访问 /admin/dashboard → fetchMe 401 → 重定向 /login
-# 输入 admin@marketing-monitor.local / strong → 跳 /dashboard
+# 输入 admin@pinconsole.local / strong → 跳 /dashboard
 ```
 
 ## 深度判定

@@ -14,13 +14,13 @@
 
 ### 三方 proto 共享(消除手写同步重复)
 
-- ✅ `packages/proto/`(新建 workspace package)— `@marketing-monitor/proto`,含 envelope.ts / events.ts / command.ts(原 admin/src/proto + visitor-sdk/src/proto 合并)
+- ✅ `packages/proto/`(新建 workspace package)— `@pinconsole/proto`,含 envelope.ts / events.ts / command.ts(原 admin/src/proto + visitor-sdk/src/proto 合并)
 - ✅ `packages/proto/package.json` — workspace package 配置,exports map
 - ✅ `packages/proto/tsconfig.json` — 类型检查
 - ✅ `pnpm-workspace.yaml` — 加 `packages/*`
-- ✅ `admin/package.json` + `visitor-sdk/package.json` — 加 `@marketing-monitor/proto: workspace:*` dep
+- ✅ `admin/package.json` + `visitor-sdk/package.json` — 加 `@pinconsole/proto: workspace:*` dep
 - ✅ 删除 `admin/src/proto/` + `visitor-sdk/src/proto/`(原 4 个文件,2 份重复)
-- ✅ 重写 14 处 import:`'../proto/envelope'` → `'@marketing-monitor/proto'`(admin 3 处 + SDK 11 处)
+- ✅ 重写 14 处 import:`'../proto/envelope'` → `'@pinconsole/proto'`(admin 3 处 + SDK 11 处)
 - ✅ admin 现在也能 import command.ts(原 admin 缺,SDK 有)
 
 ### IMPLEMENTATION_PLAN.md(CLAUDE.md 要求)
@@ -43,14 +43,14 @@
 pnpm install  # 应成功,symlink 创建
 
 # 2. SDK + Admin 编译(共享包被正确解析)
-pnpm --filter @marketing-monitor/visitor-sdk build
-pnpm --filter @marketing-monitor/admin build
+pnpm --filter @pinconsole/visitor-sdk build
+pnpm --filter @pinconsole/admin build
 
 # 3. Go 测试不受影响
 cd server && go test ./... -count=1
 
 # 4. 验证 admin 现在能 import command 类型
-grep "from '@marketing-monitor/proto'" admin/src/composables/useWs.ts
+grep "from '@pinconsole/proto'" admin/src/composables/useWs.ts
 ```
 
 **预期结果**:全部 build + test 通过,SDK + Admin 共享同一份 proto 源。
@@ -84,6 +84,6 @@ grep "from '@marketing-monitor/proto'" admin/src/composables/useWs.ts
 
 ## Notes
 
-- packages/proto 的 `exports` map 允许 `@marketing-monitor/proto` / `.../envelope` / `.../events` / `.../command` 多入口;主入口 re-export 全部
+- packages/proto 的 `exports` map 允许 `@pinconsole/proto` / `.../envelope` / `.../events` / `.../command` 多入口;主入口 re-export 全部
 - Go 端的 internal/proto 和 TS 端的 packages/proto 仍是两份源,需手工保持字段一致;1m 已通过 Envelope.TraceID 接线降低漂移风险
 - LLM friendly 评分提升主要来自:三方 proto 单一源(原 P0)+ IMPLEMENTATION_PLAN.md 存在(原 P0)+ change-safety 文档化(原 P0)

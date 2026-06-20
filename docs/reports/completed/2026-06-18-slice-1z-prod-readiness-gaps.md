@@ -24,7 +24,7 @@
 
 ### P0 已修:i18n `@` SyntaxError(本切片已完成)
 
-vue-i18n v10 把 `@` 解析为 linked-message 引用,`admin@example.com` / `admin@marketing-monitor.local` 触发 `INVALID_LINKED_FORMAT`(error code 10)。浏览器实测命中。
+vue-i18n v10 把 `@` 解析为 linked-message 引用,`admin@example.com` / `admin@pinconsole.local` 触发 `INVALID_LINKED_FORMAT`(error code 10)。浏览器实测命中。
 
 - ✅ `admin/src/i18n/{en-US,zh-CN}.ts`:
   - 删除 `login.default_hint`(含 `@`)
@@ -34,8 +34,8 @@ vue-i18n v10 把 `@` 解析为 linked-message 引用,`admin@example.com` / `admi
   - 抽 `DEFAULT_ADMIN_EMAIL` 常量(取代 i18n 内嵌字面量)
   - placeholder 直接用常量
   - hint 用 `t('login.default_email_hint', { email: DEFAULT_ADMIN_EMAIL })` 传参
-- ✅ `pnpm --filter @marketing-monitor/admin build` 通过
-- ✅ `pnpm --filter @marketing-monitor/admin test` 通过
+- ✅ `pnpm --filter @pinconsole/admin build` 通过
+- ✅ `pnpm --filter @pinconsole/admin test` 通过
 
 ### P1-1 已完成:trace_id 端到端补全(1m badge 修正)
 
@@ -113,10 +113,10 @@ vue-i18n v10 把 `@` 解析为 linked-message 引用,`admin@example.com` / `admi
 cd server && go test ./... -count=1     # 应 12 packages ALL PASS
 cd server && go test -tags release ./... -count=1  # release build 也应全 PASS
 cd server && go vet ./...                # clean
-pnpm --filter @marketing-monitor/admin test    # 10 测试
-pnpm --filter @marketing-monitor/visitor-sdk test  # 7 测试
-pnpm --filter @marketing-monitor/admin build   # 编译
-pnpm --filter @marketing-monitor/visitor-sdk build  # 编译
+pnpm --filter @pinconsole/admin test    # 10 测试
+pnpm --filter @pinconsole/visitor-sdk test  # 7 测试
+pnpm --filter @pinconsole/admin build   # 编译
+pnpm --filter @pinconsole/visitor-sdk build  # 编译
 ```
 
 ## Blockers

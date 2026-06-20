@@ -33,7 +33,7 @@
 
 ### server/（12 个新文件 + migrations 占位）
 
-- ✅ `go.mod` / `go.sum` — module `github.com/iannil/marketing-monitor`
+- ✅ `go.mod` / `go.sum` — module `github.com/iannil/pinconsole`
 - ✅ `cmd/server/main.go` — 入口，装配 config / logger / stores / router，支持优雅退出
 - ✅ `cmd/server/embed.go` — `//go:build release`，`//go:embed all:embedded`
 - ✅ `cmd/server/embed_dev.go` — `//go:build !release`，空 embed.FS（dev 走 Vite）
@@ -83,8 +83,8 @@ cd server && go build -tags dev -o /tmp/server-dev ./cmd/server
 # → 17 MB 二进制
 
 # 3. Go release 构建（含前端 embed）
-pnpm --filter @marketing-monitor/admin build      # → admin/dist 1.06 MB JS
-pnpm --filter @marketing-monitor/visitor-sdk build # → visitor-sdk/dist/sdk.js 1.56 KB
+pnpm --filter @pinconsole/admin build      # → admin/dist 1.06 MB JS
+pnpm --filter @pinconsole/visitor-sdk build # → visitor-sdk/dist/sdk.js 1.56 KB
 # 拷贝产物到 server/cmd/server/embedded/
 cd server && CGO_ENABLED=0 go build -tags release -o /tmp/server-release ./cmd/server
 # → 24 MB 单二进制（含全部前端）
@@ -141,7 +141,7 @@ level=INFO msg=http_request trace_id=7c7f71fdd684ae7119c772085a293b3a \
   - 决定 ORM/DB 库（推迟清单中的项）
 - 实施前需安装的本地工具：
   - `make install-tools`（air / golangci-lint / golang-migrate）
-  - Playwright 浏览器：`pnpm --filter @marketing-monitor/e2e install-browsers`
+  - Playwright 浏览器：`pnpm --filter @pinconsole/e2e install-browsers`
 - 首次 git commit：用户尚未授权，等待指令
 - 启动日常开发：`make docker-up && pnpm dev`
 

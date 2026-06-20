@@ -1,5 +1,7 @@
 # 测试健康度审计（2026-06-19）
 
+> **状态**:已闭环(9 项 P0/P1 全部修复,mutation score 71.4%→100%, e2e flaky 20%→0%, verdict 🔴→🟢),详见 1ae/1af 报告 + [`docs/project-status.md`](../project-status.md) §6。
+
 > 4 维度综合判定 v1 测试套件健康度。本审计在 2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad 之后做"二阶验证"——验证 1ac/1ad 的 68 项闭包声明是否真实有效。
 >
 > **审计方法**:rubric 判定 + 弱断言扫描 + 手动 mutation testing + 多次重复运行 + CI 历史分析。

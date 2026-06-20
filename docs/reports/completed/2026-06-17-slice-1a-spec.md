@@ -42,7 +42,7 @@ PLAN.md §7 把 v1 切片拆为 10 个子切片（1a-1j）。本文档钉死切�
 | 6 | 热重载 | air（Go）+ Vite HMR（admin + SDK）+ overmind | 多进程协调 |
 | 7 | 配置 | env vars + .env + struct tag | caarlos0/env |
 | 8 | docker-compose | 单文件 + profiles | dev 默认仅 infra，prod 加 server |
-| 9 | Module path | `github.com/iannil/marketing-monitor` | 与 git user 一致 |
+| 9 | Module path | `github.com/iannil/pinconsole` | 与 git user 一致 |
 | 10 | DB migration | golang-migrate | CLI + lib 双形态 |
 | 11 | 测试 | testify + Vitest + Playwright | 1b 起加 testcontainers |
 | 12 | Linting | golangci-lint + ESLint + Prettier + markdownlint + commitlint + pre-commit | 完整工程化 |
@@ -51,7 +51,7 @@ PLAN.md §7 把 v1 切片拆为 10 个子切片（1a-1j）。本文档钉死切�
 ## 仓库布局（具体到文件）
 
 ```
-marketing-monitor/
+pinconsole/
 ├── CLAUDE.md                          # 已存在
 ├── PLAN.md                            # 已存在
 ├── START.md                           # 已存在
@@ -70,7 +70,7 @@ marketing-monitor/
 ├── markdownlint.json                  # 新增
 │
 ├── server/                            # Go monolith
-│   ├── go.mod                         # module github.com/iannil/marketing-monitor
+│   ├── go.mod                         # module github.com/iannil/pinconsole
 │   ├── go.sum
 │   ├── Dockerfile                     # multi-stage + alpine
 │   ├── .golangci.yml
@@ -115,7 +115,7 @@ marketing-monitor/
 │           └── .gitkeep
 │
 ├── visitor-sdk/                       # TypeScript SDK
-│   ├── package.json                   # name: @marketing-monitor/visitor-sdk
+│   ├── package.json                   # name: @pinconsole/visitor-sdk
 │   ├── vite.config.ts                 # library mode + dev playground
 │   ├── tsconfig.json
 │   ├── playground/
@@ -176,7 +176,7 @@ REDIS_PASSWORD=
 MINIO_ENDPOINT=localhost:9000
 MINIO_ACCESS_KEY=mm_dev
 MINIO_SECRET_KEY=mm_dev_secret
-MINIO_BUCKET=marketing-monitor
+MINIO_BUCKET=pinconsole
 MINIO_USE_SSL=false
 ```
 
@@ -216,8 +216,8 @@ docker compose --profile prod up -d   # 完整堆栈
 
 ```
 server: air -server.cd server -- build/bin/server
-admin: pnpm --filter @marketing-monitor/admin dev
-sdk: pnpm --filter @marketing-monitor/visitor-sdk dev
+admin: pnpm --filter @pinconsole/admin dev
+sdk: pnpm --filter @pinconsole/visitor-sdk dev
 ```
 
 ## 推迟到 1b 的次要决策

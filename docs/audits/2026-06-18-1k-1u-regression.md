@@ -1,5 +1,7 @@
 # 1k-1u 回归 + 生产就绪度审计
 
+> **状态**:已闭环(1v 切片修复 8 个新发现),详见 [`docs/reports/completed/2026-06-18-slice-1v-implementation.md`](../reports/completed/2026-06-18-slice-1v-implementation.md) + [`docs/project-status.md`](../project-status.md) §6。
+
 **审计时间**:2026-06-18
 **审计范围**:验证 2026-06-18-deep-audit.md 中的 P0/P1 修复是否真生效 + 端到端生产就绪度
 **审计员**:Claude(grill-me 共识: A 纯报告 + C 端到端 + L3 验证深度)

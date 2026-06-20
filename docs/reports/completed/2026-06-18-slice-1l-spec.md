@@ -136,7 +136,7 @@ cd server && go test ./internal/privacy/ -run TestTruncateIP -v
 cd server && go test ./internal/storage/ -run TestDeleteVisitorCascade -v
 
 # 5. SDK banner 构建
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 6. e2e
 cd e2e && pnpm test 1l-privacy

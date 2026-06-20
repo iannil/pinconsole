@@ -34,7 +34,7 @@
 cd server && go test ./... -count=1 -race
 
 # 2. SDK 编译
-pnpm --filter @marketing-monitor/visitor-sdk build
+pnpm --filter @pinconsole/visitor-sdk build
 
 # 3. trace_id 链路手动验证
 # 启动 server + 访客页 → 访客发事件 → 服务端日志应含 trace_id

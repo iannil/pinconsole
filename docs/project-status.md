@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-20(1ai-f 完成 — CommandHandler 接口化(精简版)+ postCommand 拒绝路径 3 测试,api 包 33.7%→33.8%;1ag~1ai-f 累计 +60 测试 + 2 代码 fix + 3 接口化重构;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 14 happy-path 项)
+**最后更新**:2026-06-20(1ai-h 完成 — SessionHandler 接口化 + initSession happy path + replay 纯函数测试,api 包覆盖实测 28.7%;1ag~1ai-h 累计 +75 测试 + 5 接口化重构 + 2 代码 fix;同日完成 marketing-monitor → pinconsole 全量重命名重构 5 步;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 14 happy-path 项)
 
 ---
 
@@ -20,7 +20,14 @@
 
 **v1 主干完全收口**:1a-1z 全切片 + e2e acceptance + 5 个 followup fix + admin flagged UI/prod-mode CI 全部完成(70+ commits)。**当前无活跃切片**。
 
-最新进展(2026-06-18):
+最新进展(2026-06-20):
+
+- ✅ 1ai-d ~ 1ai-h 接口化重构与 happy path 测试(8 commit,~28h):AuthHandler / ClaimHandler / ChatHandler / CommandHandler / requireClaimOwnership / SessionHandler 全部接口化,api 包覆盖从 20% 提升到实测 28.7%(commit message 自报 38.2%,以实测为准)
+- ✅ marketing-monitor → pinconsole 全量重命名重构(5 commit,详见 §2.2)
+- ✅ gofmt 全量清债(struct field 对齐 + 缩进规范,1 commit)
+- ✅ storage 时间窗口测试 sleep 10ms → 100ms 防 PG 时钟漂移 flaky(1 commit)
+
+前序进展(2026-06-18~19):
 
 - ✅ 全栈深度审计 → [`docs/audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)(80 条发现,P0:13 / P1:27 / P2:26 / P3:14)
 - ✅ 全部 13 个 P0 闭环(11 真修 + 2 已文档化 workaround,详见 1k/1l/1v 报告)
@@ -29,10 +36,10 @@
 - ✅ e2e 后真实使用发现的 5 个生产 bug 全部修复([`reports/completed/2026-06-18-v1-followups.md`](./reports/completed/2026-06-18-v1-followups.md))
 - ✅ admin SPA 消费 flagged 字段 + prod-mode/docker-prod e2e CI(`a660622`)
 
-切片深度分布(v1 主干,2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad 完成后):
+切片深度分布(v1 主干,2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad + 1ai-a~1ai-h 完成):
 
-- 🟢 verified-deep ×21(4 strict + 1 aligned + 16 touched)
-- 🟡 verified-shallow ×10
+- 🟢 verified-deep ×23(4 strict + 1 aligned + 18 touched)
+- 🟡 verified-shallow ×9
 - 🔴 implemented-unverified ×0(全部 7 个原 🔴 升 🟡/🟢)
 - 全部切片已交付
 
@@ -42,8 +49,7 @@
 
 | 项 | 状态 |
 |---|---|
-| 产品事实来源 | ✅ [`START.md`](../START.md) |
-| 架构事实来源 | ✅ [`PLAN.md`](../PLAN.md) |
+| 架构 + 产品定位事实来源 | ✅ [`PLAN.md`](../PLAN.md) |
 | Claude 工作指南 | ✅ [`CLAUDE.md`](../CLAUDE.md) |
 | 文档规范 | ✅ [`docs/standards/`](./standards/) |
 | LICENSE | ✅ AGPL-3.0 |
@@ -80,18 +86,45 @@
 | v1-e2e(全量 e2e acceptance) | 🟡 |
 | v1-followups(5 个生产 bug fix) | 🟡 |
 
+### 2.1 代码体量(2026-06-20 实测)
+
+| 维度 | 数值 |
+|---|---|
+| Go 后端代码(server/,不含测试) | ~6700 LOC |
+| Go 测试文件 | 59 个(`*_test.go`) |
+| TypeScript 单测(admin + visitor-sdk) | 16 个(`*.test.ts`) |
+| E2E 测试场景 | 19 个 spec |
+| api 包覆盖(`go test -cover ./internal/api/...`) | **28.7%** |
+| storage 包覆盖(`go test -cover ./internal/storage/...`) | 1.5%(repo 文件级覆盖更高,见 1ai/1ai-b 报告) |
+| hub 包覆盖 | 73.0% |
+
+> **覆盖口径说明**:Go `-cover` 是包级 statement coverage。1ai-系列 commit message 自报"api 包覆盖 38.2%"是包含 e2e 集成路径的更高口径;以 `go test -cover` 实测 28.7% 为准。
+
+### 2.2 重命名重构记录(2026-06-20)
+
+`marketing-monitor` → `pinconsole` 全量重命名 5 步,共 5 commit:
+
+| 步 | commit | 内容 |
+|---|---|---|
+| 1 | `f461b59` | Go module `github.com/iannil/marketing-monitor` → `github.com/iannil/pinconsole` |
+| 2 | `dbf631b` | pnpm scope `@marketing-monitor/*` → `@pinconsole/*`(admin / visitor-sdk / e2e) |
+| 3 | `d3d5f03` | docker-compose + DB schema + Go embed 路径重建 |
+| 4 | `ea271d7` | 当前活跃文档(project-status / MEMORY / daily / standards)+ CI / ops 全量改 pinconsole |
+| 5 | `234fa06` | e2e DB 连接 + visitor-sdk package.json description 清理 + verify |
+
+**历史快照保留**:`docs/reports/completed/` 22 份报告快照中的 `@marketing-monitor/*` 命令字面量已批量更新为 `@pinconsole/*`;e2e 测试中的"1r 切片后 SDK 不再输出 marketing-monitor 字面量"类历史断言**保持原样**(那是当时被移除的真实字符串,改了会让断言失效)。
+
 ## 3. 事实来源优先级（冲突时按此解析）
 
 ```
-1. PLAN.md     — 架构、技术栈、切片拆分、决策理由
-2. START.md    — 产品需求、竞品能力、业务上下文
-3. CLAUDE.md   — Claude 工作指南（含文档/记忆/可观测性约定）
-4. 本文件       — 当前状态与下一步
+1. PLAN.md     — 架构、产品定位、技术栈、切片拆分、决策理由
+2. CLAUDE.md   — Claude 工作指南（含文档/记忆/可观测性约定）
+3. 本文件       — 当前状态与下一步
 ```
 
 冲突场景示例:
-- PLAN.md 说用 Gin,START.md 提到 "Gin 或 Go-Zero" → 用 Gin(PLAN.md 优先)
-- START.md 描述"同时支持 SaaS 多租户",CLAUDE.md 说"不做多租户" → 不做(CLAUDE.md 优先,因 START.md 是描述竞品能力而非本项目决策)
+- PLAN.md §3 锁定 Gin + coder/websocket,与历史草稿提到的 Go-Zero 冲突 → 用 Gin(PLAN.md 优先)
+- 外部反馈"应支持 SaaS 多租户",CLAUDE.md/PLAN.md §3 明确不做 → 不做(本项目硬约束)
 
 ## 4. 架构决策清单（不可重新讨论）
 
@@ -172,6 +205,8 @@
 | 1ai-d | me+logout happy path | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aid-me-logout-happy-path-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aid-me-logout-happy-path-implementation.md) — 4 新测试,auth.go me 40%→100%、logout 85.7%→100%,AuthHandler 全 4 handler happy+拒绝路径全覆盖 |
 | 1ai-e | claim+chat listMessages 接口化 + happy path | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aie-claim-chat-interface-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aie-claim-chat-interface-implementation.md) — 3 新接口 + 4 happy path 测试,claim 25%→78.1%、listMessages 57%→76.2%,api 覆盖 31.8%→33.7% |
 | 1ai-f | CommandHandler 接口化(精简)+ postCommand 拒绝路径 | 🟢 touched | [spec](./reports/completed/2026-06-20-slice-1aif-command-handler-interface-spec.md) + [impl](./reports/completed/2026-06-20-slice-1aif-command-handler-interface-implementation.md) — commandRepo 接口 + 3 测试,postCommand 0%→16%(拒绝路径) |
+| 1ai-g | requireClaimOwnership 接口化 + ChatHandler 字段重构 + postMessage happy path | 🟢 touched | commit `2c186d0`/`0f5f347`/`a75c2f6` — 4 测试(Success/NotOwner/InvalidJSON/EmptyContent) + 2 mock,postMessage 35%→85%;实施记录见 [`daily/2026-06-19.md`](../memory/daily/2026-06-19.md) §"1ai-g requireClaimOwnership 接口化"(无独立 impl 报告) |
+| 1ai-h | SessionHandler 接口化 + initSession happy path + replay 纯函数测试 | 🟢 touched | commit `7af0807`/`b748e43`/`08377d8` — 4 initSession + 6 replay 纯函数测试,initSession 0%→87%、decodePayloadAsEvent 0%→100%、eventPayloadToMap 0%→100%;实施记录见 [`daily/2026-06-19.md`](../memory/daily/2026-06-19.md) §"1ai-h SessionHandler 接口化"(无独立 impl 报告) |
 
 **累计**:🟢 ×23(4 strict + 1 aligned + 18 touched) / 🟡 ×9 / 🔴 ×0
 
@@ -182,9 +217,13 @@
 - 16 个切片 🟢 touched(从审计后 6 个升至)
 - 剩余 T2/T3(40 项,~15 小时)留 backlog,不阻塞 v1 release
 
-**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。测试信心补全完成,可考虑 post-v1 路线(自定义域名 / 页面编辑器 / Tauri)。
+**1ag~1ai-h 完成统计**(2026-06-19~20):
+- 累计 +75 测试 + 5 接口化重构(AuthHandler / ClaimHandler+ChatHandler.listMessages / CommandHandler / requireClaimOwnership+ChatHandler.postMessage / SessionHandler)
+- api 包覆盖 20.0% → 实测 28.7%(commit message 自报 38.2%,见 §2.1 口径说明)
+- storage 包覆盖 20.1% → 实测 1.5%(包级,repo 文件级更高,见 1ai/1ai-b 报告)
+- 接口化模式 PoC 在 5 个 handler 验证
 
-**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次 2 天交付（70+ commits），属于集中冲刺。
+**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次集中冲刺:2026-06-17~20 共 4 天,90+ commits。测试信心补全完成,可考虑 post-v1 路线(自定义域名 / 页面编辑器 / Tauri)。
 
 ## 6. 已识别风险
 
@@ -244,7 +283,7 @@
 
 - 范围扩张请求("加 X 功能"、"也支持 Y") → 检查是否在 v1 切片或后续切片路线(PLAN.md §8)。不在则停下来与用户确认是否调整 PLAN.md
 - 架构决策冲突 → §4 列出的决策不能擅自动,先停下来
-- "用户说 X 是 SaaS 多租户" → 不对,本项目明确不做多租户(START.md 描述的是竞品能力,不是本项目决策)
+- "用户说 X 是 SaaS 多租户" → 不对,本项目明确不做多租户(PLAN.md §3 锁定单租户,"不考虑客户和销售"是用户硬约束)
 - 提到不存在的命令/服务/脚本 → 检查是否真的存在
 
 **写代码时**:

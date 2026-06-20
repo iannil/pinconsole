@@ -51,7 +51,7 @@ cd admin && pnpm dev
 # prod 模式(SERVER_ENV=prod)
 SERVER_ENV=prod ADMIN_PASSWORD=strong ./server
 # 访问 /admin/dashboard → 重定向 /admin/login
-# 输入 admin@marketing-monitor.local / strong → 跳回 /dashboard
+# 输入 admin@pinconsole.local / strong → 跳回 /dashboard
 
 # e2e
 cd e2e && pnpm test 1h-ui

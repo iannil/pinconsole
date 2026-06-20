@@ -28,7 +28,7 @@
 - ✅ **`e2e/fixtures/db.ts`**(新建)— DB/Redis 直连 fixture,封装 `seedFlaggedSession` / `setLoginThrottleCounter` / `clearLoginThrottle` 等 paired seed/cleanup 函数。
 - ✅ **`e2e/package.json`** — 加 `pg` / `redis` / `@types/pg` 依赖。
 - ✅ 13 个旧 spec 全部改用 admin-auth fixture + adminRequest:
-  - `1a-smoke` — logger 断言从字面量 `marketing-monitor` 改为 JSON `source` 字段(1r 改造)
+  - `1a-smoke` — logger 断言从字面量 `marketing-monitor` 改为 JSON `source` 字段(1r 改造;历史字面量,仓库重命名为 pinconsole 后该字面量在当前代码中已不存在)
   - `1b-realtime` / `1c-rrweb` / `1d-replay` / `1e-cobrowse` / `1f-form-navigate` / `1g-chat` — admin 不再用裸 `browser.newContext() + goto('/admin/')`(被 router 守卫挡到 /login),改用 `adminPage` fixture
   - `1h-auth` — 凭证从硬编码 `changeme123` 改为从 `.env` 读 `ADMIN_PASSWORD`(1k fail-secure 后 release binary 真验密码)
   - `1h-ui` — 错密码测试改用专属 email 避免污染 admin throttle counter

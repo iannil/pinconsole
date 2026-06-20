@@ -1,5 +1,7 @@
 # 全栈深度审计:pinconsole v1 交付物
 
+> **状态**:已闭环(13 个 P0 全部修复,详见 1k/1l/1v 报告;P1~P3 部分留 post-v1 backlog),详见 [`docs/project-status.md`](../project-status.md) §6。
+
 **审计时间**：2026-06-18
 **审计范围**：v1 全部交付物(server 38 Go 文件 + admin 22 Vue/TS + visitor-sdk 17 TS + e2e 10 spec + DB migrations + Dockerfile/CI/compose + 全部 docs/Markdown)
 **审计员**：Claude(grill-me 共识达成后,6 维并行 subagent + 主线交叉验证)
