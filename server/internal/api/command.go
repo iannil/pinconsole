@@ -94,7 +94,7 @@ func (h *CommandHandler) postCommand(c *gin.Context) {
 	defer observability.Lifecycle(ctx, "PostCommand", logger)()
 
 	// 1k P0-3:校验调用方拥有 session claim(不要求 alive,因命令可能针对刚结束的 session)
-	sessionID, callerUID, ok := requireClaimOwnership(c, h.stores, h.logger, false)
+	sessionID, callerUID, ok := requireClaimOwnership(c, h.sessionRepo, h.redis, h.logger, false)
 	if !ok {
 		observability.LogPoint(ctx, logger, observability.EventBranch, "PostCommand",
 			"claim_check", "failed")

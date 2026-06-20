@@ -69,10 +69,9 @@ func TestRequireClaimOwnership_NotClaimed_Returns403(t *testing.T) {
 	ctx := context.Background()
 	rdb.Del(ctx, claimKey(sessionID))
 
-	stores := &storage.Stores{Redis: &storage.Redis{Client: rdb}}
 	c, w := newAuthzTestContext(sessionID, callerUID)
 
-	_, _, ok := requireClaimOwnership(c, stores, nil, false)
+	_, _, ok := requireClaimOwnership(c, nil, &storage.Redis{Client: rdb}, nil, false)
 	if ok {
 		t.Errorf("ok=true want false (session not claimed)")
 	}
@@ -101,10 +100,9 @@ func TestRequireClaimOwnership_OwnerMismatch_Returns403(t *testing.T) {
 		t.Fatalf("seed claim: %v", err)
 	}
 
-	stores := &storage.Stores{Redis: &storage.Redis{Client: rdb}}
 	c, w := newAuthzTestContext(sessionID, callerUID)
 
-	_, _, ok := requireClaimOwnership(c, stores, nil, false)
+	_, _, ok := requireClaimOwnership(c, nil, &storage.Redis{Client: rdb}, nil, false)
 	if ok {
 		t.Errorf("ok=true want false (caller != owner)")
 	}
@@ -135,10 +133,9 @@ func TestRequireClaimOwnership_Owner_Ok(t *testing.T) {
 		t.Fatalf("seed claim: %v", err)
 	}
 
-	stores := &storage.Stores{Redis: &storage.Redis{Client: rdb}}
 	c, _ := newAuthzTestContext(sessionID, ownerUID)
 
-	gotSID, gotCaller, ok := requireClaimOwnership(c, stores, nil, false)
+	gotSID, gotCaller, ok := requireClaimOwnership(c, nil, &storage.Redis{Client: rdb}, nil, false)
 	if !ok {
 		t.Errorf("ok=false want true (owner should pass)")
 	}
@@ -159,7 +156,7 @@ func TestRequireClaimOwnership_InvalidSessionID(t *testing.T) {
 	c.Params = gin.Params{{Key: "id", Value: "not-a-uuid"}}
 	c.Set("user_id", uuid.New())
 
-	_, _, ok := requireClaimOwnership(c, &storage.Stores{}, nil, false)
+	_, _, ok := requireClaimOwnership(c, nil, nil, nil, false)
 	if ok {
 		t.Errorf("ok=true want false (invalid session_id)")
 	}
@@ -178,7 +175,7 @@ func TestRequireClaimOwnership_NoUserID_Returns401(t *testing.T) {
 	c.Params = gin.Params{{Key: "id", Value: uuid.New().String()}}
 	// 不 Set user_id,模拟 AuthMiddleware 失效
 
-	_, _, ok := requireClaimOwnership(c, &storage.Stores{}, nil, false)
+	_, _, ok := requireClaimOwnership(c, nil, nil, nil, false)
 	if ok {
 		t.Errorf("ok=true want false (no user_id in ctx)")
 	}
@@ -203,10 +200,9 @@ func TestRequireClaimOwnership_ClaimCorrupt(t *testing.T) {
 		t.Fatalf("seed corrupt: %v", err)
 	}
 
-	stores := &storage.Stores{Redis: &storage.Redis{Client: rdb}}
 	c, w := newAuthzTestContext(sessionID, callerUID)
 
-	_, _, ok := requireClaimOwnership(c, stores, testLogger(), false)
+	_, _, ok := requireClaimOwnership(c, nil, &storage.Redis{Client: rdb}, testLogger(), false)
 	if ok {
 		t.Errorf("ok=true want false (corrupt claim value)")
 	}

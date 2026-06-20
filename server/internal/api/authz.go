@@ -17,7 +17,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
 )
 
 // requireClaimOwnership 校验调用方拥有 session 的 claim。
@@ -30,9 +29,14 @@ import (
 //   - sessionID 解析后的 UUID
 //   - callerUID 调用方 user_id
 //   - ok 是否通过；若 false 调用方应直接 return
+//
+// 1ai-g:签名从 *storage.Stores 改为接口参数(claimSessionRepo + claimRedisStore),
+// 解锁 mock 注入(postMessage/postCommand happy path 测试)。
+// sessionRepo 可为 nil(当 requireAliveSession=false 时,如 command/chat 路径)。
 func requireClaimOwnership(
 	c *gin.Context,
-	stores *storage.Stores,
+	sessionRepo claimSessionRepo,
+	redis claimRedisStore,
 	logger *slog.Logger,
 	requireAliveSession bool,
 ) (sessionID uuid.UUID, callerUID uuid.UUID, ok bool) {
@@ -55,9 +59,13 @@ func requireClaimOwnership(
 
 	// 3. （可选）PG session 存在性
 	if requireAliveSession {
+		if sessionRepo == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "session_repo_required"})
+			return uuid.Nil, uuid.Nil, false
+		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 		defer cancel()
-		sess, err := stores.PG.GetSession(ctx, sid)
+		sess, err := sessionRepo.GetSession(ctx, sid)
 		if err != nil || sess == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "session_not_found"})
 			return uuid.Nil, uuid.Nil, false
@@ -71,7 +79,7 @@ func requireClaimOwnership(
 	// 4. Redis claim ownership
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
-	claimVal, err := stores.Redis.Get(ctx, claimKey(sid))
+	claimVal, err := redis.Get(ctx, claimKey(sid))
 	if err != nil {
 		logger.ErrorContext(ctx, "claim lookup failed", "session_id", sid, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "claim_lookup_failed"})

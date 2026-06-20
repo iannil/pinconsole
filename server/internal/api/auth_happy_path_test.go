@@ -98,6 +98,19 @@ func (m *mockRedisStore) Set(ctx context.Context, key string, value []byte, ttl 
 	return nil
 }
 
+// SetNX 1ai-g:加此方法让 mockRedisStore 满足 claimRedisStore 接口。
+// 简单实现:key 不存在则写入返 true,已存在返 false(模拟 Redis SET NX 语义)。
+func (m *mockRedisStore) SetNX(ctx context.Context, key string, value []byte, ttl time.Duration) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.data[key]; exists {
+		return false, nil
+	}
+	m.data[key] = value
+	m.ttl[key] = ttl
+	return true, nil
+}
+
 func (m *mockRedisStore) Del(ctx context.Context, key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()

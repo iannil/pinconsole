@@ -17,16 +17,31 @@ import (
 )
 
 type ChatHandler struct {
-	stores      *storage.Stores // 留给 postMessage + requireClaimOwnership(1ai-f 再重构)
-	messageRepo chatMessageRepo // 1ai-e:listMessages 用接口(从 stores.PG 抽取)
+	// 1ai-g:postMessage 走接口(requireClaimOwnership 接口化),
+	// stores 保留(暂未用,1ai-h 删除)。
+	stores      *storage.Stores
+	sessionRepo claimSessionRepo
+	redis       claimRedisStore
+	messageRepo chatMessageRepo // 1ai-e:listMessages 用接口
+	createMsg   chatMessageCreator
 	hub         CommandHub
 	logger      *slog.Logger
+}
+
+// chatMessageCreator 扩展 chatMessageRepo,加 CreateChatMessage(postMessage 用)。
+// *storage.Postgres 自动满足。
+type chatMessageCreator interface {
+	ListChatMessagesBySession(ctx context.Context, sessionID uuid.UUID, sinceID int64, limit int32) ([]storage.ChatMessage, error)
+	CreateChatMessage(ctx context.Context, tenantID uuid.UUID, sessionID uuid.UUID, sender, content string) (*storage.ChatMessage, error)
 }
 
 func NewChatHandler(stores *storage.Stores, h CommandHub, logger *slog.Logger) *ChatHandler {
 	return &ChatHandler{
 		stores:      stores,
-		messageRepo: stores.PG, // 1ai-e:listMessages 走接口
+		sessionRepo: stores.PG,
+		redis:       stores.Redis,
+		messageRepo: stores.PG,
+		createMsg:   stores.PG,
 		hub:         h,
 		logger:      logger,
 	}
@@ -108,7 +123,7 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 	defer observability.Lifecycle(ctx, "PostMessage", logger)()
 
 	// 1k P0-3:校验调用方拥有 session claim
-	sessionID, _, ok := requireClaimOwnership(c, h.stores, h.logger, false)
+	sessionID, _, ok := requireClaimOwnership(c, h.sessionRepo, h.redis, h.logger, false)
 	if !ok {
 		return
 	}
@@ -122,7 +137,7 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 	sender := "operator"
 
 	// 写 PG
-	msg, err := h.stores.PG.CreateChatMessage(ctx, storage.DefaultTenantID, sessionID, sender, req.Content)
+	msg, err := h.createMsg.CreateChatMessage(ctx, storage.DefaultTenantID, sessionID, sender, req.Content)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "create message failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})
