@@ -14,7 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // TestMe_Success_Returns200_Body — 注入 user_id + mock userRepo 返 user →

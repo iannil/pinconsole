@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/config"
+	"github.com/iannil/pinconsole/internal/config"
 	"github.com/redis/go-redis/v9"
 )
 

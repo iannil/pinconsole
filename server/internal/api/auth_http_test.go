@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // newAuthTestEngine 构造仅挂 auth 路由的 gin engine,不含 middleware。

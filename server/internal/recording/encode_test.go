@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/proto"
+	"github.com/iannil/pinconsole/internal/proto"
 )
 
 // TestEncodeBlobChecksum 验证 blob 编码的 checksum 与手动计算一致。

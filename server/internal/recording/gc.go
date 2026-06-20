@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/observability"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/observability"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // GCConfig 是 GC worker 的配置。

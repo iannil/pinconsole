@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iannil/marketing-monitor/internal/config"
+	"github.com/iannil/pinconsole/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

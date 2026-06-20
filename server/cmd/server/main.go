@@ -16,12 +16,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/api"
-	"github.com/iannil/marketing-monitor/internal/config"
-	"github.com/iannil/marketing-monitor/internal/hub"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/recording"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/api"
+	"github.com/iannil/pinconsole/internal/config"
+	"github.com/iannil/pinconsole/internal/hub"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/recording"
+	"github.com/iannil/pinconsole/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 

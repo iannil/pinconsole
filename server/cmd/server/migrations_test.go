@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iannil/marketing-monitor/migrations"
+	"github.com/iannil/pinconsole/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )

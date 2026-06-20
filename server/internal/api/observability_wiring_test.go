@@ -23,8 +23,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/observability"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/observability"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // TestObservability_Lifecycle_OnPostCommand — T1-1s-LIF-01:

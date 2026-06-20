@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // snapshotTTL 是 Redis 中 snapshot 的过期时间。

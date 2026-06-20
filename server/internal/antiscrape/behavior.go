@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/proto"
+	"github.com/iannil/pinconsole/internal/proto"
 	"github.com/redis/go-redis/v9"
 )
 

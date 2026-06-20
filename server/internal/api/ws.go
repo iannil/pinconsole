@@ -11,12 +11,12 @@ import (
 	"github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/antiscrape"
-	"github.com/iannil/marketing-monitor/internal/hub"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/proto"
-	"github.com/iannil/marketing-monitor/internal/recording"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/antiscrape"
+	"github.com/iannil/pinconsole/internal/hub"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/proto"
+	"github.com/iannil/pinconsole/internal/recording"
+	"github.com/iannil/pinconsole/internal/storage"
 	"github.com/redis/go-redis/v9"
 )
 

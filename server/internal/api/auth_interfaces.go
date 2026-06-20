@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // authUserRepo 是 AuthHandler 需要的 user 查询接口。

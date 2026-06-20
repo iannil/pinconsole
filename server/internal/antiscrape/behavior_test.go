@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iannil/marketing-monitor/internal/proto"
+	"github.com/iannil/pinconsole/internal/proto"
 )
 
 // testLogger 返回一个丢弃所有输出的 slog logger 用于测试。

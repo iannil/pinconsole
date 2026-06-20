@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/iannil/marketing-monitor/internal/config"
+	"github.com/iannil/pinconsole/internal/config"
 )
 
 // Stores 聚合三个后端依赖。

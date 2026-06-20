@@ -21,7 +21,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // TestWS_VisitorOriginCheck_Enabled — T0-1h-6:

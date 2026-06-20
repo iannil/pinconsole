@@ -17,8 +17,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/iannil/marketing-monitor/internal/storage"
-	"github.com/iannil/marketing-monitor/migrations"
+	"github.com/iannil/pinconsole/internal/storage"
+	"github.com/iannil/pinconsole/migrations"
 )
 
 // migrationAdvisoryLockID 是 pg_advisory_lock 的固定 key（任意 int64）。

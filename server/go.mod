@@ -1,4 +1,4 @@
-module github.com/iannil/marketing-monitor
+module github.com/iannil/pinconsole
 
 go 1.25.0
 

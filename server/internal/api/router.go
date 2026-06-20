@@ -23,11 +23,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iannil/marketing-monitor/internal/antiscrape"
-	"github.com/iannil/marketing-monitor/internal/hub"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/recording"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/antiscrape"
+	"github.com/iannil/pinconsole/internal/hub"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/recording"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // Options 是 NewRouter 的可选参数集合。

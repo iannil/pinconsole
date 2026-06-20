@@ -18,10 +18,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/observability"
-	"github.com/iannil/marketing-monitor/internal/proto"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/observability"
+	"github.com/iannil/pinconsole/internal/proto"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // CommandHub 是 hub 的最小接口约束（避免循环 import + 测试更易）。

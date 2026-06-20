@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // healthLive 仅检查进程存活（无依赖检查）。

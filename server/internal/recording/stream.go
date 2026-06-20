@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/observability"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/observability"
+	"github.com/iannil/pinconsole/internal/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )

@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iannil/marketing-monitor/internal/antiscrape"
-	"github.com/iannil/marketing-monitor/internal/hub"
-	"github.com/iannil/marketing-monitor/internal/logging"
-	"github.com/iannil/marketing-monitor/internal/privacy"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/antiscrape"
+	"github.com/iannil/pinconsole/internal/hub"
+	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/privacy"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // SessionHandler 处理 session REST 端点。

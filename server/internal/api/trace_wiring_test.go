@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iannil/marketing-monitor/internal/logging"
+	"github.com/iannil/pinconsole/internal/logging"
 )
 
 // TestTraceID_WsReadLoop_RestoresCtx — T1-1m-1:

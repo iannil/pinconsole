@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 

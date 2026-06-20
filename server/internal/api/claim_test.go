@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/iannil/marketing-monitor/internal/storage"
+	"github.com/iannil/pinconsole/internal/storage"
 )
 
 // TestClaim_SetNX_RaceSafety — T0-1k-4: 并发 SetNX 同一 session_key 只一方 win。

@@ -10,7 +10,7 @@ package api
 import (
 	"testing"
 
-	"github.com/iannil/marketing-monitor/internal/proto"
+	"github.com/iannil/pinconsole/internal/proto"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

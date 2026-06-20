@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
-	"github.com/iannil/marketing-monitor/internal/proto"
+	"github.com/iannil/pinconsole/internal/proto"
 )
 
 // encodeBlob 把一批 stream entry 编码为 MinIO 对象内容（msgpack array of envelope bytes）。
