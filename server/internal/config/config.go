@@ -80,7 +80,7 @@ type PostgresConfig struct {
 	Port     string `env:"PG_PORT" envDefault:"5432"`
 	User     string `env:"PG_USER" envDefault:"mm"`
 	Password string `env:"PG_PASSWORD" envDefault:""`
-	Database string `env:"PG_DB" envDefault:"marketing_monitor"`
+	Database string `env:"PG_DB" envDefault:"pinconsole"`
 	SSLMode  string `env:"PG_SSLMODE" envDefault:"prefer"`
 	// 1z:连接池上限。pgxpool 默认 max(4, NumCPU) 对 4 核机器仅 4 条,
 	// 多并发访客场景(每访客至少 1 PG 写连接)快速耗尽。默认 25 = ~20 访客 + 5 运营余量。
@@ -109,7 +109,7 @@ type MinIOConfig struct {
 	Endpoint  string `env:"MINIO_ENDPOINT" envDefault:"localhost:9000"`
 	AccessKey string `env:"MINIO_ACCESS_KEY" envDefault:""`
 	SecretKey string `env:"MINIO_SECRET_KEY" envDefault:""`
-	Bucket    string `env:"MINIO_BUCKET" envDefault:"marketing-monitor"`
+	Bucket    string `env:"MINIO_BUCKET" envDefault:"pinconsole"`
 	UseSSL    bool   `env:"MINIO_USE_SSL" envDefault:"false"`
 }
 

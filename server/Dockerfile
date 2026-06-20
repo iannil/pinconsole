@@ -16,8 +16,8 @@ RUN pnpm install --frozen-lockfile
 # 复制源码并构建
 COPY admin/ ./admin/
 COPY visitor-sdk/ ./visitor-sdk/
-RUN pnpm --filter @marketing-monitor/admin build && \
-    pnpm --filter @marketing-monitor/visitor-sdk build
+RUN pnpm --filter @pinconsole/admin build && \
+    pnpm --filter @pinconsole/visitor-sdk build
 
 # ===== Stage 2: Go builder =====
 FROM golang:1.25-alpine AS go-builder

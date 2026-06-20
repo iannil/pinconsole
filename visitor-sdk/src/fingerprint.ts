@@ -36,7 +36,7 @@ function getCanvasHash(): string {
     if (!ctx) return 'no-canvas';
     ctx.textBaseline = 'top';
     ctx.font = '14px Arial';
-    ctx.fillText('marketing-monitor fingerprint 🎯', 2, 2);
+    ctx.fillText('pinconsole fingerprint 🎯', 2, 2);
     ctx.fillStyle = 'rgba(102,204,0,0.7)';
     ctx.fillRect(125, 1, 62, 20);
     return simpleHash(canvas.toDataURL());

@@ -43,7 +43,7 @@ func helperMinioIfAvailable(t *testing.T) (*minio.Client, string) {
 	if _, err := client.ListBuckets(ctx); err != nil {
 		t.Skipf("minio ListBuckets: %v", err)
 	}
-	bucket := "marketing-monitor"
+	bucket := "pinconsole"
 	exists, err := client.BucketExists(ctx, bucket)
 	if err != nil || !exists {
 		t.Skipf("bucket %s 不存在或不可访问: %v", bucket, err)

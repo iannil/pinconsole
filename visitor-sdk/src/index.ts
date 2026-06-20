@@ -1,4 +1,4 @@
-// marketing-monitor 访客 SDK 入口。
+// pinconsole 访客 SDK 入口。
 //
 // 切片 1a：仅自动初始化 + console.log。
 // 切片 1b：4 类 collector + transport + 重连。

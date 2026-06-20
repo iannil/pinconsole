@@ -1,4 +1,4 @@
-# docker-compose for marketing-monitor
+# docker-compose for pinconsole
 #
 # 默认（dev）profile 仅启动基础设施（PG + Redis + MinIO）。
 # 启动：docker compose up -d
@@ -8,7 +8,7 @@
 #
 # 详见 docs/reports/completed/2026-06-17-slice-1a-spec.md §docker-compose 结构
 
-name: marketing-monitor
+name: pinconsole
 
 networks:
   mm-net:
@@ -21,13 +21,13 @@ services:
     environment:
       POSTGRES_USER: ${PG_USER:-mm}
       POSTGRES_PASSWORD: ${PG_PASSWORD:-mm_dev}
-      POSTGRES_DB: ${PG_DB:-marketing_monitor}
+      POSTGRES_DB: ${PG_DB:-pinconsole}
     ports:
       - "${PG_PORT:-5432}:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-mm} -d ${PG_DB:-marketing_monitor}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-mm} -d ${PG_DB:-pinconsole}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -85,16 +85,16 @@ services:
       # (不用 ${VAR:?required} 语法,因 docker compose 在 parse 阶段就校验,
       # 即使 server 在 profile 中未激活也会阻塞 `docker compose up postgres`)
       PG_PASSWORD: ${PG_PASSWORD:-}
-      PG_DB: ${PG_DB:-marketing_monitor}
+      PG_DB: ${PG_DB:-pinconsole}
       PG_SSLMODE: ${PG_SSLMODE:-prefer}
       REDIS_ADDR: redis:6379
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-}
-      MINIO_BUCKET: ${MINIO_BUCKET:-marketing-monitor}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pinconsole}
       MINIO_USE_SSL: "false"
       # 1k P0-2:同上,依赖 Go validate() 拒绝空密码 / changeme123 / dev 弱凭证
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@marketing-monitor.local}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@pinconsole.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       BCRYPT_COST: ${BCRYPT_COST:-12}
     ports:

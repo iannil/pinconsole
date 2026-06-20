@@ -28,7 +28,7 @@ func helperPGIfAvailable(t *testing.T) *pgxpool.Pool {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, "postgres://mm:mm_dev@localhost:5432/marketing_monitor?sslmode=disable")
+	pool, err := pgxpool.New(ctx, "postgres://mm:mm_dev@localhost:5432/pinconsole?sslmode=disable")
 	if err != nil {
 		t.Skipf("PG 不可用(%v),跳过", err)
 	}

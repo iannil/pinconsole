@@ -1,4 +1,4 @@
-// Package main 是 marketing-monitor 后端 server 的入口。
+// Package main 是 pinconsole 后端 server 的入口。
 //
 // v1 切片 1a：启动 HTTP server，注册 health/sdk/admin/landing 路由。
 // v1 切片 1b：增加 hub、WS、recording、session REST 端点。
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	logger := logging.NewLogger(cfg.LogLevel, cfg.Env)
-	logger.Info("启动 marketing-monitor",
+	logger.Info("启动 pinconsole",
 		"version", version,
 		"commit", commit,
 		"env", cfg.Env,
