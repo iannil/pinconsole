@@ -40,3 +40,10 @@ type chatMessageRepo interface {
 type commandRepo interface {
 	CreateCoBrowsingCommand(ctx context.Context, cmd storage.CoBrowsingCommand) (*storage.CoBrowsingCommand, error)
 }
+
+// sessionInitRepo 是 SessionHandler.initSession 需要的 visitor+session upsert 接口(1ai-h)。
+// *storage.Postgres 自动满足。
+type sessionInitRepo interface {
+	CreateVisitor(ctx context.Context, tenantID uuid.UUID, fingerprint, ua, ip string) (*storage.Visitor, error)
+	CreateSession(ctx context.Context, tenantID, visitorID uuid.UUID, ua, ip string) (*storage.Session, error)
+}

@@ -19,14 +19,24 @@ import (
 
 // SessionHandler 处理 session REST 端点。
 type SessionHandler struct {
-	stores *storage.Stores
-	hub    *hub.Hub
-	logger *slog.Logger
+	// 1ai-h:用接口替代具体 *storage.Stores,解锁 mock 注入。
+	// stores/redis 保留(listSessions 用 antiscrape.IsSessionFlagged 需要 Redis.Client)。
+	stores      *storage.Stores
+	sessionRepo sessionInitRepo
+	logger      *slog.Logger
+	hub         *hub.Hub
 }
 
 // NewSessionHandler 创建 session handler。
+//
+// 1ai-h:签名不变,内部抽取 PG 适配接口。
 func NewSessionHandler(stores *storage.Stores, h *hub.Hub, logger *slog.Logger) *SessionHandler {
-	return &SessionHandler{stores: stores, hub: h, logger: logger}
+	return &SessionHandler{
+		stores:      stores,
+		sessionRepo: stores.PG,
+		hub:         h,
+		logger:      logger,
+	}
 }
 
 // Register 在 router 上注册路由。
@@ -78,7 +88,7 @@ func (h *SessionHandler) initSession(c *gin.Context) {
 	truncatedIP := privacy.TruncateIP(c.ClientIP())
 
 	// upsert visitor
-	visitor, err := h.stores.PG.CreateVisitor(ctx, tenantID, req.VisitorID, req.UA, truncatedIP)
+	visitor, err := h.sessionRepo.CreateVisitor(ctx, tenantID, req.VisitorID, req.UA, truncatedIP)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "create visitor failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})
@@ -86,7 +96,7 @@ func (h *SessionHandler) initSession(c *gin.Context) {
 	}
 
 	// create session
-	sess, err := h.stores.PG.CreateSession(ctx, tenantID, visitor.ID, req.UA, truncatedIP)
+	sess, err := h.sessionRepo.CreateSession(ctx, tenantID, visitor.ID, req.UA, truncatedIP)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "create session failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})
