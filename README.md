@@ -33,26 +33,43 @@ cd pinconsole
 # 1. 复制环境配置
 cp .env.example .env
 
-# 2. 启动基础设施
-docker compose up -d
+# 2. 启动基础设施（用 Make 一键启动 + 等 PG ready）
+make docker-up
+# 或手动:docker compose up -d postgres redis minio
 
 # 3. 安装前端依赖 + 构建嵌入
-pnpm install
-pnpm --filter @pinconsole/admin build
-pnpm --filter @pinconsole/visitor-sdk build
+make build-frontend
+# 或手动:pnpm install && pnpm --filter @pinconsole/admin build && ...
 
 # 4. 构建 + 启动 release 单二进制(server 启动时自动应用 migrations)
-mkdir -p server/cmd/server/embedded/{admin,sdk,landing}
-cp -r admin/dist/. server/cmd/server/embedded/admin/
-cp -r visitor-sdk/dist/. server/cmd/server/embedded/sdk/
-cp -r landing/. server/cmd/server/embedded/landing/
-cd server && go build -tags release -o bin/server ./cmd/server
-./bin/server
+make build
+./server/bin/server
+# 或手动:cd server && go build -tags release -o bin/server ./cmd/server
 
 # 5. 访问
 # 访客落地页：http://localhost:8080/
 # 运营后台：http://localhost:8080/admin
 ```
+
+**Make 命令清单**(详见 `Makefile`):`make help` / `make docker-up` / `make test-go` / `make coverage-go` / `make check`(lint + 单测) / `make verify`(含 e2e)。
+
+### 老开发者迁移(2026-06-20 rename 重构遗漏修复)
+
+如果本地 PG volume 已有 `marketing_monitor` 数据库(rename 重构前的旧名),改 `.env` 后 docker compose up **不会**自动迁移。两种迁移方式:
+
+```bash
+# 方式 A:清空 volume 重来(数据丢失,仅开发环境)
+make docker-down-v
+make docker-up
+make migrate
+
+# 方式 B:保留数据,手动迁移
+docker compose exec -T postgres psql -U mm -d postgres -c "CREATE DATABASE pinconsole OWNER mm;"
+make migrate
+# 然后可选:导出 marketing_monitor 数据 → 导入 pinconsole → DROP DATABASE marketing_monitor
+```
+
+详见 [`docs/reports/completed/2026-06-20-slice-0-env-rename-fix-implementation.md`](./docs/reports/completed/2026-06-20-slice-0-env-rename-fix-implementation.md)。
 
 ## 生产部署
 

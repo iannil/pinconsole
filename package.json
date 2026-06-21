@@ -21,6 +21,7 @@
     "test": "pnpm test:go && pnpm test:js && pnpm test:e2e",
     "test:go": "make test-go",
     "test:js": "pnpm --filter '@pinconsole/admin' --filter '@pinconsole/visitor-sdk' --if-present test",
+    "test:js:cov": "pnpm --filter '@pinconsole/admin' --filter '@pinconsole/visitor-sdk' --if-present test:cov",
     "test:e2e": "pnpm --filter @pinconsole/e2e test",
     "lint": "pnpm lint:md && pnpm lint:js && make lint-go",
     "lint:md": "markdownlint '**/*.md' '#node_modules' '#.git' '#server' '#admin' '#visitor-sdk' '#docs/standards' '#docs/templates'",

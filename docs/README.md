@@ -16,7 +16,7 @@
 | [`project-status.md`](./project-status.md) | rolling 项目状态（LLM 友好） | v1 主干完全收口版本（2026-06-18） |
 | [`progress/`](./progress/) | 当前正在进行的修改单元（一改一文） | 空（无在进行的修改） |
 | [`reports/completed/`](./reports/completed/) | 已完成的切片 spec + implementation 报告 | v1 全切片 1a-1z + v1-e2e + v1-followups 共 30+ 报告 + [`v1-slice-plan.md`](./reports/completed/2026-06-17-v1-slice-plan.md) |
-| [`audits/`](./audits/) | 审计发现（冗余/过期/错误梳理） | [`initial-cleanup`](./audits/2026-06-17-initial-cleanup.md) / [`deep-audit (80 findings)`](./audits/2026-06-18-deep-audit.md) / [`1k-1u-regression`](./audits/2026-06-18-1k-1u-regression.md) |
+| [`audits/`](./audits/) | 审计发现（冗余/过期/错误梳理 + 测试覆盖率/质量评估） | [`initial-cleanup`](./audits/2026-06-17-initial-cleanup.md) / [`deep-audit (80 findings)`](./audits/2026-06-18-deep-audit.md) / [`1k-1u-regression`](./audits/2026-06-18-1k-1u-regression.md) / [`test-confidence-audit`](./audits/2026-06-19-test-confidence-audit.md) / [`test-health-audit`](./audits/2026-06-19-test-health-audit.md) / [`coverage-assessment`](./audits/2026-06-20-coverage-assessment.md) |
 | [`standards/`](./standards/) | 规范（命名、结构、流程、验证深度、变更安全） | [`doc-structure.md`](./standards/doc-structure.md) / [`naming-conventions.md`](./standards/naming-conventions.md) / [`verification-depth.md`](./standards/verification-depth.md) / [`change-safety.md`](./standards/change-safety.md) |
 | [`templates/`](./templates/) | 各类文档模板 | [`progress.md`](./templates/progress.md) / [`report.md`](./templates/report.md) / [`audit.md`](./templates/audit.md) / [`spec.md`](./templates/spec.md) |
 

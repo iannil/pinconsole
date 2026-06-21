@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'node:path';
@@ -5,6 +6,7 @@ import { resolve } from 'node:path';
 // 切片 1a：admin Vue3 SPA 的 Vite 配置。
 // - dev: HMR + proxy /api 与 /healthz 到后端 8080
 // - build: 输出 dist/ 供 Go embed
+// - test: vitest + coverage(TS-1 切片配置,thresholds 60% 起步,TS-5 提升到 90%)
 export default defineConfig({
   plugins: [vue()],
   base: '/admin/',
@@ -32,6 +34,30 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+      },
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '**/*.d.ts',
+        '**/*.config.ts',
+        '**/*.cjs',
+        '**/.eslintrc*',
+        'tests/**',
+        'src/main.ts',
+        'src/env.d.ts',
+      ],
+      thresholds: {
+        lines: 60,
+        functions: 50,
+        branches: 50,
+        statements: 60,
       },
     },
   },

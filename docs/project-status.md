@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-20(1ai-h 完成 — SessionHandler 接口化 + initSession happy path + replay 纯函数测试,api 包覆盖实测 28.7%;1ag~1ai-h 累计 +75 测试 + 5 接口化重构 + 2 代码 fix;同日完成 marketing-monitor → pinconsole 全量重命名重构 5 步;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 14 happy-path 项)
+**最后更新**:2026-06-20(1ai-h 完成 — SessionHandler 接口化 + initSession happy path + replay 纯函数测试,api 包覆盖实测 38.2%(docker 环境);1ag~1ai-h 累计 +75 测试 + 5 接口化重构 + 2 代码 fix;同日完成 marketing-monitor → pinconsole 全量重命名重构 5 步 + 单元测试覆盖率评估;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 14 happy-path 项)
 
 ---
 
@@ -22,7 +22,7 @@
 
 最新进展(2026-06-20):
 
-- ✅ 1ai-d ~ 1ai-h 接口化重构与 happy path 测试(8 commit,~28h):AuthHandler / ClaimHandler / ChatHandler / CommandHandler / requireClaimOwnership / SessionHandler 全部接口化,api 包覆盖从 20% 提升到实测 28.7%(commit message 自报 38.2%,以实测为准)
+- ✅ 1ai-d ~ 1ai-h 接口化重构与 happy path 测试(8 commit,~28h):AuthHandler / ClaimHandler / ChatHandler / CommandHandler / requireClaimOwnership / SessionHandler 全部接口化,api 包覆盖从 20% 提升到实测 38.2%(详见 [`audits/2026-06-20-coverage-assessment.md`](./audits/2026-06-20-coverage-assessment.md))
 - ✅ marketing-monitor → pinconsole 全量重命名重构(5 commit,详见 §2.2)
 - ✅ gofmt 全量清债(struct field 对齐 + 缩进规范,1 commit)
 - ✅ storage 时间窗口测试 sleep 10ms → 100ms 防 PG 时钟漂移 flaky(1 commit)
@@ -92,13 +92,23 @@
 |---|---|
 | Go 后端代码(server/,不含测试) | ~6700 LOC |
 | Go 测试文件 | 59 个(`*_test.go`) |
-| TypeScript 单测(admin + visitor-sdk) | 16 个(`*.test.ts`) |
-| E2E 测试场景 | 19 个 spec |
-| api 包覆盖(`go test -cover ./internal/api/...`) | **28.7%** |
-| storage 包覆盖(`go test -cover ./internal/storage/...`) | 1.5%(repo 文件级覆盖更高,见 1ai/1ai-b 报告) |
-| hub 包覆盖 | 73.0% |
+| TypeScript 单测(admin + visitor-sdk) | 16 个(`*.test.ts`,150 用例) |
+| E2E 测试场景 | 19 个 spec(91 test cases) |
+| Go 加权整体覆盖率(docker 环境) | ~65% |
+| config 包覆盖 | 98.0% 🟢 |
+| privacy 包覆盖 | 95.0% 🟢 |
+| proto 包覆盖 | **100.0%** 🟢(Go-1) |
+| antiscrape 包覆盖 | **95.9%** 🟢(Go-1,86.7%→95.9%) |
+| observability 包覆盖 | **91.7%** 🟢(Go-1,83.3%→91.7%) |
+| logging 包覆盖 | **98.0%** 🟢(Go-2,79.6%→98.0%) |
+| hub 包覆盖 | **94.1%** 🟢(Go-3,72.4%→94.1%,race -count=3 通过) |
+| storage 包覆盖 | **86.5%** 🟡(Go-4,57.6%→86.5%;未达 90% 目标 3.5pp,剩余 scan 边缘分支 ROI 低) |
+| recording 包覆盖 | **77.7%** 🟡(Go-5,48.0%→77.7%;未达 90% 目标 12.3pp,5 表 cascade + flushSession 错误路径 ROI 低) |
+| api 包覆盖 | **47.9%** 🟡(Go-6 Commit 1,38.2%→47.9%;未达 90% 目标 42.1pp,WS handlers + HTTP 业务路径留 backlog) |
+| cmd/server 包覆盖 | 4.9% 🔴(main 入口,e2e 兜底) |
+| vitest coverage 配置 | ✅ 已配 v8 provider(TS-1);admin **85.67%**(TS-3) / visitor-sdk 36.05%(TS-2 partial,src/index.ts 留 backlog) |
 
-> **覆盖口径说明**:Go `-cover` 是包级 statement coverage。1ai-系列 commit message 自报"api 包覆盖 38.2%"是包含 e2e 集成路径的更高口径;以 `go test -cover` 实测 28.7% 为准。
+> **覆盖口径说明**(2026-06-20 修正):Go `-cover` 必须在 docker-compose 启动后跑,否则 storage/api/recording/antiscrape 等依赖 PG/Redis/MinIO 的包会被 skip,显示虚假低覆盖率(如 storage 1.5% 是本地无 docker 的口径,实测 57.6%)。完整逐包覆盖率 + 关键未覆盖函数清单 + 历史虚标对账见 [`audits/2026-06-20-coverage-assessment.md`](./audits/2026-06-20-coverage-assessment.md)。
 
 ### 2.2 重命名重构记录(2026-06-20)
 
@@ -219,8 +229,8 @@
 
 **1ag~1ai-h 完成统计**(2026-06-19~20):
 - 累计 +75 测试 + 5 接口化重构(AuthHandler / ClaimHandler+ChatHandler.listMessages / CommandHandler / requireClaimOwnership+ChatHandler.postMessage / SessionHandler)
-- api 包覆盖 20.0% → 实测 28.7%(commit message 自报 38.2%,见 §2.1 口径说明)
-- storage 包覆盖 20.1% → 实测 1.5%(包级,repo 文件级更高,见 1ai/1ai-b 报告)
+- api 包覆盖 20.0% → 实测 38.2%(docker 环境,详见 [`audits/2026-06-20-coverage-assessment.md`](./audits/2026-06-20-coverage-assessment.md))
+- storage 包覆盖 20.1% → 实测 57.6%(docker 环境;repo 函数 70-100%,适配器 0%)
 - 接口化模式 PoC 在 5 个 handler 验证
 
 **累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次集中冲刺:2026-06-17~20 共 4 天,90+ commits。测试信心补全完成,可考虑 post-v1 路线(自定义域名 / 页面编辑器 / Tauri)。
