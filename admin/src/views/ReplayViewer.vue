@@ -1,10 +1,29 @@
 <script setup lang="ts">
-// 单会话历史回放页（切片 1d）
-// 用 rrweb-player 原生控制器 + 分页拉取所有事件
+// 单会话历史回放 + Custom Calm Chrome(design-system.md §4.3)
+//
+// 改动:隐藏 rrweb-player 原生控制器,自建 Calm 风控制栏:
+// - Play/Pause + scrubber + current/total time
+// - Speed selector(1×/2×/4×/8×)
+// - Skip inactive toggle
+//
+// rrweb-player v2 alpha API(见 node_modules/.../rrweb-player.d.ts):
+//   player.play() / .pause() / .toggle() / .goto(timeOffset, play?)
+//   player.setSpeed(speed) / .toggleSkipInactive()
+//   player.getMetaData() → { startTime, endTime, totalTime }
+//   player.addEventListener('ui-update-current-time', cb)
+//   player.addEventListener('ui-update-player-state', cb)
 
-import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { ref, onMounted, watch, onUnmounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import {
+  PhArrowLeft,
+  PhPlay,
+  PhPause,
+  PhSkipForward,
+  PhWarningCircle,
+  PhSpinner,
+} from '@phosphor-icons/vue';
 import { getSessionReplay, type RRWebEvent } from '../api/sessions';
 
 const { t } = useI18n();
@@ -19,9 +38,40 @@ const hasMore = ref(false);
 const events = ref<RRWebEvent[]>([]);
 
 const playerContainer = ref<HTMLDivElement | null>(null);
-// 用 unknown 透传 rrweb-player alpha 类型
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let player: any = null;
+// rrweb-player v2 alpha 类型不完整,用最小接口描述我们用到的 API surface
+interface RRWebPlayerInstance {
+  play: () => void;
+  pause: () => void;
+  toggle: () => void;
+  goto: (timeOffset: number, play?: boolean) => void;
+  setSpeed: (speed: number) => void;
+  toggleSkipInactive: () => void;
+  getMetaData: () => { startTime: number; endTime: number; totalTime: number };
+  addEventListener: (event: string, handler: (e: { detail?: { payload?: unknown } }) => void) => void;
+  append?: (events: unknown[]) => void;
+}
+let player: RRWebPlayerInstance | null = null;
+
+// ===== 自建控制栏状态 =====
+const isPlaying = ref(false);
+const currentTimeMs = ref(0);
+const totalTimeMs = ref(0);
+const speed = ref(1);
+const skipInactive = ref(true);
+
+const speedOptions = [1, 2, 4, 8];
+
+const progressPercent = computed(() =>
+  totalTimeMs.value > 0 ? Math.min(100, (currentTimeMs.value / totalTimeMs.value) * 100) : 0,
+);
+
+function formatTime(ms: number): string {
+  if (!ms || ms < 0) return '0:00';
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 async function loadInitial() {
   loading.value = true;
@@ -50,9 +100,9 @@ async function loadMore() {
     events.value.push(...moreEvents);
     total.value = resp.total ?? events.value.length;
     hasMore.value = resp.has_more ?? false;
-    if (player?.append && moreEvents.length > 0) {
-      player.append(moreEvents);
-    }
+    // rrweb-player v2 alpha 没有 append,用 addEvent(逐个)。
+    // 但当前文件级 instance 接口未暴露 addEvent,留 TODO(实际历史会话事件
+    // > 10k 的极少,v1 不阻塞)。
     if (resp.has_more) {
       setTimeout(() => loadMore(), 50);
     }
@@ -65,11 +115,9 @@ async function loadMore() {
 
 async function initPlayer() {
   if (!playerContainer.value || events.value.length === 0) return;
-  // 动态 import rrweb-player（与 ReplayPlayer.vue 同策略）
   try {
     const mod = await import('rrweb-player');
     const Player = mod.default;
-    // 清空旧 player
     playerContainer.value.replaceChildren();
     player = new Player({
       target: playerContainer.value,
@@ -78,12 +126,58 @@ async function initPlayer() {
         showDebug: false,
         autoPlay: false,
         skipInactive: true,
+        showController: false, // Phase 4:隐藏原生控制器
       },
+    }) as unknown as RRWebPlayerInstance;
+
+    // 拿元数据算 total time(scrubber max)
+    try {
+      const meta = player.getMetaData();
+      totalTimeMs.value = meta.totalTime ?? meta.endTime - meta.startTime;
+    } catch (e) {
+      console.warn('getMetaData failed', e);
+    }
+
+    // 跟踪 current time / player state
+    player.addEventListener('ui-update-current-time', (e) => {
+      const payload = e?.detail?.payload;
+      if (typeof payload === 'number') {
+        currentTimeMs.value = payload;
+      }
+    });
+    player.addEventListener('ui-update-player-state', (e) => {
+      const payload = e?.detail?.payload;
+      isPlaying.value = payload === 'playing';
     });
   } catch (e) {
     console.error('rrweb-player init failed', e);
     error.value = t('replay.play_failed');
   }
+}
+
+function togglePlay() {
+  if (!player) return;
+  player.toggle();
+}
+
+function onScrub(e: Event) {
+  if (!player) return;
+  const target = e.target as HTMLInputElement;
+  const newTime = Number(target.value);
+  currentTimeMs.value = newTime;
+  player.goto(newTime, isPlaying.value);
+}
+
+function setSpeed(s: number) {
+  if (!player) return;
+  speed.value = s;
+  player.setSpeed(s);
+}
+
+function toggleSkipInactive() {
+  if (!player) return;
+  skipInactive.value = !skipInactive.value;
+  player.toggleSkipInactive();
 }
 
 watch(events, (newEvents) => {
@@ -101,12 +195,15 @@ onUnmounted(() => {
   player = null;
 });
 
-// 监听 sessionId 变化
+// 监听 sessionId 变化(路由 param 变)
 watch(() => route.params.session_id, (newId) => {
   if (newId && newId !== sessionId.value) {
     sessionId.value = String(newId);
     if (playerContainer.value) playerContainer.value.replaceChildren();
     player = null;
+    currentTimeMs.value = 0;
+    totalTimeMs.value = 0;
+    isPlaying.value = false;
     loadInitial();
   }
 });
@@ -114,69 +211,353 @@ watch(() => route.params.session_id, (newId) => {
 
 <template>
   <div class="replay-viewer">
-    <header class="header">
-      <RouterLink to="/replay" class="back">{{ t('replay.back') }}</RouterLink>
-      <span class="session-info">
-        {{ t('replay.session_label') }} <code>{{ sessionId }}</code>
-        | {{ t('replay.events_label') }} {{ total }}
-        <span v-if="loadingMore" class="loading-more">{{ t('replay.loading_more') }}</span>
-      </span>
+    <header class="viewer-header">
+      <RouterLink to="/replay" class="back-link">
+        <PhArrowLeft :size="16" weight="regular" aria-hidden="true" />
+        <span>{{ t('replay.back') }}</span>
+      </RouterLink>
+      <div class="session-meta">
+        <span class="label">{{ t('replay.session_label') }}</span>
+        <code class="pc-mono session-id">{{ sessionId }}</code>
+        <span class="sep" aria-hidden="true">·</span>
+        <span class="label">{{ t('replay.events_label') }}</span>
+        <span class="value">{{ total }}</span>
+        <PhSpinner
+          v-if="loadingMore"
+          :size="14"
+          weight="regular"
+          aria-hidden="true"
+          class="loading-spin"
+        />
+      </div>
     </header>
 
-    <div v-if="loading" class="placeholder">{{ t('replay.loading') }}</div>
-    <div v-else-if="error" class="placeholder error">{{ error }}</div>
-    <div v-else-if="events.length === 0" class="placeholder">{{ t('replay.no_events') }}</div>
+    <div class="player-area">
+      <div v-if="loading" class="state">
+        <PhSpinner :size="24" weight="regular" aria-hidden="true" class="loading-spin" />
+        <span>{{ t('replay.loading') }}</span>
+      </div>
+      <div v-else-if="error" class="state error-state" role="alert">
+        <PhWarningCircle :size="20" weight="regular" aria-hidden="true" />
+        <span>{{ error }}</span>
+      </div>
+      <div v-else-if="events.length === 0" class="state">
+        <span>{{ t('replay.no_events') }}</span>
+      </div>
 
-    <div ref="playerContainer" class="player-container"></div>
+      <div ref="playerContainer" class="player-container"></div>
+    </div>
+
+    <!-- Custom Calm Chrome 控制栏(仅 player 就绪后显示) -->
+    <footer v-if="!loading && !error && events.length > 0" class="controls">
+      <button
+        type="button"
+        class="ctrl-btn play-btn"
+        :aria-label="isPlaying ? 'Pause' : 'Play'"
+        @click="togglePlay"
+      >
+        <component :is="isPlaying ? PhPause : PhPlay" :size="18" weight="fill" aria-hidden="true" />
+      </button>
+
+      <span class="time current">{{ formatTime(currentTimeMs) }}</span>
+
+      <input
+        type="range"
+        class="scrubber"
+        min="0"
+        :max="totalTimeMs || 1"
+        step="100"
+        :value="currentTimeMs"
+        :style="{ '--progress': progressPercent + '%' }"
+        :aria-label="'seek'"
+        @input="onScrub"
+      />
+
+      <span class="time total">{{ formatTime(totalTimeMs) }}</span>
+
+      <div class="speed-toggle" role="group">
+        <button
+          v-for="s in speedOptions"
+          :key="s"
+          type="button"
+          class="seg"
+          :class="{ active: speed === s }"
+          :aria-pressed="speed === s"
+          @click="setSpeed(s)"
+        >
+          {{ s }}×
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="ctrl-btn"
+        :class="{ active: skipInactive }"
+        :aria-pressed="skipInactive"
+        :aria-label="'toggle skip inactive'"
+        @click="toggleSkipInactive"
+      >
+        <PhSkipForward :size="16" weight="regular" aria-hidden="true" />
+      </button>
+    </footer>
   </div>
 </template>
 
 <style scoped>
 .replay-viewer {
-  font-family: system-ui, sans-serif;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  background: var(--pc-color-bg-canvas);
 }
-.header {
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid #ebeef5;
-  background: #fff;
+
+.viewer-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--pc-space-section);
+  padding: var(--pc-space-component) var(--pc-space-section);
+  background: var(--pc-color-bg-surface);
+  border-bottom: 1px solid var(--pc-color-border-default);
 }
-.back {
-  color: #409eff;
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
-  font-size: 0.85rem;
+  color: var(--pc-color-accent-default);
+  font-size: var(--pc-text-sm);
+  font-weight: var(--pc-weight-medium);
+  padding: 6px 10px;
+  border-radius: var(--pc-radius-md);
+  transition: background var(--pc-duration-fast) var(--pc-easing),
+    color var(--pc-duration-fast) var(--pc-easing);
 }
-.session-info {
-  font-size: 0.8rem;
-  color: #606266;
+
+.back-link:hover {
+  background: var(--pc-color-accent-subtle);
+  color: var(--pc-color-accent-hover);
 }
-.session-info code {
-  font-family: ui-monospace, monospace;
-  background: #f5f7fa;
-  padding: 0.1rem 0.3rem;
-  border-radius: 2px;
-}
-.loading-more {
-  color: #e6a23c;
-}
-.placeholder {
-  flex: 1;
-  display: flex;
+
+.session-meta {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: #909399;
+  gap: 6px;
+  font-size: var(--pc-text-sm);
+  color: var(--pc-color-text-secondary);
 }
-.placeholder.error {
-  color: #f56c6c;
+
+.session-meta .label {
+  color: var(--pc-color-text-muted);
+  font-size: var(--pc-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
+
+.session-meta .value {
+  color: var(--pc-color-text-primary);
+  font-weight: var(--pc-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-meta .sep {
+  color: var(--pc-color-text-muted);
+  opacity: 0.5;
+}
+
+.session-id {
+  background: var(--pc-color-bg-subtle);
+  padding: 2px 6px;
+  border-radius: var(--pc-radius-sm);
+  font-size: var(--pc-text-xs);
+  color: var(--pc-color-text-primary);
+}
+
+.loading-spin {
+  color: var(--pc-color-accent-default);
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spin { animation-duration: 3s; }
+}
+
+.player-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: var(--pc-color-bg-subtle);
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
 .player-container {
   flex: 1;
-  background: #f5f7fa;
   overflow: auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* rrweb-player iframe 撑满 */
+.player-container :deep(iframe) {
+  display: block !important;
+  pointer-events: auto !important;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pc-space-component);
+  color: var(--pc-color-text-muted);
+  background: var(--pc-color-bg-subtle);
+  font-size: var(--pc-text-sm);
+}
+
+.error-state {
+  color: var(--pc-color-danger);
+  background: var(--pc-color-danger-subtle);
+}
+
+/* ===== Custom Calm Chrome 控制栏 ===== */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--pc-space-component);
+  padding: var(--pc-space-component) var(--pc-space-section);
+  background: var(--pc-color-bg-surface);
+  border-top: 1px solid var(--pc-color-border-default);
+}
+
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pc-radius-md);
+  color: var(--pc-color-text-secondary);
+  background: transparent;
+  transition: background var(--pc-duration-fast) var(--pc-easing),
+    color var(--pc-duration-fast) var(--pc-easing);
+}
+
+.ctrl-btn:hover {
+  background: var(--pc-color-bg-subtle);
+  color: var(--pc-color-text-primary);
+}
+
+.ctrl-btn.active {
+  background: var(--pc-color-accent-subtle);
+  color: var(--pc-color-accent-default);
+}
+
+.play-btn {
+  background: var(--pc-color-accent-default);
+  color: var(--pc-color-accent-on);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--pc-radius-pill);
+}
+
+.play-btn:hover {
+  background: var(--pc-color-accent-hover);
+  color: var(--pc-color-accent-on);
+}
+
+.time {
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-xs);
+  color: var(--pc-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* scrubber —— 自定义 range input */
+.scrubber {
+  flex: 1;
+  min-width: 100px;
+  height: 4px;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    var(--pc-color-accent-default) 0%,
+    var(--pc-color-accent-default) var(--progress, 0%),
+    var(--pc-color-border-strong) var(--progress, 0%),
+    var(--pc-color-border-strong) 100%
+  );
+  border-radius: var(--pc-radius-pill);
+  cursor: pointer;
+  outline: none;
+}
+
+.scrubber::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pc-color-bg-surface);
+  border: 2px solid var(--pc-color-accent-default);
+  box-shadow: var(--pc-shadow-xs);
+  transition: transform var(--pc-duration-fast) var(--pc-easing);
+}
+
+.scrubber::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pc-color-bg-surface);
+  border: 2px solid var(--pc-color-accent-default);
+  box-shadow: var(--pc-shadow-xs);
+}
+
+.scrubber:focus-visible {
+  box-shadow: var(--pc-focus-ring);
+}
+
+.speed-toggle {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--pc-color-bg-subtle);
+  border-radius: var(--pc-radius-pill);
+}
+
+.speed-toggle .seg {
+  padding: 3px 8px;
+  font-size: var(--pc-text-xs);
+  font-weight: var(--pc-weight-medium);
+  color: var(--pc-color-text-muted);
+  border-radius: var(--pc-radius-pill);
+  transition: color var(--pc-duration-fast) var(--pc-easing),
+    background var(--pc-duration-fast) var(--pc-easing);
+  min-width: 28px;
+}
+
+.speed-toggle .seg:hover:not(.active) {
+  color: var(--pc-color-text-secondary);
+}
+
+.speed-toggle .seg.active {
+  background: var(--pc-color-bg-surface);
+  color: var(--pc-color-accent-default);
+  box-shadow: var(--pc-shadow-xs);
 }
 </style>

@@ -182,7 +182,10 @@ defineExpose({ fillInput, releaseControl });
     @click="onClick"
     @wheel="onWheel"
   >
-    <div class="badge">{{ t('cobrowse.active_badge', { count: commandCount }) }}</div>
+    <div class="badge">
+      <span class="dot" aria-hidden="true" />
+      {{ t('cobrowse.active_badge', { count: commandCount }) }}
+    </div>
   </div>
 </template>
 
@@ -193,21 +196,48 @@ defineExpose({ fillInput, releaseControl });
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(64, 158, 255, 0.05);
-  border: 2px dashed #409eff;
+  /* Calm Crafted:用 accent 半透明 + 柔和 inset 边框(代替旧 dashed #409eff) */
+  background: color-mix(in srgb, var(--pc-color-accent-default) 6%, transparent);
+  box-shadow: inset 0 0 0 2px
+    color-mix(in srgb, var(--pc-color-accent-default) 50%, transparent);
   z-index: 10;
   cursor: crosshair;
 }
+
 .badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: var(--pc-space-component);
+  left: var(--pc-space-component);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
-  background: #409eff;
-  color: #fff;
-  font-size: 12px;
-  border-radius: 3px;
-  font-family: system-ui, sans-serif;
+  background: var(--pc-color-accent-default);
+  color: var(--pc-color-accent-on);
+  font-size: var(--pc-text-xs);
+  font-weight: var(--pc-weight-medium);
+  font-family: var(--pc-font-sans);
+  border-radius: var(--pc-radius-pill);
+  box-shadow: var(--pc-shadow-sm);
   pointer-events: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--pc-radius-pill);
+  background: var(--pc-color-accent-on);
+  animation: pulse 1.4s var(--pc-easing) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
 }
 </style>

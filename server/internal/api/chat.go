@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,13 @@ func NewChatHandler(stores *storage.Stores, h CommandHub, logger *slog.Logger) *
 func (h *ChatHandler) Register(r gin.IRoutes) {
 	r.GET("/api/sessions/:id/messages", h.listMessages)
 	r.POST("/api/sessions/:id/messages", h.postMessage)
+}
+
+// RegisterVisitorPublic 注册访客侧公开路由(不挂 admin AuthMiddleware)。
+// 与 PrivacyHandler.RegisterPublic 同模式:visitor 无 admin cookie,
+// 但需写 chat_messages 让 admin 轮询拿到。
+func (h *ChatHandler) RegisterVisitorPublic(r gin.IRoutes) {
+	r.POST("/api/sessions/:id/visitor-message", h.postVisitorMessage)
 }
 
 // listMessagesResponse
@@ -114,6 +122,12 @@ type postMessageRequest struct {
 	Content string `json:"content" binding:"required"`
 }
 
+// visitorMessageRequest 不带 binding:required — 空内容返回更友好的 empty_content,
+// 而不是 binding 的 invalid_json。
+type visitorMessageRequest struct {
+	Content string `json:"content"`
+}
+
 func (h *ChatHandler) postMessage(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
@@ -168,4 +182,70 @@ func (h *ChatHandler) postMessage(c *gin.Context) {
 		Content:   msg.Content,
 		CreatedAt: msg.CreatedAt.UnixMilli(),
 	})
+}
+
+// postVisitorMessage 访客侧公开端点:visitor 发消息进 DB。
+// admin ChatPanel 轮询 GET /api/sessions/:id/messages 自动取走(无需 WS 推送)。
+// 安全:sender 固定 "visitor",session 必须存在 + 未结束,内容长度上限 2000。
+// 全局 rate limit(antiscrape.RateLimitMiddleware,prod 启用)按 IP 限频。
+func (h *ChatHandler) postVisitorMessage(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	logger := logging.FromContext(ctx, h.logger)
+	defer observability.Lifecycle(ctx, "PostVisitorMessage", logger)()
+
+	sessionID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id"})
+		return
+	}
+
+	// session 必须存在 + 未结束(防止向历史会话灌水)
+	sess, err := h.sessionRepo.GetSession(ctx, sessionID)
+	if err != nil || sess == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "session_not_found"})
+		return
+	}
+	if sess.EndedAt.Valid {
+		c.JSON(http.StatusConflict, gin.H{"error": "session_ended"})
+		return
+	}
+
+	var req visitorMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_json"})
+		return
+	}
+	content := truncate(strings.TrimSpace(req.Content), 2000)
+	if content == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "empty_content"})
+		return
+	}
+
+	msg, err := h.createMsg.CreateChatMessage(ctx, storage.DefaultTenantID, sessionID, "visitor", content)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "create visitor message failed", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "db_error"})
+		return
+	}
+
+	// 无下行:visitor chatWidget.sendCurrent 已做本地回声;
+	// admin 侧靠 2s 轮询 GET /messages 拉取(sender=visitor)。
+
+	c.JSON(http.StatusOK, chatMessageItem{
+		ID:        msg.ID,
+		Sender:    msg.Sender,
+		Content:   msg.Content,
+		CreatedAt: msg.CreatedAt.UnixMilli(),
+	})
+}
+
+// truncate 按 rune 截断字符串到 maxRunes,防止超长内容压垮 PG/网络。
+func truncate(s string, maxRunes int) string {
+	r := []rune(s)
+	if len(r) <= maxRunes {
+		return s
+	}
+	return string(r[:maxRunes])
 }

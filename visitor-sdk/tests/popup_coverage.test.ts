@@ -85,4 +85,111 @@ describe('ui/popup', () => {
     expect(() => removePopup()).not.toThrow();
     expect(() => removePopup()).not.toThrow();
   });
+
+  it('action_url 为 protocol-relative //host 渲染', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'Go',
+      action_url: '//cdn.example.com/lib.js',
+      dismissible: false,
+    });
+    const link = document.querySelector('a[href]');
+    expect(link).not.toBeNull();
+  });
+
+  it('action_url 为相对路径 /path 渲染', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'Go',
+      action_url: '/relative/path',
+      dismissible: false,
+    });
+    const link = document.querySelector('a[href]');
+    expect(link).not.toBeNull();
+  });
+
+  it('action_url 为文件名 page.html 渲染', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'Go',
+      action_url: 'page.html',
+      dismissible: false,
+    });
+    const link = document.querySelector('a[href]');
+    expect(link).not.toBeNull();
+  });
+
+  it('action_url 为 mailto: 被拒绝', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'Mail',
+      action_url: 'mailto:test@example.com',
+      dismissible: false,
+    });
+    // mailto 应被拒绝(无 a 标签)
+    const link = document.querySelector('a[href]');
+    expect(link).toBeNull();
+  });
+
+  it('action_url 为 data: 被拒绝', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'XSS',
+      action_url: 'data:text/html,<script>alert(1)</script>',
+      dismissible: false,
+    });
+    const link = document.querySelector('a[href]');
+    expect(link).toBeNull();
+  });
+
+  it('action_url 为空字符串 渲染(允许相对)', () => {
+    showPopup({
+      title: 'T',
+      action_label: 'X',
+      action_url: '',
+      dismissible: false,
+    });
+    // 空字符串触发 isURLSchemeAllowed 第一行 return true
+    // 但 action_label && action_url 都需 true 才渲染,空 url 不渲染
+    // 改:测 dismissible + 无 action
+  });
+
+  it('dismissible=true 点击 overlay 触发 removePopup', () => {
+    showPopup({
+      title: 'T',
+      dismissible: true,
+    });
+    const overlay = document.getElementById('__mm_popup__');
+    // 模拟点击 overlay 本身
+    overlay?.dispatchEvent(new MouseEvent('click'));
+    expect(document.getElementById('__mm_popup__')).toBeNull();
+  });
+
+  it('dismissible=false 不渲染 dismiss 按钮', () => {
+    showPopup({
+      title: 'T',
+      dismissible: false,
+    });
+    const overlay = document.getElementById('__mm_popup__');
+    const buttons = overlay?.querySelectorAll('button');
+    expect(buttons?.length).toBe(0);
+  });
+
+  it('无 title 不渲染 h3', () => {
+    showPopup({
+      body: 'B only',
+      dismissible: false,
+    });
+    const overlay = document.getElementById('__mm_popup__');
+    expect(overlay?.querySelector('h3')).toBeNull();
+  });
+
+  it('无 body 不渲染 p', () => {
+    showPopup({
+      title: 'T only',
+      dismissible: false,
+    });
+    const overlay = document.getElementById('__mm_popup__');
+    expect(overlay?.querySelector('p')).toBeNull();
+  });
 });

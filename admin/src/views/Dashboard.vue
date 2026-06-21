@@ -1,28 +1,60 @@
 <script setup lang="ts">
+// Dashboard —— 3-Column Smart Expand(design-system.md §4.2)
+//
+// 默认(未 claim):VisitorList + LiveColumn(2 栏)
+// claim 后:VisitorList + LiveColumn + EngagementPanel(3 栏展开)
+//
+// Script 逻辑保留(claim heartbeat / toggleCoBrowsing / useWs subscribe),
+// dashboard_wiring.test.ts 做源码契约校验,不能改这些 pattern。
 import { onMounted, onUnmounted, computed, ref, watch } from 'vue';
 import { useVisitorsStore } from '../stores/visitors';
-import { useWs, type WsStatus } from '../composables/useWs';
+import { useWs } from '../composables/useWs';
 import VisitorList from '../components/VisitorList.vue';
-import VisitorPanel from '../components/VisitorPanel.vue';
-import CoBrowseOverlay from '../components/CoBrowseOverlay.vue';
+import LiveColumn from '../components/LiveColumn.vue';
+import EngagementPanel from '../components/EngagementPanel.vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '../api/client';
-import { claimSession, releaseSession } from '../api/claim';
+import { claimSession, releaseSession, refreshClaim } from '../api/claim';
 
-const { t, locale, availableLocales } = useI18n();
+const { t } = useI18n();
 const store = useVisitorsStore();
-
-// 1j:语言切换按钮 - 在中英之间 toggle
-function toggleLocale() {
-  const currentIdx = availableLocales.indexOf(locale.value);
-  const nextIdx = (currentIdx + 1) % availableLocales.length;
-  locale.value = availableLocales[nextIdx];
-}
 
 // 1e：co-browsing 控制状态
 const coBrowsingActive = ref(false);
 // claim 是否成功(用于错误提示 + UI 状态)
 const claimError = ref('');
+
+// Phase 3:cobrowse hint 文本由 Dashboard 算好传 LiveColumn
+const cobrowseHint = computed(() =>
+  coBrowsingActive.value
+    ? t('dashboard.cobrowse_hint_active')
+    : t('dashboard.cobrowse_hint_idle'),
+);
+
+// P1-claim-TTL 修复:claim active 时每 60s 续 TTL,避免 5min 自然过期。
+// 续 TTL 失败(403 = claim 已丢)时,自动转 Start 状态 + 提示运营。
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+const REFRESH_INTERVAL_MS = 60_000;
+
+function startClaimHeartbeat(sessionId: string) {
+  stopClaimHeartbeat();
+  refreshTimer = setInterval(async () => {
+    const ok = await refreshClaim(sessionId);
+    if (!ok) {
+      // claim 已丢(TTL 过期 / 被他人 release)
+      stopClaimHeartbeat();
+      coBrowsingActive.value = false;
+      claimError.value = t('dashboard.claim_lost_hint');
+    }
+  }, REFRESH_INTERVAL_MS);
+}
+
+function stopClaimHeartbeat() {
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
 
 async function toggleCoBrowsing() {
   if (!store.selectedSessionId) return;
@@ -32,11 +64,13 @@ async function toggleCoBrowsing() {
       await claimSession(store.selectedSessionId);
       coBrowsingActive.value = true;
       claimError.value = '';
+      startClaimHeartbeat(store.selectedSessionId);
     } catch (e) {
       claimError.value = (e as Error).message;
     }
   } else {
     // Stop:释放 claim + 关 overlay
+    stopClaimHeartbeat();
     try {
       await releaseSession(store.selectedSessionId);
     } finally {
@@ -50,6 +84,7 @@ watch(
   () => store.selectedSessionId,
   async (_newId, oldId) => {
     if (oldId && coBrowsingActive.value) {
+      stopClaimHeartbeat();
       try { await releaseSession(oldId); } catch { /* 已结束/已 release */ }
       coBrowsingActive.value = false;
     }
@@ -116,7 +151,10 @@ onMounted(async () => {
   connect();
 });
 
-onUnmounted(() => close());
+onUnmounted(() => {
+  stopClaimHeartbeat();
+  close();
+});
 
 // 1f：navigated 自动重订阅
 watch(
@@ -136,7 +174,7 @@ watch(
 // 原 UX:user click visitor → 看到 panel → 找 "订阅实时" 按钮(底部可能滚动不到)
 // → click → 等 events → player 渲染。步骤多,易踩坑。
 // 改:user click visitor → 自动 unsubscribe 旧 + subscribe 新 → 等 events →
-// player 渲染。subscribe-bar 按钮保留(可手动取消订阅)。
+// player 渲染。Phase 3:订阅按钮从 UI 移除(自动订阅足够),逻辑保留。
 watch(
   () => store.selectedSessionId,
   (newId, oldId) => {
@@ -148,48 +186,27 @@ watch(
     }
   },
 );
-
-function statusBadgeClass(s: WsStatus): string {
-  return `status-badge status-${s}`;
-}
 </script>
 
 <template>
   <div class="dashboard">
-    <header class="top-bar">
-      <span class="title">{{ t('app.title') }}</span>
-      <span :class="statusBadgeClass(status)">{{ status }}</span>
-      <RouterLink to="/replay" class="nav-link">{{ t('nav.replay') }}</RouterLink>
-      <button class="lang-switch" @click="toggleLocale">{{ t('app.switch_lang') }}</button>
-    </header>
     <main class="main">
-      <VisitorList />
-      <div class="panel-wrapper">
-        <VisitorPanel />
-        <!-- 1e：CoBrowseOverlay 覆盖在 VisitorPanel 上 -->
-        <CoBrowseOverlay
-          v-if="store.selectedSessionId"
+      <VisitorList :status="status" />
+
+      <LiveColumn
+        :co-browsing-active="coBrowsingActive"
+        :claim-error="claimError"
+        :cobrowse-hint="cobrowseHint"
+        :operator-name="t('chat.operator')"
+        @toggle-cobrowse="toggleCoBrowsing"
+      />
+
+      <Transition name="engage">
+        <EngagementPanel
+          v-if="coBrowsingActive && store.selectedSessionId"
           :session-id="store.selectedSessionId"
-          :active="coBrowsingActive"
-          :operator-name="t('chat.operator')"
         />
-        <div v-if="store.selectedSessionId" class="subscribe-bar">
-          <button @click="subscribe(store.selectedSessionId!)">{{ t('dashboard.subscribe') }}</button>
-          <button @click="unsubscribe(store.selectedSessionId!)">{{ t('dashboard.unsubscribe') }}</button>
-          <button
-            v-if="store.selectedSessionId"
-            class="cobrowse-btn"
-            :class="{ active: coBrowsingActive }"
-            :disabled="!store.selectedSessionId"
-            @click="toggleCoBrowsing"
-          >
-            {{ coBrowsingActive ? t('dashboard.stop_cobrowse') : t('dashboard.start_cobrowse') }}
-          </button>
-          <span class="hint">
-            {{ coBrowsingActive ? t('dashboard.cobrowse_hint_active') : t('dashboard.cobrowse_hint_idle') }}
-          </span>
-        </div>
-      </div>
+      </Transition>
     </main>
   </div>
 </template>
@@ -198,89 +215,34 @@ function statusBadgeClass(s: WsStatus): string {
 .dashboard {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
 }
-.top-bar {
-  padding: 0.6rem 1rem;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.title {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-.status-badge {
-  padding: 0.15rem 0.6rem;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-family: ui-monospace, monospace;
-  background: #f5f7fa;
-  color: #606266;
-}
-.status-connected {
-  background: #e1f3d8;
-  color: #67c23a;
-}
-.status-connecting,
-.status-reconnecting {
-  background: #fdf6ec;
-  color: #e6a23c;
-}
-.status-closed,
-.status-idle {
-  background: #fef0f0;
-  color: #f56c6c;
-}
-.nav-link {
-  margin-left: auto;
-  padding: 0.3rem 0.7rem;
-  text-decoration: none;
-  color: #409eff;
-  font-size: 0.8rem;
-}
-.cobrowse-btn.active {
-  background: #f56c6c;
-  border-color: #f56c6c;
-  color: #fff;
-}
-.panel-wrapper {
-  position: relative;
-}
+
 .main {
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
+  background: var(--pc-color-bg-canvas);
 }
-.panel-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+
+/* Engagement panel slide-in transition(Gentle & Restrained:240ms ease-out) */
+.engage-enter-active,
+.engage-leave-active {
+  transition: transform var(--pc-duration-slow) var(--pc-easing),
+    opacity var(--pc-duration-slow) var(--pc-easing);
 }
-.subscribe-bar {
-  padding: 0.5rem 1rem;
-  background: #f5f7fa;
-  border-top: 1px solid #ebeef5;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
+.engage-enter-from,
+.engage-leave-to {
+  transform: translateX(320px);
+  opacity: 0;
 }
-button {
-  padding: 0.3rem 0.8rem;
-  border: 1px solid #409eff;
-  background: #fff;
-  color: #409eff;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-button:hover {
-  background: #ecf5ff;
-}
-.hint {
-  color: #909399;
-  font-size: 0.75rem;
+
+@media (prefers-reduced-motion: reduce) {
+  .engage-enter-active,
+  .engage-leave-active {
+    transition-duration: 1ms;
+  }
 }
 </style>

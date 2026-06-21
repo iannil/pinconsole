@@ -1,12 +1,16 @@
 <script setup lang="ts">
-// ChatPanel：嵌入 VisitorPanel 下方的聊天面板
+// ChatPanel —— 嵌入 EngagementPanel Chat tab 的聊天面板
 //
 // 1z 修 deep-audit P2-23 + 控制台 403 刷屏:
 // session 未 claim 时 server 返 403 not_claimed,旧实现 catch ignore + 继续 2s 轮询,
 // 控制台被 403 刷爆。新实现:遇 401/403 暂停轮询,UI 提示需 claim 才能聊天;
 // sessionId 变化或 send 成功后恢复。
-import { ref, watch, onMounted, nextTick } from 'vue';
+//
+// Phase 3.5a:CSS 全量切 Calm token,气泡 operator=accent / visitor=subtle,
+// input + button 用 .pc-input / .pc-btn 原子类。
+import { ref, watch, onMounted, nextTick, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhPaperPlaneTilt } from '@phosphor-icons/vue';
 import { listMessages, sendMessage, type ChatMessageItem } from '../api/sessions';
 
 const { t } = useI18n();
@@ -103,7 +107,6 @@ onMounted(() => {
   }
 });
 
-import { onUnmounted } from 'vue';
 onUnmounted(() => {
   stopPolling();
 });
@@ -124,18 +127,23 @@ onUnmounted(() => {
         {{ t('chat.paused_auth_required') }}
       </div>
     </div>
-    <div class="input-bar">
+    <form class="input-bar" @submit.prevent="send">
       <input
         v-model="input"
         type="text"
+        class="pc-input chat-input"
         :placeholder="t('chat.placeholder')"
-        @keydown.enter="send"
         :disabled="!sessionId || !!pausedReason"
       />
-      <button @click="send" :disabled="!sessionId || !input.trim() || !!pausedReason">
-        {{ t('chat.send') }}
+      <button
+        type="submit"
+        class="pc-btn pc-btn--primary send-btn"
+        :disabled="!sessionId || !input.trim() || !!pausedReason"
+        :aria-label="t('chat.send')"
+      >
+        <PhPaperPlaneTilt :size="16" weight="regular" aria-hidden="true" />
       </button>
-    </div>
+    </form>
   </div>
 </template>
 
@@ -143,75 +151,95 @@ onUnmounted(() => {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  height: 200px;
-  border-top: 1px solid #ebeef5;
+  height: 100%;
+  min-height: 0;
+  background: var(--pc-color-bg-surface);
 }
+
 .message-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 12px;
+  padding: var(--pc-space-component) var(--pc-space-section);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pc-space-field);
 }
+
 .msg {
-  margin-bottom: 6px;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--pc-text-sm);
+  max-width: 85%;
 }
+
 .msg.operator {
-  text-align: right;
+  align-self: flex-end;
+  align-items: flex-end;
 }
+
+.msg.visitor {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
 .sender {
-  font-size: 11px;
-  color: #909399;
-  margin-right: 4px;
+  font-size: var(--pc-text-xs);
+  color: var(--pc-color-text-muted);
+  padding: 0 4px;
 }
+
 .content {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  max-width: 75%;
+  padding: 6px 12px;
+  border-radius: var(--pc-radius-lg);
   word-break: break-word;
+  line-height: 1.4;
 }
+
 .msg.operator .content {
-  background: #409eff;
-  color: #fff;
+  background: var(--pc-color-accent-default);
+  color: var(--pc-color-accent-on);
+  border-bottom-right-radius: var(--pc-radius-sm);
 }
+
 .msg.visitor .content {
-  background: #f5f7fa;
-  color: #303133;
+  background: var(--pc-color-bg-subtle);
+  color: var(--pc-color-text-primary);
+  border-bottom-left-radius: var(--pc-radius-sm);
 }
+
 .empty {
   text-align: center;
-  color: #c0c4cc;
-  font-size: 12px;
-  padding: 1rem;
+  color: var(--pc-color-text-muted);
+  font-size: var(--pc-text-xs);
+  padding: var(--pc-space-section);
+  font-style: italic;
 }
+
+.empty.paused {
+  color: var(--pc-color-warning);
+  background: var(--pc-color-warning-subtle);
+  border-radius: var(--pc-radius-md);
+  font-style: normal;
+}
+
 .input-bar {
   display: flex;
-  gap: 4px;
-  padding: 8px;
-  border-top: 1px solid #ebeef5;
+  gap: var(--pc-space-field);
+  padding: var(--pc-space-component) var(--pc-space-section);
+  border-top: 1px solid var(--pc-color-border-default);
+  background: var(--pc-color-bg-surface);
 }
-input {
+
+.chat-input {
   flex: 1;
-  padding: 4px 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 3px;
-  font-size: 13px;
-  outline: none;
+  min-height: 36px;
 }
-input:focus {
-  border-color: #409eff;
-}
-button {
-  padding: 4px 14px;
-  background: #409eff;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 13px;
-}
-button:disabled {
-  background: #c0c4cc;
-  cursor: not-allowed;
+
+.send-btn {
+  flex-shrink: 0;
+  padding: 0 12px;
+  min-height: 36px;
 }
 </style>

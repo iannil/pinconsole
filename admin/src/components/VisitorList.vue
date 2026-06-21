@@ -1,13 +1,45 @@
 <script setup lang="ts">
+// Phase 3:🚩 emoji → Phosphor PhFlag(fill,danger 色)。
+// .flag-icon 类保留(tests + 旧 selector 仍工作)。
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhFlag } from '@phosphor-icons/vue';
 import { useVisitorsStore } from '../stores/visitors';
 import { formatRelative } from '../utils/time';
+import type { WsStatus } from '../composables/useWs';
+import StatusBadge from './StatusBadge.vue';
+
+const props = defineProps<{
+  /** WS 连接状态(来自 Dashboard useWs)。不传则不显示状态点。 */
+  status?: WsStatus;
+}>();
 
 const { t } = useI18n();
 const store = useVisitorsStore();
 
 const list = computed(() => store.visitorList);
+
+// WS status → StatusBadge variant + pulse
+const statusVariant = computed<'success' | 'warning' | 'danger' | 'neutral'>(() => {
+  switch (props.status) {
+    case 'connected':
+      return 'success';
+    case 'connecting':
+    case 'reconnecting':
+      return 'warning';
+    case 'closed':
+      return 'danger';
+    default:
+      return 'neutral';
+  }
+});
+
+const statusPulse = computed(() => props.status === 'connected');
+
+const statusLabel = computed(() => {
+  if (!props.status) return '';
+  return t(`status.${props.status}`);
+});
 
 function onClick(sessionId: string) {
   store.select(sessionId);
@@ -25,7 +57,15 @@ function flagTitle(reason?: string): string {
 <template>
   <div class="visitor-list">
     <div class="header">
-      <span>{{ t('dashboard.online_count', { count: list.length }) }}</span>
+      <span class="count">{{ t('dashboard.online_count', { count: list.length }) }}</span>
+      <StatusBadge
+        v-if="status && statusLabel"
+        :variant="statusVariant"
+        :dot="true"
+        :pulse="statusPulse"
+      >
+        {{ statusLabel }}
+      </StatusBadge>
     </div>
     <ul>
       <li
@@ -35,7 +75,9 @@ function flagTitle(reason?: string): string {
         @click="onClick(v.sessionId)"
       >
         <div class="fingerprint" :title="v.fingerprint">
-          <span class="flag-icon" v-if="v.isFlagged" :title="flagTitle(v.flagReason)">🚩</span>
+          <span class="flag-icon" v-if="v.isFlagged" :title="flagTitle(v.flagReason)">
+            <PhFlag :size="12" weight="fill" aria-hidden="true" />
+          </span>
           {{ v.fingerprint.slice(0, 12) }}
         </div>
         <div class="meta">
@@ -51,19 +93,30 @@ function flagTitle(reason?: string): string {
 <style scoped>
 .visitor-list {
   width: 280px;
-  border-right: 1px solid #ebeef5;
+  border-right: 1px solid var(--pc-color-border-default);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  font-family: system-ui, sans-serif;
+  height: 100%;
+  background: var(--pc-color-bg-surface);
+  font-family: var(--pc-font-sans);
 }
+
 .header {
-  padding: 1rem;
-  background: #f5f7fa;
-  font-size: 0.9rem;
-  color: #606266;
-  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pc-space-field);
+  padding: var(--pc-space-component) var(--pc-space-card);
+  background: var(--pc-color-bg-subtle);
+  border-bottom: 1px solid var(--pc-color-border-default);
+  font-size: var(--pc-text-sm);
+  color: var(--pc-color-text-secondary);
 }
+
+.count {
+  font-weight: var(--pc-weight-medium);
+}
+
 ul {
   list-style: none;
   margin: 0;
@@ -71,52 +124,67 @@ ul {
   overflow-y: auto;
   flex: 1;
 }
+
 li {
-  padding: 0.75rem 1rem;
+  padding: var(--pc-space-component) var(--pc-space-card);
   cursor: pointer;
-  border-bottom: 1px solid #f5f7fa;
-  transition: background 0.1s;
+  border-bottom: 1px solid var(--pc-color-border-default);
+  transition: background var(--pc-duration-fast) var(--pc-easing);
 }
+
 li:hover {
-  background: #f5f7fa;
+  background: var(--pc-color-bg-subtle);
 }
+
 li.selected {
-  background: #ecf5ff;
-  border-left: 3px solid #409eff;
-  padding-left: calc(1rem - 3px);
+  background: var(--pc-color-accent-subtle);
+  border-left: 3px solid var(--pc-color-accent-default);
+  padding-left: calc(var(--pc-space-card) - 3px);
 }
-/* 1w P1-29:flagged session 高亮(淡红底)提示运营警惕 */
+
+/* 1w P1-29:flagged session 高亮提示运营警惕 */
 li.flagged {
-  background: #fef0f0;
-  border-left: 3px solid #f56c6c;
+  background: var(--pc-color-danger-subtle);
+  border-left: 3px solid var(--pc-color-danger);
 }
+
 li.flagged:hover {
-  background: #fde2e2;
+  background: var(--pc-color-danger-subtle);
+  filter: brightness(0.97);
 }
+
 li.flagged.selected {
-  background: #fde2e2;
-  border-left: 3px solid #f56c6c;
+  background: var(--pc-color-danger-subtle);
+  border-left: 3px solid var(--pc-color-danger);
 }
+
 .flag-icon {
+  display: inline-flex;
+  align-items: center;
   margin-right: 4px;
+  color: var(--pc-color-danger);
   cursor: help;
 }
+
 .fingerprint {
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
-  color: #303133;
-  margin-bottom: 0.25rem;
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-sm);
+  color: var(--pc-color-text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
+
 .meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #909399;
+  font-size: var(--pc-text-xs);
+  color: var(--pc-color-text-muted);
 }
+
 .empty {
-  padding: 2rem 1rem;
+  padding: var(--pc-space-section) var(--pc-space-card);
   text-align: center;
-  color: #909399;
+  color: var(--pc-color-text-muted);
   cursor: default;
 }
 </style>

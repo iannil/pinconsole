@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'pinconsole 运营后台',
+    wordmark: 'pinconsole',
+    tagline: '开源访客监控控制台',
     hello: '你好！这是切片 1a 的占位页面。后续会接入访客列表、实时回放、co-browsing 控件。',
     switch_lang: '切换到英文',
     health: '后端健康',
@@ -11,6 +13,11 @@ export default {
     live: '← 实时',
     privacy: '隐私合规',
     login: '登录',
+  },
+  profile: {
+    signed_in_as: '已登录:{name}',
+    logout: '退出登录',
+    menu_aria: '账户菜单',
   },
   login: {
     title: 'pinconsole 登录',
@@ -24,6 +31,10 @@ export default {
     error_credentials: '邮箱或密码错误',
     error_session_expired: '会话已过期,请重新登录',
     default_email_hint: '默认账号 {email} / 部署时配置的密码',
+    legal_ack: '登录即表示你知悉本平台会记录访客操作',
+    privacy_link: '隐私',
+    gdpr_link: 'GDPR',
+    source_link: '源代码',
   },
   privacy: {
     title: '隐私合规(GDPR / CCPA)',
@@ -54,6 +65,7 @@ export default {
     stop_cobrowse: 'Stop Co-browsing',
     cobrowse_hint_active: '控制模式已启用，鼠标/点击会下发到访客',
     cobrowse_hint_idle: '订阅后右侧面板显示实时事件',
+    claim_lost_hint: '协助会话已超时,请重新点击 Start Co-browsing',
     logout: '登出',
   },
   visitor: {
@@ -105,6 +117,12 @@ export default {
   },
   cobrowse: {
     active_badge: 'co-browsing 已启用 · {count} 命令已发',
+  },
+  engagement: {
+    tab_chat: '聊天',
+    tab_popup: '弹窗',
+    tab_forms: '表单',
+    title: '正在协助',
   },
   floating_input: {
     placeholder_default: '输入代填值',

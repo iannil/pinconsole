@@ -9,6 +9,7 @@ export function detectLocale(): Locale {
 }
 
 // SDK 端文案字典(1r:替换原硬编码)
+// Phase 5:加 consent / cobrowse / chat Calm UI 新 key
 export const sdkMessages = {
   zh: {
     popup_dismiss: '关闭',
@@ -18,6 +19,13 @@ export const sdkMessages = {
     chat_header: '客服',
     chat_input_placeholder: '输入消息...',
     chat_send: '发送',
+    // Phase 5: Calm co-browse banner 文案
+    cobrowse_assist_hint: '{name} 正在协助你 · 可见页面操作',
+    cobrowse_exit: '退出协助',
+    // Phase 5: Calm consent card 文案
+    consent_privacy_link: '隐私',
+    consent_wordmark: 'pinconsole',
+    consent_tagline: '开源访客监控控制台',
   },
   en: {
     popup_dismiss: 'Close',
@@ -27,6 +35,13 @@ export const sdkMessages = {
     chat_header: 'Support',
     chat_input_placeholder: 'Type a message...',
     chat_send: 'Send',
+    // Phase 5: Calm co-browse banner text
+    cobrowse_assist_hint: '{name} is assisting you · can see page actions',
+    cobrowse_exit: 'End assistance',
+    // Phase 5: Calm consent card text
+    consent_privacy_link: 'Privacy',
+    consent_wordmark: 'pinconsole',
+    consent_tagline: 'open-source visitor console',
   },
 } as const;
 

@@ -75,7 +75,7 @@ describe('VisitorList.vue', () => {
     expect(store.selectedSessionId).toBe('s1');
   });
 
-  it('flagged visitor 渲染 🚩 icon', () => {
+  it('flagged visitor 渲染 flag icon', () => {
     const store = useVisitorsStore();
     store.setInitialList([
       {
@@ -92,8 +92,10 @@ describe('VisitorList.vue', () => {
       },
     });
 
-    // 应含 🚩 icon
-    expect(wrapper.text()).toContain('🚩');
+    // Phase 3:🚩 emoji 已换 Phosphor PhFlag(SVG)。验证 .flag-icon span + 内含 svg
+    const flagIcon = wrapper.find('.flag-icon');
+    expect(flagIcon.exists()).toBe(true);
+    expect(flagIcon.find('svg').exists()).toBe(true);
   });
 
   it('flagTitle 无 reason 返回默认 tooltip', async () => {

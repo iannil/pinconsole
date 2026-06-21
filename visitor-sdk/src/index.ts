@@ -16,6 +16,7 @@ import { ChatWidget } from './ui/chatWidget';
 import { collectFingerprint } from './fingerprint';
 import { showConsentBanner, removeConsentBanner } from './ui/consentBanner';
 import { showCoBrowseBanner, removeCoBrowseBanner } from './ui/coBrowseBanner';
+import { injectTokenStyles } from './styles/tokens';
 import { sdkLogger } from './logging';
 
 const SDK_VERSION = '0.4.0';
@@ -42,6 +43,9 @@ class MarketingMonitorSDK {
   async start(): Promise<void> {
     if (this.started) return;
     this.started = true;
+
+    // Phase 5:注入 --pinconsole-* token styles 到 :root(必须在任何 UI 创建前)
+    injectTokenStyles();
 
     const apiBase = this.inferApiBase();
     const wsBase = this.inferWsBase();
@@ -93,16 +97,22 @@ class MarketingMonitorSDK {
     // 1g：聊天 widget（右下角浮动气泡）
     this.chatWidget = new ChatWidget({
       onSend: (content) => {
-        // 访客发消息：POST /api/sessions/:id/messages
+        // 访客发消息：POST /api/sessions/:id/visitor-message（公开端点，
+        // server 固定 sender="visitor"；旧 /messages 端点挂在 admin AuthMiddleware
+        // 后,visitor 无 admin cookie 会 403）
         const apiBase = this.inferApiBase();
-        void fetch(`${apiBase}/api/sessions/${this.session!.sessionId}/messages`, {
+        void fetch(`${apiBase}/api/sessions/${this.session!.sessionId}/visitor-message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content, sender: 'visitor' }),
+          body: JSON.stringify({ content }),
           credentials: 'include',
         }).catch((e) => sdkLogger.warn('chat_send_failed', { error: String(e) }));
       },
       onFetchMessages: async (sinceId) => {
+        // 拉历史聊天消息。GET /messages 挂在 admin AuthMiddleware 下;
+        // 单租户同源部署下(admin SPA + visitor SDK 同 origin),浏览器共享
+        // cookie,本端点能 200。多租户/跨域部署下会 403,fetchMessages 静默
+        // 返回空,只依赖 WS 实时推送(详见 server/internal/api/router.go 注释)。
         const apiBase = this.inferApiBase();
         const resp = await fetch(
           `${apiBase}/api/sessions/${this.session!.sessionId}/messages?since_id=${sinceId}`,

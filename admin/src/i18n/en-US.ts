@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'pinconsole Operator Console',
+    wordmark: 'pinconsole',
+    tagline: 'open-source visitor console',
     hello: 'Hello! This is the slice 1a placeholder. Visitor list, live replay, and co-browsing controls will arrive in subsequent slices.',
     switch_lang: 'Switch to Chinese',
     health: 'Backend health',
@@ -11,6 +13,11 @@ export default {
     live: '← Live',
     privacy: 'Privacy',
     login: 'Sign In',
+  },
+  profile: {
+    signed_in_as: 'Signed in as {name}',
+    logout: 'Sign out',
+    menu_aria: 'Account menu',
   },
   login: {
     title: 'pinconsole Login',
@@ -24,6 +31,10 @@ export default {
     error_credentials: 'Invalid email or password',
     error_session_expired: 'Session expired, please sign in again',
     default_email_hint: 'Default account {email} / password set at deploy',
+    legal_ack: 'By signing in you acknowledge visitor recording is logged',
+    privacy_link: 'Privacy',
+    gdpr_link: 'GDPR',
+    source_link: 'Source',
   },
   privacy: {
     title: 'Privacy (GDPR / CCPA)',
@@ -54,6 +65,7 @@ export default {
     stop_cobrowse: 'Stop Co-browsing',
     cobrowse_hint_active: 'Control mode active, mouse/clicks forwarded to visitor',
     cobrowse_hint_idle: 'Subscribe to see live events in the right panel',
+    claim_lost_hint: 'Co-browse session timed out, click Start Co-browsing again',
     logout: 'Logout',
   },
   visitor: {
@@ -105,6 +117,12 @@ export default {
   },
   cobrowse: {
     active_badge: 'co-browsing active · {count} commands sent',
+  },
+  engagement: {
+    tab_chat: 'Chat',
+    tab_popup: 'Popup',
+    tab_forms: 'Forms',
+    title: 'Engaging',
   },
   floating_input: {
     placeholder_default: 'Enter fill value',

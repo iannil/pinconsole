@@ -19,6 +19,9 @@ type RRWebPlayerPack = {
         showDebug?: boolean;
         autoPlay?: boolean;
         skipInactive?: boolean;
+        // Phase 4:rrweb-player v2 alpha 支持 showController,
+        // 设 false 隐藏原生控制器(实时模式由我们自己接管 UI)
+        showController?: boolean;
         rootContext?: unknown;
       };
     }): RRWebPlayerInstance;
@@ -45,6 +48,12 @@ let iframeObserver: MutationObserver | null = null;
 // 缺 allow-scripts 导致 Replayer 内部脚本被浏览器阻断(player 渲染空 iframe)。
 // 用 MutationObserver 监听 iframe 创建,自动补 allow-scripts + 强制 reload。
 // 注:改 sandbox attribute 后必须 reload iframe 才生效。
+//
+// 2026-06-21 扩展:除了 childList(新 iframe 插入),也监听 attribute 变化
+// (sandbox / srcdoc)。rrweb-player 在创建 iframe 后通过 setAttribute 设这两个
+// 属性,如果只在 childList 触发 patch,会错过首次 srcdoc load,留下 "Blocked
+// script execution in sandboxed iframe" warning 噪音。attribute filter 让 patch
+// 在 srcdoc 真正 load 之前生效。
 function setupIframeSandboxPatch(root: HTMLElement): void {
   if (iframeObserver) iframeObserver.disconnect();
   const patch = (iframe: HTMLIFrameElement) => {
@@ -61,16 +70,27 @@ function setupIframeSandboxPatch(root: HTMLElement): void {
   };
   // patch 现有
   root.querySelectorAll('iframe').forEach(patch);
-  // 监听新 iframe
+  // 监听新 iframe + 后期 attribute 变化(sandbox/srcdoc)
   iframeObserver = new MutationObserver((mutations) => {
     for (const m of mutations) {
+      if (m.type === 'attributes') {
+        const target = m.target;
+        if (target instanceof HTMLIFrameElement) patch(target);
+        continue;
+      }
+      // childList
       m.addedNodes.forEach((n) => {
         if (n.nodeName === 'IFRAME') patch(n as HTMLIFrameElement);
         if (n instanceof Element) n.querySelectorAll?.('iframe').forEach(patch);
       });
     }
   });
-  iframeObserver.observe(root, { childList: true, subtree: true });
+  iframeObserver.observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['sandbox', 'srcdoc'],
+  });
 }
 
 // 提取 rrweb 原生事件（FullSnapshot + IncrementalSnapshot 等）
@@ -133,6 +153,9 @@ async function rebuildPlayer() {
         showDebug: false,
         autoPlay: true,
         skipInactive: true,
+        // Phase 4:实时回放隐藏 rrweb-player 原生控制器
+        // (live 模式不需要 play/pause/scrub;事件是被动推送的)
+        showController: false,
       },
     });
     // rrweb-player v2 alpha 的 iframe sandbox 默认只设 allow-same-origin,

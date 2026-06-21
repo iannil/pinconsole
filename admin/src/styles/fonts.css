@@ -1,0 +1,27 @@
+/* pinconsole font-face 接入
+ * 来源:docs/design-system.md §6.4
+ *
+ * Latin + Mono 走 @fontsource(self-host,Vite 自动 bundle woff2 进 dist/)
+ * SC(Simplified Chinese)暂用系统 CJK fallback,TODO: 后续下载 IBM Plex Sans SC woff2 提交到 admin/public/fonts/
+ *
+ * 预加载 critical weights(Regular + Medium)在 index.html 里通过 <link rel="preload">
+ */
+
+/* Latin Sans:400 / 500 / 600 */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+
+/* Mono:400(trace_id / session_id / fingerprint) */
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/* TODO(phase-1.5+):IBM Plex Sans SC(self-host woff2)
+ * 来源:https://github.com/ibm/plex/tree/master/IBM-Plex-Sans-SC/fonts/complete/woff2
+ * 计划:下载 Regular/Medium/SemiBold 三个 weight 的 woff2 到 admin/public/fonts/IBMPlexSansSC-*.woff2
+ * 然后在此处加 @font-face 规则(unicode-range: U+4E00-9FFF 等 CJK 范围)
+ *
+ * 当前 fallback 链(在 tokens.css --pc-font-sans):
+ *   "IBM Plex Sans SC"(未加载,fallback) → "PingFang SC" → "Microsoft YaHei" →
+ *   "Hiragino Sans GB" → "Source Han Sans SC" → "Noto Sans CJK SC"
+ */

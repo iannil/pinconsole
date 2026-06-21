@@ -1,0 +1,125 @@
+/* pinconsole global reset
+ * 来源:docs/design-system.md §6.1
+ * 目的:统一浏览器默认 + 走 token
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-base);
+  line-height: var(--pc-leading-normal);
+  color: var(--pc-color-text-primary);
+  background: var(--pc-color-bg-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--pc-weight-semibold);
+  line-height: var(--pc-leading-heading);
+  color: var(--pc-color-text-primary);
+}
+
+a {
+  color: var(--pc-color-accent-default);
+  text-decoration: none;
+  transition: color var(--pc-duration-fast) var(--pc-easing);
+}
+
+a:hover {
+  color: var(--pc-color-accent-hover);
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* 自定义滚动条(仅在支持 webkit-scrollbar 的浏览器) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pc-scrollbar-thumb) var(--pc-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--pc-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--pc-scrollbar-thumb);
+  border-radius: var(--pc-radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--pc-color-border-strong);
+}
+
+/* 焦点环(键盘可访问性) */
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--pc-focus-ring);
+}
+
+/* prefers-reduced-motion 尊重 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -7,15 +7,14 @@
 // 会被强制退出。
 //
 // 修复方式:第一次 navigation 触发时 lazy 调 fetchMe,await 之后再判断 auth 状态。
+//
+// design-system Phase 2:嵌套路由重构 —— /login 独立 public 路由,
+// 其他认证页面挂在 AppShell(顶栏 + 内容)的 children 下。
 
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
 const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    redirect: '/dashboard',
-  },
   {
     path: '/login',
     name: 'login',
@@ -23,29 +22,33 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: () => import('../views/Dashboard.vue'),
+    path: '/',
+    component: () => import('../layouts/AppShell.vue'),
     meta: { requiresAuth: true },
-  },
-  {
-    path: '/replay',
-    name: 'replay-list',
-    component: () => import('../views/ReplayList.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/replay/:session_id',
-    name: 'replay-viewer',
-    component: () => import('../views/ReplayViewer.vue'),
-    props: true,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/privacy',
-    name: 'privacy',
-    component: () => import('../views/Privacy.vue'),
-    meta: { requiresAuth: true },
+    children: [
+      { path: '', redirect: '/dashboard' },
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: () => import('../views/Dashboard.vue'),
+      },
+      {
+        path: 'replay',
+        name: 'replay-list',
+        component: () => import('../views/ReplayList.vue'),
+      },
+      {
+        path: 'replay/:session_id',
+        name: 'replay-viewer',
+        component: () => import('../views/ReplayViewer.vue'),
+        props: true,
+      },
+      {
+        path: 'privacy',
+        name: 'privacy',
+        component: () => import('../views/Privacy.vue'),
+      },
+    ],
   },
 ];
 
@@ -83,7 +86,9 @@ router.beforeEach(async (to, _from, next) => {
     return;
   }
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  // 用 matched.some 检查父级(AppShell)的 requiresAuth meta。
+  // to.meta 会浅 merge 父子,但 matched.some 是 Vue Router 推荐的 canonical 写法。
+  if (to.matched.some((record) => record.meta.requiresAuth) && !auth.isAuthenticated) {
     next({ name: 'login', query: { redirect: to.fullPath } });
     return;
   }

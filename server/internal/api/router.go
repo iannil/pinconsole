@@ -108,6 +108,10 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	privacyH := NewPrivacyHandler(opts.Stores, opts.Logger)
 	privacyH.RegisterPublic(r)
 
+	// 1g-visitor:访客发聊天消息(公开,SDK 用;admin 侧轮询 GET /messages 拉取)
+	chatH := NewChatHandler(opts.Stores, opts.Hub, opts.Logger)
+	chatH.RegisterVisitorPublic(r)
+
 	// 1b/1c/1d：访客 WebSocket（公开）
 	wsH := NewWSHandler(opts.Hub, opts.Stores, opts.Stream, opts.Flusher, opts.Snapshots, opts.Logger, opts.Env != "prod")
 	wsH.Register(r)
@@ -127,8 +131,15 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 		commandH := NewCommandHandler(opts.Stores, opts.Hub, opts.NavigateAllowedDomains, opts.Logger)
 		commandH.Register(protected)
 
-		// 1g：聊天消息 REST API
-		chatH := NewChatHandler(opts.Stores, opts.Hub, opts.Logger)
+		// 1g：聊天消息 REST API（admin 侧:list + operator→visitor POST）
+		//
+		// 注意:GET /messages 挂在 admin AuthMiddleware 下,设计上仅 admin 可拉。
+		// 但单租户同源部署下(admin SPA + visitor SDK 共用同一 origin),
+		// 浏览器会共享 cookie,visitor SDK 的 chatWidget.fetchMessages 也能 200。
+		// 这不是 bug —— 同源 cookie 共享是浏览器行为,且单租户部署下 admin 与
+		// visitor 共享 backend 是设计决策(详见 PLAN.md §3)。
+		// 若未来引入多租户/跨域,需把 GET /messages 改为 session_id 鉴权(类似
+		// POST /visitor-message 的公开端点模式)。
 		chatH.Register(protected)
 
 		// 1h：claim/release
