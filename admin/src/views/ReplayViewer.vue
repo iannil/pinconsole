@@ -25,6 +25,7 @@ import {
   PhSpinner,
 } from '@phosphor-icons/vue';
 import { getSessionReplay, type RRWebEvent } from '../api/sessions';
+import { useResponsivePlayerSize } from '../composables/useResponsivePlayerSize';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -49,8 +50,15 @@ interface RRWebPlayerInstance {
   getMetaData: () => { startTime: number; endTime: number; totalTime: number };
   addEventListener: (event: string, handler: (e: { detail?: { payload?: unknown } }) => void) => void;
   append?: (events: unknown[]) => void;
+  // v2 支持 $set 热更新 props(width/height 等),用于响应式 sizing
+  $set?: (props: Record<string, unknown>) => void;
 }
 let player: RRWebPlayerInstance | null = null;
+
+// 响应式 sizing:覆盖 rrweb-player 默认 1024x576,按真实录制视口比例动态算
+// player 外框尺寸,避免 letterbox / 视觉错位。详见 composable 注释。
+const { start: startResponsiveSizing, stop: stopResponsiveSizing } =
+  useResponsivePlayerSize(playerContainer, () => player);
 
 // ===== 自建控制栏状态 =====
 const isPlaying = ref(false);
@@ -149,6 +157,9 @@ async function initPlayer() {
       const payload = e?.detail?.payload;
       isPlaying.value = payload === 'playing';
     });
+
+    // 启动响应式 sizing(覆盖 rrweb-player 默认 1024x576,从 iframe width/height 读真实录制视口)
+    startResponsiveSizing();
   } catch (e) {
     console.error('rrweb-player init failed', e);
     error.value = t('replay.play_failed');
@@ -192,6 +203,7 @@ onUnmounted(() => {
   if (playerContainer.value) {
     playerContainer.value.replaceChildren();
   }
+  stopResponsiveSizing();
   player = null;
 });
 
@@ -200,6 +212,7 @@ watch(() => route.params.session_id, (newId) => {
   if (newId && newId !== sessionId.value) {
     sessionId.value = String(newId);
     if (playerContainer.value) playerContainer.value.replaceChildren();
+    stopResponsiveSizing();
     player = null;
     currentTimeMs.value = 0;
     totalTimeMs.value = 0;
@@ -399,10 +412,14 @@ watch(() => route.params.session_id, (newId) => {
 
 .player-container {
   flex: 1;
+  /* 响应式 sizing 下 player 外框已按容器+录制比例算好,
+     通常不会超出。保留 auto 作为兜底(异常尺寸时仍可滚动)。 */
   overflow: auto;
+  /* player 外框(rr-player)由 rrweb-player 设 inline width/height,
+     flex 居中让 letterbox 平均分布在两侧而非顶左对齐 */
   display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  align-items: center;
+  justify-content: center;
 }
 
 /* rrweb-player iframe 撑满 */

@@ -5,11 +5,16 @@
 import { ref, watch, onUnmounted, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { EventPayload } from '@pinconsole/proto';
+import { useResponsivePlayerSize } from '../composables/useResponsivePlayerSize';
 
 const { t } = useI18n();
 
 // rrweb-player 的类型定义在 alpha 版不完整，使用 unknown 透传
-type RRWebPlayerInstance = { addEvent?: (e: unknown) => void } & Record<string, unknown>;
+type RRWebPlayerInstance = {
+  addEvent?: (e: unknown) => void;
+  // v2 支持 $set 热更新 props（width/height 等），用于响应式 sizing
+  $set?: (props: Record<string, unknown>) => void;
+} & Record<string, unknown>;
 type RRWebPlayerPack = {
   default: {
     new (opts: {
@@ -43,6 +48,10 @@ const hasEnoughEvents = ref(false);
 let player: RRWebPlayerInstance | null = null;
 let pack: RRWebPlayerPack | null = null;
 let iframeObserver: MutationObserver | null = null;
+// 响应式 sizing:覆盖 rrweb-player 默认 1024x576,按真实录制视口比例动态算
+// player 外框尺寸,避免 letterbox / 视觉错位。详见 composable 注释。
+const { start: startResponsiveSizing, stop: stopResponsiveSizing } =
+  useResponsivePlayerSize(containerRef, () => player);
 
 // 1c-fix:rrweb-player v2 alpha.18 的 iframe 默认 sandbox="allow-same-origin",
 // 缺 allow-scripts 导致 Replayer 内部脚本被浏览器阻断(player 渲染空 iframe)。
@@ -120,6 +129,7 @@ async function rebuildPlayer() {
       // ignore
     }
     player = null;
+    stopResponsiveSizing();  // 旧 player 销毁后,释放对应的 ResizeObserver
   }
 
   if (props.events.length === 0) {
@@ -163,6 +173,8 @@ async function rebuildPlayer() {
     // permission is not set")→ player 渲染空白。
     // 修复:用 MutationObserver 监听 iframe 创建,自动补 allow-scripts。
     setupIframeSandboxPatch(containerRef.value);
+    // 启动响应式 sizing(覆盖 rrweb-player 默认 1024x576,从 iframe width/height 读真实录制视口)
+    startResponsiveSizing();
   } catch (e) {
     errorMsg.value = (e as Error).message;
   } finally {
@@ -230,6 +242,7 @@ onUnmounted(() => {
   }
   iframeObserver?.disconnect();
   iframeObserver = null;
+  stopResponsiveSizing();
   player = null;
 });
 
@@ -267,8 +280,15 @@ defineExpose({ appendEvents });
 }
 .player-container {
   flex: 1;
+  /* 响应式 sizing 下 player 外框已按容器+录制比例算好,
+     通常不会超出。保留 auto 作为兜底(异常尺寸时仍可滚动)。 */
   overflow: auto;
   background: #f5f7fa;
+  /* player 外框(rr-player)由 rrweb-player 设 inline width/height,
+     flex 居中让 letterbox 平均分布在两侧而非顶左对齐 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 /* rrweb-player 自带样式，给个最小高度 */
 .player-container :deep(iframe),
