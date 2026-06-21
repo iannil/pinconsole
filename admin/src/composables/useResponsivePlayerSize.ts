@@ -24,6 +24,8 @@ import type { Ref } from 'vue';
 export interface PlayerLike {
   // rrweb-player v2 提供 $set 热更新 props(width/height 等)
   $set?: (props: Record<string, unknown>) => void;
+  // v2 暴露 getReplayer 拿到内部 Replayer 实例(用于兜底手动触发 handleResize)
+  getReplayer?: () => { handleResize?: (dimension: { width: number; height: number }) => void } | null;
 }
 
 // 从 container 中找 rrweb-player 创建的渲染 iframe,读 width/height attribute。
@@ -40,6 +42,22 @@ function readRecordingDimsFromIframe(container: HTMLElement): { width: number; h
     if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
       return { width: w, height: h };
     }
+  }
+  return null;
+}
+
+// 从 iframe.contentWindow 读 innerWidth/innerHeight。用于 iframe 没有
+// width/height attribute 时的兜底(meta event 缺失导致 handleResize 没触发)。
+//
+// iframe 即使 display:none,contentWindow.innerWidth 仍可读(布局视口,非视觉视口)。
+// 这些值反映 rrweb 写入 iframe.contentDocument 的 DOM 渲染视口,等同访客录制时的 viewport。
+// 需要 sandbox 含 allow-same-origin(rrweb-player 默认设置),否则跨域被拦。
+function readRecordingDimsFromContentWindow(container: HTMLElement): { width: number; height: number } | null {
+  const iframe = container.querySelector('iframe');
+  const cw = iframe?.contentWindow?.innerWidth;
+  const ch = iframe?.contentWindow?.innerHeight;
+  if (typeof cw === 'number' && typeof ch === 'number' && cw > 0 && ch > 0) {
+    return { width: cw, height: ch };
   }
   return null;
 }
@@ -91,8 +109,22 @@ export function useResponsivePlayerSize(
     const cw = container.clientWidth;
     const ch = container.clientHeight;
     if (cw === 0 || ch === 0) return; // 容器未布局好
-    const recDims = readRecordingDimsFromIframe(container);
-    if (!recDims) return; // iframe 还没创建或尺寸无效
+    let recDims = readRecordingDimsFromIframe(container);
+    if (!recDims) {
+      // iframe 没有 width/height attribute,通常是 admin 没收到 meta event
+      // (服务端旧版只缓存 full snapshot 不缓存 meta,或 meta TTL 过期)。
+      // 兜底:从 iframe.contentWindow 读真实视口尺寸,手动触发 replayer.handleResize,
+      // 让 rrweb-player 内部把 iframe 设为 display:inherit + 写入 width/height attribute。
+      // 后续 apply() 再走正常路径读 attribute。
+      const fallbackDims = readRecordingDimsFromContentWindow(container);
+      if (fallbackDims) {
+        const replayer = player.getReplayer?.();
+        replayer?.handleResize?.(fallbackDims);
+        // handleResize 同步设了 attribute,再读一次
+        recDims = readRecordingDimsFromIframe(container) ?? fallbackDims;
+      }
+    }
+    if (!recDims) return; // 仍无尺寸,放弃此次 apply
     const ratio = recDims.width / recDims.height;
     let newW: number;
     let newH: number;

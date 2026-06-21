@@ -9,11 +9,16 @@ import { useResponsivePlayerSize } from '../composables/useResponsivePlayerSize'
 
 const { t } = useI18n();
 
-// rrweb-player 的类型定义在 alpha 版不完整，使用 unknown 透传
+// rrweb-player v2 的类型定义虽然 2.0.1 已提供,但 Player extends SvelteComponent
+// 的 $set(addEvent 等)签名与我们的 composable PlayerLike 不直接兼容。
+// 仍用最小化 interface + 透传 unknown 模式,保留动态 import 的代码分割。
 type RRWebPlayerInstance = {
   addEvent?: (e: unknown) => void;
-  // v2 支持 $set 热更新 props（width/height 等），用于响应式 sizing
+  // v2 支持 $set 热更新 props(width/height 等),用于响应式 sizing
   $set?: (props: Record<string, unknown>) => void;
+  // v2 暴露 getReplayer 拿到内部 Replayer,用于兜底手动触发 handleResize
+  // (admin 没收到 meta event 时让 iframe 显示)
+  getReplayer?: () => { handleResize?: (dimension: { width: number; height: number }) => void } | null;
 } & Record<string, unknown>;
 type RRWebPlayerPack = {
   default: {
@@ -24,10 +29,11 @@ type RRWebPlayerPack = {
         showDebug?: boolean;
         autoPlay?: boolean;
         skipInactive?: boolean;
-        // Phase 4:rrweb-player v2 alpha 支持 showController,
-        // 设 false 隐藏原生控制器(实时模式由我们自己接管 UI)
         showController?: boolean;
         rootContext?: unknown;
+        // alpha.20 起传 UNSAFE_replayCanvas:true 让 rrweb 把 allow-scripts 加进
+        // iframe sandbox,避免回放含 <script> 的页面时刷屏 sandbox warning。
+        UNSAFE_replayCanvas?: boolean;
       };
     }): RRWebPlayerInstance;
   };
@@ -48,6 +54,13 @@ const hasEnoughEvents = ref(false);
 let player: RRWebPlayerInstance | null = null;
 let pack: RRWebPlayerPack | null = null;
 let iframeObserver: MutationObserver | null = null;
+// rebuildPlayer 的并发抑制 token。onMounted + watch(events) 可能在初始挂载时
+// 几乎同时触发 rebuildPlayer,rebuildPlayer 内有 `await loadPack()`,在 await 期间
+// player 还是 null,两次调用都跳过 `if (player)` 清理,各自创建一个 Player Svelte
+// 实例 → DOM 里出现两个 `.rr-player` 元素 → flex 布局把外框各缩一半,iframe 仍按
+// 原比例缩放并 overflow → "大片空白 + 一小块录屏" 视觉 bug。
+// 每次 rebuildPlayer 递增 token,await 完成后检查自己是否仍是最新;若不是则放弃。
+let rebuildToken = 0;
 // 响应式 sizing:覆盖 rrweb-player 默认 1024x576,按真实录制视口比例动态算
 // player 外框尺寸,避免 letterbox / 视觉错位。详见 composable 注释。
 const { start: startResponsiveSizing, stop: stopResponsiveSizing } =
@@ -109,7 +122,7 @@ function extractRRWeb(events: EventPayload[]): unknown[] {
     .map((e) => e.rrweb) as unknown[];
 }
 
-// 动态加载 rrweb-player
+// 动态加载 rrweb-player(避免进首屏 bundle)
 async function loadPack(): Promise<RRWebPlayerPack> {
   if (pack) return pack;
   pack = (await import('rrweb-player')) as unknown as RRWebPlayerPack;
@@ -118,27 +131,33 @@ async function loadPack(): Promise<RRWebPlayerPack> {
 
 async function rebuildPlayer() {
   if (!containerRef.value) return;
+  // 拿到本次调用的 token。后续 await 完成后,如果 rebuildToken 已经被另一个
+  // 更新的调用递增,说明我已被取代,直接放弃,避免双 mount 写出两个 .rr-player。
+  const myToken = ++rebuildToken;
   loading.value = true;
   errorMsg.value = null;
 
-  // 销毁旧 player：用 replaceChildren 安全清空 DOM（无 XSS 风险）
+  // **无条件**清空 DOM + 释放 observer(不放在 `if (player)` 守卫里)。
+  // 原因:首次 mount 时 player 仍是 null,但若 onMounted 和 watch(events) 在
+  // await 窗口内都调到 rebuildPlayer,两次都会跳过 if(player) 守卫,各自创建
+  // 一个 Player Svelte 实例。无条件清空 + token 检查在 await 后,确保即便
+  // 两次都跑到 new Ctor(),也只有一个能成功 append DOM。
   if (player) {
-    try {
-      containerRef.value.replaceChildren();
-    } catch {
-      // ignore
-    }
+    stopResponsiveSizing();
     player = null;
-    stopResponsiveSizing();  // 旧 player 销毁后,释放对应的 ResizeObserver
   }
+  containerRef.value.replaceChildren();
 
   if (props.events.length === 0) {
-    loading.value = false;
+    if (myToken === rebuildToken) loading.value = false;
     return;
   }
 
   try {
     const playerPack = await loadPack();
+    // await 完成后检查:如果期间有更新的 rebuildPlayer 调用接管,我必须放弃,
+    // 避免和它同时 new Ctor() 导致 .player-container 里出现两个 .rr-player。
+    if (myToken !== rebuildToken) return;
     const rrwebEvents = extractRRWeb(props.events);
     if (rrwebEvents.length === 0) {
       loading.value = false;
@@ -155,8 +174,8 @@ async function rebuildPlayer() {
       return;
     }
     hasEnoughEvents.value = true;
-    const Player = playerPack.default;
-    player = new Player({
+    const Ctor = playerPack.default;
+    player = new Ctor({
       target: containerRef.value,
       props: {
         events: rrwebEvents,
@@ -166,8 +185,19 @@ async function rebuildPlayer() {
         // Phase 4:实时回放隐藏 rrweb-player 原生控制器
         // (live 模式不需要 play/pause/scrub;事件是被动推送的)
         showController: false,
+        // alpha.20 默认 sandbox="allow-same-origin"(无 allow-scripts),
+        // 回放含 <script> 的页面时每个 script 触发一次 sandbox warning。
+        // UNSAFE_replayCanvas 同时打开 allow-scripts(名字唬人但 iframe 仍受
+        // sandbox 隔离,且这是回放我们自己的访客录制,不是任意内容)。
+        // 副作用:canvas/WebGL 录制内容也能正确回放(符合 PLAN.md 选择性截图策略)。
+        UNSAFE_replayCanvas: true,
       },
     });
+    // **关键**:player 成功创建后才标记 initialized。原代码在 watch callback 里
+    // 同步 `if (player) initialized = true`,但 rebuildPlayer 是 async,同步检查时
+    // player 还是 null,initialized 永远 false → 每个 WS 事件都触发完整 rebuild →
+    // 浏览器对每次新建的 iframe 都报 sandbox warning(实测 123 条)。
+    initialized = true;
     // rrweb-player v2 alpha 的 iframe sandbox 默认只设 allow-same-origin,
     // 导致 Replayer 内部脚本被浏览器阻断("frame is sandboxed and 'allow-scripts'
     // permission is not set")→ player 渲染空白。
@@ -178,7 +208,8 @@ async function rebuildPlayer() {
   } catch (e) {
     errorMsg.value = (e as Error).message;
   } finally {
-    loading.value = false;
+    // 只有本次调用仍是最新时才清 loading,避免被后续调用覆盖。
+    if (myToken === rebuildToken) loading.value = false;
   }
 }
 
@@ -188,7 +219,7 @@ function appendEvents(events: EventPayload[]) {
   const rrwebEvents = extractRRWeb(events);
   if (rrwebEvents.length === 0) return;
   try {
-    // rrweb-player v2 alpha 的 addEvent 接受单个 eventWithTime。
+    // rrweb-player v2 的 addEvent 接受单个 eventWithTime。
     // 注意 v2 没有 append(批量) 方法 — 之前的 player.append 是 bug,
     // 静默吞掉 catch 导致 incremental events 永远不进 player。
     // 修复:逐个 addEvent。
@@ -204,14 +235,14 @@ function appendEvents(events: EventPayload[]) {
 // 注意 rrweb Replayer 需 ≥ 2 events 才能实例化,所以 events<2 时 rebuildPlayer
 // 内部跳过创建 player,这时不能标记 initialized=true,否则下次新 events 来时
 // 走 appendEvents 分支(player=null 时 return),player 永远不创建。
+// initialized 由 rebuildPlayer 内部在 player 成功创建后设置(不能在这里同步检查,
+// 因为 rebuildPlayer 是 async,同步检查时 player 还是 null)。
 let initialized = false;
 watch(
   () => props.events,
   (newEvents, oldEvents) => {
     if (!initialized || !player) {
       rebuildPlayer();
-      // 只有 player 真创建后才标记 initialized,后续走 appendEvents
-      if (player) initialized = true;
       return;
     }
     if (newEvents.length > (oldEvents?.length ?? 0)) {
@@ -290,13 +321,6 @@ defineExpose({ appendEvents });
   align-items: center;
   justify-content: center;
 }
-/* rrweb-player 自带样式，给个最小高度 */
-.player-container :deep(iframe),
-.Player-wrapper {
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
 
 /* rrweb-player v2 alpha.18 bug:Replayer 创建的 mirror iframe 默认
    style="display:none; pointer-events:none",但实际它是用来渲染 snapshot
@@ -306,4 +330,12 @@ defineExpose({ appendEvents });
   display: block !important;
   pointer-events: auto !important;
 }
+
+/* 不要给 iframe 设 width/height:100% — rrweb-player 通过 iframe 的
+   width/height attribute(1913×904) + .replayer-wrapper 的 transform:scale
+   来缩放。如果设 width:100% height:100%,iframe 会试撑满 .replayer-wrapper,
+   而 wrapper 没有显式高度,height:100% 无法 resolve,浏览器 fallback 到
+   iframe 默认 150px,导致 iframe 高度只有 150px 视觉压扁。
+   旧 CSS hack(width:100% height:100%)是 1c 切片为旧 layout 加的,
+   与当前 transform 缩放机制冲突,移除。 */
 </style>

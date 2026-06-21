@@ -12,18 +12,17 @@ import (
 // Test1c_SnapshotCache_RedisTTL_Contract — T1-1c-2:
 // snapshot.go 必须定义 Redis snapshot key + TTL。
 // operator subscribe 时服务端应先发缓存 snapshot(让 replay 立即可见)。
+//
+// 2026-06-21:TTL 从 5min 提到 30min(配合 SDK 续期间隔 10s),原 "5*time.Minute"
+// 契约改成更宽泛的 "time.Minute" 表达式 + snapshotTTL 标识符存在性检查。
 func Test1c_SnapshotCache_RedisTTL_Contract(t *testing.T) {
 	src := mustReadFile(t, "snapshot.go")
 	for _, must := range []string{
 		"snapshotTTL",
 		"SnapshotKey",
-		"5*time.Minute", // 5min TTL(或等价表达式)
+		"time.Minute", // TTL 必须以 time.Minute 表达(原 5min,现 30min)
 	} {
 		if !strings.Contains(src, must) {
-			// snapshotTTL 可能定义为常量,TTL 可能是 time.Minute * 5
-			if must == "5*time.Minute" && (strings.Contains(src, "time.Minute * 5") || strings.Contains(src, "5 * time.Minute")) {
-				continue
-			}
 			t.Errorf("snapshot.go 缺失 %q — SnapshotCache TTL 接线破坏", must)
 		}
 	}

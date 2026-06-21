@@ -9,7 +9,29 @@ import { resolve } from 'node:path';
 //   TS-2 提升至 90%)
 //
 // 注:lib.name 在 2026-06-20 rename 重构中从 MarketingMonitorSDK 改为 PinconsoleSDK。
+
+// devOnlyRootRedirect:把 / 重定向到 /playground/,避免 visitor-sdk 根目录没
+// index.html 时访问 http://localhost:5174/ 返回 404(只影响 dev server)。
+const devOnlyRootRedirect = {
+  name: 'dev-only-root-redirect',
+  apply: 'serve' as const,
+  configureServer(server: { middlewares: { use: (m: unknown) => void } }) {
+    server.middlewares.use(
+      (req: unknown, res: { writeHead: (status: number, headers?: Record<string, string>) => void; end: () => void }, next: () => void) => {
+        const url = (req as { url?: string }).url ?? '';
+        if (url === '/' || url === '') {
+          res.writeHead(302, { Location: '/playground/' });
+          res.end();
+          return;
+        }
+        next();
+      },
+    );
+  },
+};
+
 export default defineConfig({
+  plugins: [devOnlyRootRedirect],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -31,6 +53,13 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
+    // SDK 用 location.host 推断 WS/API 端点。从 5174 加载时,默认会去连
+    // ws://localhost:5174 而不是 Go server(8080),导致访客连不上后端,
+    // admin dashboard 看不到该访客。代理 /api 和 /ws 到 8080 修复。
+    proxy: {
+      '/api': 'http://localhost:8080',
+      '/ws': { target: 'http://localhost:8080', ws: true },
+    },
   },
   test: {
     environment: 'jsdom',

@@ -45,8 +45,8 @@ importers:
         specifier: ^2.2.4
         version: 2.3.1(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3))
       rrweb-player:
-        specifier: 2.0.0-alpha.18
-        version: 2.0.0-alpha.18
+        specifier: 2.0.0-alpha.20
+        version: 2.0.0-alpha.20
       vue:
         specifier: ^3.5.12
         version: 3.5.38(typescript@5.9.3)
@@ -136,11 +136,11 @@ importers:
         specifier: workspace:*
         version: link:../packages/proto
       rrweb:
-        specifier: ^2.0.0-alpha.18
-        version: 2.0.1
+        specifier: 2.0.0-alpha.20
+        version: 2.0.0-alpha.20
       rrweb-snapshot:
-        specifier: ^2.0.0-alpha.18
-        version: 2.0.1
+        specifier: 2.0.0-alpha.20
+        version: 2.0.0-alpha.20
     devDependencies:
       '@types/node':
         specifier: ^22.7.5
@@ -2100,11 +2100,17 @@ packages:
   rrweb-cssom@0.8.0:
     resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
 
-  rrweb-player@2.0.0-alpha.18:
-    resolution: {integrity: sha512-v31QgtjR9Ei3JnyvaN/2THj6a/i+dG49LzHiUtHcfTIFi7ecVExmMq+QDctVxUsuwdPPTtEcslpQh2tbVbi/ow==}
+  rrweb-player@2.0.0-alpha.20:
+    resolution: {integrity: sha512-3ZCv1ksUxuIOn3Vn/eWrwWs9Xy+4KVjISD+q26ZLfisZ3hZ0CPgYG3iC22pmmycIeMS2svOfvf7gPh7jExwpUA==}
+
+  rrweb-snapshot@2.0.0-alpha.20:
+    resolution: {integrity: sha512-YTNf9YVeaGRo/jxY3FKBge2c/Ojd/KTHmuWloUSB+oyPXuY73ZeeG873qMMmhIpqEn7hn7aBF1eWEQmP7wjf8A==}
 
   rrweb-snapshot@2.0.1:
     resolution: {integrity: sha512-H8TA29ct2tpYtr5oaB0N+ksRY9bhEErfAYcKbce4+w8lqEUQChpKZd41HpBJLkp04b5QUfWUg4v6r9Okf8r7vA==}
+
+  rrweb@2.0.0-alpha.20:
+    resolution: {integrity: sha512-CZKDlm+j1VA50Ko3gnMbpvguCAleljsTNXPnVk9aeNP8o6T6kolRbISHyDZpqZ4G+bdDLlQOignPP3jEsXs8Gg==}
 
   rrweb@2.0.1:
     resolution: {integrity: sha512-MQYzOtI7aZft9ffDMT6rmRSAj6hO4W6T7iA4eB9Mtcuiv3M7DbnnxDMrcPW0sQXepgYN46YhfSKe75d/mlUHrQ==}
@@ -4380,15 +4386,30 @@ snapshots:
 
   rrweb-cssom@0.8.0: {}
 
-  rrweb-player@2.0.0-alpha.18:
+  rrweb-player@2.0.0-alpha.20:
     dependencies:
       '@rrweb/packer': 2.0.1
       '@rrweb/replay': 2.0.1
       '@tsconfig/svelte': 1.0.13
 
+  rrweb-snapshot@2.0.0-alpha.20:
+    dependencies:
+      postcss: 8.5.15
+
   rrweb-snapshot@2.0.1:
     dependencies:
       postcss: 8.5.15
+
+  rrweb@2.0.0-alpha.20:
+    dependencies:
+      '@rrweb/types': 2.0.1
+      '@rrweb/utils': 2.0.1
+      '@types/css-font-loading-module': 0.0.7
+      '@xstate/fsm': 1.6.5
+      base64-arraybuffer: 1.0.2
+      mitt: 3.0.1
+      rrdom: 2.0.1
+      rrweb-snapshot: 2.0.0-alpha.20
 
   rrweb@2.0.1:
     dependencies:

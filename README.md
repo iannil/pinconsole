@@ -43,8 +43,8 @@ make build-frontend
 
 # 4. 构建 + 启动 release 单二进制(server 启动时自动应用 migrations)
 make build
-./server/bin/server
-# 或手动:cd server && go build -tags release -o bin/server ./cmd/server
+./server/bin/pinconsole-server
+# 或手动:cd server && go build -tags release -o bin/pinconsole-server ./cmd/server
 
 # 5. 访问
 # 访客落地页：http://localhost:8080/

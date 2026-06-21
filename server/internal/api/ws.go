@@ -231,10 +231,11 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 			h.flusher.Unregister(flushCtx, sessionID) // Unregister 内部触发最后一次 flush
 			cancel()
 		}
-		// 1d：清 snapshot 缓存
+		// 1d：清 snapshot + meta 缓存
 		if h.snapshots != nil {
 			delCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			_ = h.snapshots.Delete(delCtx, sessionID)
+			_ = h.snapshots.DeleteMeta(delCtx, sessionID)
 			cancel()
 		}
 		h.hub.VisitorOffline(tenantID, sessionID, presenceOffline)
@@ -305,6 +306,14 @@ func (h *WSHandler) visitorWS(c *gin.Context) {
 			if snapEnv := extractFullSnapshotEnvelope(ctx, env); snapEnv != nil {
 				if err := h.snapshots.Set(ctx, sessionID, snapEnv); err != nil {
 					logger.Warn("snapshot cache set failed", "error", err)
+				}
+			}
+			// 同时提取并缓存 meta event(type=4)。meta 含访客 viewport 尺寸,
+			// admin 端 rrweb-player 需要它才能触发 handleResize 显示 iframe。
+			// 不存在时不报错(只在 session 首个 envelope 中存在)。
+			if metaEnv := extractMetaEnvelope(ctx, env); metaEnv != nil {
+				if err := h.snapshots.SetMeta(ctx, sessionID, metaEnv); err != nil {
+					logger.Warn("meta cache set failed", "error", err)
 				}
 			}
 		}
@@ -509,7 +518,14 @@ func (h *WSHandler) operatorWS(c *gin.Context) {
 					}
 				}
 				// 1c 新增：订阅时先发缓存的最近 full snapshot（如果有）
+				// 顺序:meta(type=4)先,full snapshot(type=2)后 — 符合 rrweb 协议,
+				// admin 端 rrweb-player 收到 meta 才能触发 handleResize 让 iframe 显示。
 				if h.snapshots != nil {
+					if meta, _ := h.snapshots.GetMeta(ctx, cmd.sessionID); meta != nil {
+						if err := conn.Write(ctx, websocket.MessageBinary, meta); err != nil {
+							h.logger.Debug("send meta on subscribe failed", "error", err)
+						}
+					}
 					if snap, _ := h.snapshots.Get(ctx, cmd.sessionID); snap != nil {
 						if err := conn.Write(ctx, websocket.MessageBinary, snap); err != nil {
 							h.logger.Debug("send snapshot on subscribe failed", "error", err)
@@ -579,6 +595,51 @@ func extractFullSnapshotEnvelope(_ context.Context, env proto.Envelope) []byte {
 	for _, ep := range arr {
 		if ep.Type == proto.EvRRWeb && ep.RRWeb != nil && ep.RRWeb.Type == 2 {
 			// 重新包装为单事件 envelope
+			out := proto.Envelope{
+				V:         env.V,
+				Type:      proto.MsgEvent,
+				SessionID: env.SessionID,
+				TraceID:   env.TraceID,
+				TS:        ep.TS,
+				Payload:   ep,
+			}
+			if bytes, err := proto.Encode(out); err == nil {
+				return bytes
+			}
+		}
+	}
+	return nil
+}
+
+// extractMetaEnvelope 从 envelope(single 或 batch)中提取含 rrweb meta event(type=4)的子 envelope。
+// 返回 nil 表示未找到。
+//
+// 与 extractFullSnapshotEnvelope 同构,只是匹配 rrweb.type=4(Meta)而非 2(FullSnapshot)。
+// 用于在 visitor 发首个事件时把 meta 缓存到 Redis,subscribe 时一起下发给 admin,
+// 让 rrweb-player 能触发 handleResize 显示 iframe。
+func extractMetaEnvelope(_ context.Context, env proto.Envelope) []byte {
+	if env.Type != proto.MsgEvent {
+		return nil
+	}
+
+	// single
+	var single proto.EventPayload
+	if err := proto.DecodePayload(env.Payload, &single); err == nil {
+		if single.Type == proto.EvRRWeb && single.RRWeb != nil && single.RRWeb.Type == 4 {
+			if bytes, err := proto.Encode(env); err == nil {
+				return bytes
+			}
+		}
+		return nil
+	}
+
+	// array
+	var arr []proto.EventPayload
+	if err := proto.DecodePayload(env.Payload, &arr); err != nil {
+		return nil
+	}
+	for _, ep := range arr {
+		if ep.Type == proto.EvRRWeb && ep.RRWeb != nil && ep.RRWeb.Type == 4 {
 			out := proto.Envelope{
 				V:         env.V,
 				Type:      proto.MsgEvent,

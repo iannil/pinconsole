@@ -9,7 +9,7 @@
 
 # 路径变量
 SERVER_DIR  := server
-SERVER_BIN  := $(SERVER_DIR)/bin/server
+SERVER_BIN  := $(SERVER_DIR)/bin/pinconsole-server
 FRONTEND_DIRS := admin visitor-sdk
 
 # Go 工具
@@ -66,11 +66,11 @@ build-frontend: ## 构建前端（admin + sdk）
 
 build-server: ## 构建 Go 单二进制（含前端 embed）
 	pnpm build:admin && pnpm build:sdk
-	cd $(SERVER_DIR) && CGO_ENABLED=0 $(GO) build -o bin/server -tags release ./cmd/server
+	cd $(SERVER_DIR) && CGO_ENABLED=0 $(GO) build -o bin/pinconsole-server -tags release ./cmd/server
 	@echo "$(C_GREEN)✓$(C_RESET) 二进制产出: $(SERVER_BIN)"
 
 build-server-dev: ## 构建 Go dev 二进制（不含前端 embed，仅 API）
-	cd $(SERVER_DIR) && $(GO) build -o bin/server-dev -tags dev ./cmd/server
+	cd $(SERVER_DIR) && $(GO) build -o bin/pinconsole-server-dev -tags dev ./cmd/server
 
 # ============================================================
 # 测试

@@ -244,7 +244,7 @@ jobs:
           cp -r landing/. server/cmd/server/embedded/landing/
 
       - name: Build Go release binary
-        run: cd server && CGO_ENABLED=0 go build -tags release -o bin/server ./cmd/server
+        run: cd server && CGO_ENABLED=0 go build -tags release -o bin/pinconsole-server ./cmd/server
 
       - name: Write .env
         run: |
@@ -343,7 +343,7 @@ jobs:
           cp -r landing/. server/cmd/server/embedded/landing/
 
       - name: Build Go release binary
-        run: cd server && CGO_ENABLED=0 go build -tags release -o bin/server ./cmd/server
+        run: cd server && CGO_ENABLED=0 go build -tags release -o bin/pinconsole-server ./cmd/server
 
       - name: Write .env (prod)
         run: |

@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-SERVER_BIN="${SERVER_BIN:-server/bin/server}"
+SERVER_BIN="${SERVER_BIN:-server/bin/pinconsole-server}"
 PID_FILE=".server.pid"
 LOG_FILE="/tmp/pinconsole-server.log"
 COMPOSE="docker compose"
@@ -99,7 +99,7 @@ cmd_build() {
     cp -r landing/. server/cmd/server/embedded/landing/
 
     info "构建 Go release 二进制..."
-    cd server && CGO_ENABLED=0 go build -tags release -o bin/server ./cmd/server && cd ..
+    cd server && CGO_ENABLED=0 go build -tags release -o bin/pinconsole-server ./cmd/server && cd ..
     info "构建完成：$(ls -lh "$SERVER_BIN" | awk '{print $5, $9}')"
 }
 
@@ -267,7 +267,7 @@ show_help() {
     echo ""
     echo "环境变量:"
     echo "  SERVER_PORT     server 端口（默认 8080）"
-    echo "  SERVER_BIN      二进制路径（默认 server/bin/server）"
+    echo "  SERVER_BIN      二进制路径（默认 server/bin/pinconsole-server）"
     echo "  PG_USER         PG 用户（默认 mm）"
     echo "  PG_DB           PG 库名（默认 pinconsole）"
     echo ""

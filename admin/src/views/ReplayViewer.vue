@@ -52,6 +52,8 @@ interface RRWebPlayerInstance {
   append?: (events: unknown[]) => void;
   // v2 支持 $set 热更新 props(width/height 等),用于响应式 sizing
   $set?: (props: Record<string, unknown>) => void;
+  // v2 暴露 getReplayer 拿到内部 Replayer,用于兜底手动触发 handleResize
+  getReplayer?: () => { handleResize?: (dimension: { width: number; height: number }) => void } | null;
 }
 let player: RRWebPlayerInstance | null = null;
 
@@ -135,8 +137,22 @@ async function initPlayer() {
         autoPlay: false,
         skipInactive: true,
         showController: false, // Phase 4:隐藏原生控制器
+        // alpha.20 默认 sandbox="allow-same-origin"(无 allow-scripts),
+        // 回放含 <script> 的页面时每个 script 触发一次 sandbox warning。
+        // UNSAFE_replayCanvas 同时打开 allow-scripts。详见 ReplayPlayer.vue 同名注释。
+        UNSAFE_replayCanvas: true,
       },
     }) as unknown as RRWebPlayerInstance;
+
+    // rrweb-player v2 alpha.20:Svelte onMount 用 microtask 调度,
+    // `new Replayer(events, ...)` 在 onMount 里跑,所以 `new Player(...)` 返回后
+    // 内部 `replayer` 还是 undefined。立刻调 `getMetaData` / `addEventListener`
+    // 会触发 `Cannot read properties of undefined (reading 'getMetaData')`。
+    // 等 microtask + 一帧动画(更稳)让 onMount flush 完成。
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    if (!player?.getReplayer?.()) {
+      throw new Error('rrweb-player Replayer 未创建(events 不足或构造抛错)');
+    }
 
     // 拿元数据算 total time(scrubber max)
     try {
@@ -422,12 +438,13 @@ watch(() => route.params.session_id, (newId) => {
   justify-content: center;
 }
 
-/* rrweb-player iframe 撑满 */
+/* rrweb-player iframe 强制可见(rrweb alpha mirror iframe 默认 display:none)。
+   不设 width/height:100% — rrweb-player 通过 iframe 的 width/height attribute
+   + .replayer-wrapper 的 transform:scale 缩放,height:100% 无法 resolve 时浏览器
+   fallback 到默认 150px 导致视觉压扁。 */
 .player-container :deep(iframe) {
   display: block !important;
   pointer-events: auto !important;
-  width: 100%;
-  height: 100%;
   border: 0;
 }
 

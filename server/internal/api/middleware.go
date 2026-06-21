@@ -16,11 +16,19 @@ import (
 // 1k fail-secure：dev 模式（SERVER_ENV=dev）自动绕过便于 e2e 测试，
 // 但绕过代码本身在 release 构建下不存在（//go:build !release），
 // 因此 release 二进制结构上无法走 dev bypass，即使误配 SERVER_ENV=dev 也安全。
+//
+// dev bypass 仅在"无 cookie"时生效:有 cookie 时仍走真实 session 校验,
+// 这样浏览器登录后的会话能正常解析出 user_id,避免 /api/auth/me 永远
+// 401 user_not_found(dev 模式刷新即登出的根因)。
 func AuthMiddleware(getSession func(ctx context.Context, key string) ([]byte, error), devMode bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// dev bypass 仅在 dev build 中编译进来（见 bypass_dev.go）
-		if devMode && tryDevBypass(c) {
-			return
+		if devMode {
+			if cookie, err := c.Cookie(sessionCookieName); err != nil || cookie == "" {
+				if tryDevBypass(c) {
+					return
+				}
+			}
 		}
 
 		sessionID, err := c.Cookie(sessionCookieName)

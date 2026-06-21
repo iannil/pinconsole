@@ -6,20 +6,24 @@ import { sdkLogger } from '../logging';
 
 // rrweb v2 alpha 的 record 模块动态 import（与 PLAN.md "动态 import" 一致，
 // 同时减小 SDK 首次加载体积）。SSR 安全（typeof window 检查）。
-type RRWebRecordFn = (opts: {
+//
+// 注意 rrweb 2.0.0-alpha.20 起把 takeFullSnapshot 从 top-level export 改为
+// record.takeFullSnapshot(附加属性)。SDK 必须走 record.takeFullSnapshot,
+// 否则 alpha.20+ 下静默返回 → 周期性 full snapshot 永远不发 → snapshot cache
+// 过期(TTL 5min)→ admin subscribe 时只拿到 meta → events < 2 → player 不创建。
+type RRWebRecordFn = ((opts: {
   emit: (event: RRWebEvent) => void;
   maskAllInputs?: boolean;
   maskInputOptions?: unknown;
   blockClass?: string | RegExp;
   ignoreClass?: string | RegExp;
   sampling?: unknown;
-}) => () => void;
-
-type RRWebTakeFullSnapshotFn = () => void;
+}) => () => void) & {
+  takeFullSnapshot?: (isCheckout?: boolean) => void;
+};
 
 interface RRWebPack {
   record: RRWebRecordFn;
-  takeFullSnapshot?: RRWebTakeFullSnapshotFn;
 }
 
 export interface RRWebCollectorOptions {
@@ -118,9 +122,9 @@ export class RRWebCollector {
 
   /** 主动触发 full snapshot（用于周期性 / visibility 恢复） */
   takeFullSnapshot(): void {
-    if (!this.pack?.takeFullSnapshot) return;
+    if (!this.pack?.record?.takeFullSnapshot) return;
     try {
-      this.pack.takeFullSnapshot();
+      this.pack.record.takeFullSnapshot();
       this.incrementalSinceFull = 0;
     } catch (e) {
       sdkLogger.warn('take_full_snapshot_failed', { error: String(e) });
@@ -202,14 +206,26 @@ export class RRWebCollector {
   }
 
   private startPeriodicFull(): void {
-    // 每 30s 检查；若累计 incremental >= 50 也触发
+    // 每 10s 检查;若自上次 full snapshot 后有新 incremental(>= 1)就续期。
+    //
+    // 2026-06-21:双重修复
+    // 1. 间隔从 30s 缩到 10s — 减少 admin subscribe 错过续期窗口的概率。
+    // 2. 触发条件从 ">= 50 incremental" 改为 ">= 1 incremental"。
+    //    原条件是优化手段(满 50 才发全量,避免流量爆炸),但实际副作用:
+    //    visitor 低频交互(每 10s < 50 个增量)时永远不触发周期续期,
+    //    snapshot_cache TTL 到期后过期,admin subscribe 拿不到 FullSnapshot,
+    //    rrweb Replayer 缺初始 DOM,iframe 空白。
+    //    改成 >= 1 后:只要有变化就续期,静默时(incrementalSinceFull=0)不发,
+    //    流量与活跃度成正比,避免静默 visitor 的无谓全量推送。
+    // 配合 server snapshot_cache TTL 30min(原 5min),即使 visitor 短暂静默,
+    // admin 后续 subscribe 也能拿到最近一次 full snapshot。
     this.periodicFullTimer = setInterval(
       () => {
-        if (this.incrementalSinceFull >= 50) {
+        if (this.incrementalSinceFull >= 1) {
           this.takeFullSnapshot();
         }
       },
-      30_000,
+      10_000,
     );
   }
 }

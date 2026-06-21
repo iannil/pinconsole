@@ -427,6 +427,102 @@ func TestExtractFullSnapshotEnvelope_NoFullInBatchReturnsNil(t *testing.T) {
 	}
 }
 
+// === extractMetaEnvelope ===
+// 2026-06-21 新增:服务端需缓存 meta event (rrweb type=4) 让 admin 收到完整事件流,
+// 否则 rrweb-player 收不到 meta 无法触发 handleResize,iframe 始终 display:none。
+
+// TestExtractMetaEnvelope_SingleMeta 验证 single meta event (type=4) 提取。
+func TestExtractMetaEnvelope_SingleMeta(t *testing.T) {
+	env := proto.Envelope{
+		V:    proto.ProtocolVersion,
+		Type: proto.MsgEvent,
+		TS:   100,
+		Payload: proto.EventPayload{
+			Type: proto.EvRRWeb,
+			TS:   100,
+			RRWeb: &proto.RRWebEvent{
+				Type: 4, // Meta
+				Data: map[string]any{
+					"href":   "https://example.com",
+					"width":  1579,
+					"height": 904,
+				},
+			},
+		},
+	}
+	got := extractMetaEnvelope(context.Background(), env)
+	if got == nil {
+		t.Fatal("got nil, want envelope bytes for meta event")
+	}
+	decoded, err := proto.Decode(got)
+	if err != nil {
+		t.Fatalf("decoded failed: %v", err)
+	}
+	// 验证返回的 envelope payload 是 meta event
+	var ep proto.EventPayload
+	if err := proto.DecodePayload(decoded.Payload, &ep); err != nil {
+		t.Fatalf("decode payload: %v", err)
+	}
+	if ep.RRWeb == nil || ep.RRWeb.Type != 4 {
+		t.Errorf("not a meta event: %+v", ep.RRWeb)
+	}
+}
+
+// TestExtractMetaEnvelope_NonEventReturnsNil 验证非 event 类型返回 nil。
+func TestExtractMetaEnvelope_NonEventReturnsNil(t *testing.T) {
+	env := proto.Envelope{Type: proto.MsgHello}
+	if got := extractMetaEnvelope(context.Background(), env); got != nil {
+		t.Errorf("non-event: got %v, want nil", got)
+	}
+}
+
+// TestExtractMetaEnvelope_FullSnapshotReturnsNil 验证 full snapshot (type=2) 不被当 meta 提取。
+func TestExtractMetaEnvelope_FullSnapshotReturnsNil(t *testing.T) {
+	env := proto.Envelope{
+		V:    proto.ProtocolVersion,
+		Type: proto.MsgEvent,
+		Payload: proto.EventPayload{
+			Type: proto.EvRRWeb,
+			RRWeb: &proto.RRWebEvent{
+				Type: 2, // FullSnapshot, 不是 Meta
+			},
+		},
+	}
+	if got := extractMetaEnvelope(context.Background(), env); got != nil {
+		t.Errorf("full snapshot误识为 meta: got %v, want nil", got)
+	}
+}
+
+// TestExtractMetaEnvelope_BatchExtractsMeta 验证 batch 中提取 meta event。
+func TestExtractMetaEnvelope_BatchExtractsMeta(t *testing.T) {
+	env := proto.Envelope{
+		V:    proto.ProtocolVersion,
+		Type: proto.MsgEvent,
+		TS:   100,
+		Payload: []proto.EventPayload{
+			{
+				Type: proto.EvRRWeb,
+				TS:   100,
+				RRWeb: &proto.RRWebEvent{
+					Type: 4, // Meta
+					Data: map[string]any{"width": 1024, "height": 768},
+				},
+			},
+			{Type: proto.EvClick},
+			{
+				Type: proto.EvRRWeb,
+				RRWeb: &proto.RRWebEvent{
+					Type: 2, // FullSnapshot
+				},
+			},
+		},
+	}
+	got := extractMetaEnvelope(context.Background(), env)
+	if got == nil {
+		t.Fatal("batch with meta: got nil, want envelope bytes")
+	}
+}
+
 // === buildCommandPayload ===
 
 // TestBuildCommandPayload_AllTypes 验证所有命令类型 payload 解析。
