@@ -10,7 +10,7 @@ export default {
   nav: {
     dashboard: '实时监控',
     replay: '历史会话',
-    live: '← 实时',
+    live: '实时',
     privacy: '隐私合规',
     login: '登录',
   },
@@ -96,7 +96,7 @@ export default {
     th_duration: '时长',
     th_events: '事件数',
     th_ua: 'UA',
-    back: '← 返回列表',
+    back: '返回列表',
     session_label: 'session:',
     events_label: '事件数:',
     loading: '加载事件...',

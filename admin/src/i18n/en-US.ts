@@ -10,7 +10,7 @@ export default {
   nav: {
     dashboard: 'Live Monitor',
     replay: 'History',
-    live: '← Live',
+    live: 'Live',
     privacy: 'Privacy',
     login: 'Sign In',
   },
@@ -96,7 +96,7 @@ export default {
     th_duration: 'Duration',
     th_events: 'Events',
     th_ua: 'UA',
-    back: '← Back to list',
+    back: 'Back to list',
     session_label: 'session:',
     events_label: 'Events:',
     loading: 'Loading events...',
