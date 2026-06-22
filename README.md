@@ -1,7 +1,31 @@
-# PINCONSOLE
+# · pinconsole
 
-> 开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。
-> 对标某商业竞品，AGPL-3.0 license，支持自托管。
+> **你的访客，你的数据。** / *Your visitors, your data.*
+
+开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。AGPL-3.0，自托管，数据从不出门——竞品 SaaS 的开源替代。
+
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-0F766E.svg)](./LICENSE)
+[![e2e: 65 passed](https://img.shields.io/badge/e2e-65%20passed%20%2F%200%20failed-15803D.svg)](./docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)
+[![v1: shipped](https://img.shields.io/badge/v1-shipped-0F766E.svg)](./docs/project-status.md)
+[![i18n: zh/en](https://img.shields.io/badge/i18n-zh%20%2F%20en-0E7490.svg)](#)
+
+---
+
+## 这是什么
+
+**pinconsole** 是 ToB 实时访客互动平台的 AGPL-3.0 开源替代品。三个不可妥协的设计决策：
+
+- **数据主权**：所有访客行为、运营对话、录像会话存在**你自己的** PostgreSQL / Redis / MinIO。无第三方调用、无外部依赖。
+- **AGPL-3.0 强 copyleft**：任何修改必须开源，**云厂商无法拿去做 SaaS**——license 层的硬保护。
+- **标准栈，无锁定**：Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO。每一层都是行业标准，Schema 在你手里。
+
+**v1 已交付**：实时监控（rrweb 全量）+ 双向协同（cursor/click/scroll/fill/navigate）+ 录像回放 + 弹窗聊天 + 多运营 claim 锁 + 反爬虫 + GDPR + 中英双语 + Docker 一键部署。90+ commits，65 e2e 测试全绿。
+
+> **决策者？** 看官网 → [pinconsole.example.com](https://pinconsole.example.com)（占位——部署后替换为真实域名）。
+> **咨询**（评估替代 / 自托管 / 定制 / 合规）→ [官网表单](https://pinconsole.example.com#consult) 或 [GitHub Issues](https://github.com/iannil/pinconsole/issues)。
+> **工程师？** 下面是快速开始。
+
+---
 
 ## 项目状态
 

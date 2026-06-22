@@ -1,0 +1,31 @@
+{
+  "name": "@pinconsole/marketing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "pinconsole maintainer marketing site — Astro + Vue, deployed to Cloudflare Pages + Workers + D1",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler pages dev ./dist",
+    "deploy": "pnpm build && wrangler pages deploy ./dist",
+    "db:apply": "wrangler d1 execute pinconsole-leads --file ./migrations/0001-create-leads.sql",
+    "db:apply:remote": "wrangler d1 execute pinconsole-leads --remote --file ./migrations/0001-create-leads.sql",
+    "check": "astro check",
+    "lint": "eslint src --ext .ts,.astro,.vue"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "@astrojs/vue": "^5.1.1",
+    "@phosphor-icons/vue": "^2.1.1",
+    "astro": "^5.7.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.20.0"
+  }
+}

@@ -1,0 +1,124 @@
+---
+import type { PageContent } from '../content/types';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="brand">
+        <span class="brand-dot">·</span>
+        <span class="brand-word">pinconsole</span>
+      </a>
+      <p class="footer-tagline">{content.footer.tagline}</p>
+      <p class="footer-license">{content.footer.license}</p>
+    </div>
+
+    {content.footer.columns.map((col) => (
+      <div class="footer-col">
+        <h4>{col.title}</h4>
+        <ul>
+          {col.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <div class="container footer-bottom">
+    <span>{content.footer.sourceNote.replace('2026', String(year))}</span>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--pc-color-bg-surface);
+    border-top: 1px solid var(--pc-color-border-default);
+    padding-top: 64px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr repeat(3, 1fr);
+    gap: 48px;
+    padding-bottom: 48px;
+  }
+
+  .footer-brand .brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: var(--pc-text-body-lg);
+    font-weight: var(--pc-weight-semibold);
+    color: var(--pc-color-text-primary);
+    margin-bottom: 12px;
+  }
+
+  .footer-brand .brand-dot {
+    color: var(--pc-color-accent-default);
+    font-weight: var(--pc-weight-bold);
+    font-size: 1.4em;
+    line-height: 0;
+  }
+
+  .footer-tagline {
+    font-size: var(--pc-text-body);
+    color: var(--pc-color-text-secondary);
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+
+  .footer-license {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-caption);
+    color: var(--pc-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .footer-col h4 {
+    font-size: var(--pc-text-body-sm);
+    font-weight: var(--pc-weight-semibold);
+    color: var(--pc-color-text-primary);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .footer-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-col a {
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body-sm);
+    transition: color var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .footer-col a:hover {
+    color: var(--pc-color-accent-default);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--pc-color-border-default);
+    padding: 24px var(--pc-space-page);
+    text-align: center;
+    color: var(--pc-color-text-muted);
+    font-size: var(--pc-text-caption);
+  }
+
+  @media (max-width: 768px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>

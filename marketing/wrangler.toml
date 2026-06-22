@@ -1,0 +1,25 @@
+name = "pinconsole-marketing"
+compatibility_date = "2026-06-01"
+pages_build_output_dir = "dist"
+
+# D1 binding for leads storage.
+# Create with: wrangler d1 create pinconsole-leads
+# Then replace database_id below with the returned ID.
+[[d1_databases]]
+binding = "DB"
+database_name = "pinconsole-leads"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# Environment vars (set via dashboard or wrangler secret).
+# - LEAD_NOTIFY_EMAIL: inbox to forward submissions to
+# - LEAD_NOTIFY_WEBHOOK: optional enterprise-wechat/slack webhook
+# - TURNSTILE_SECRET: optional Cloudflare Turnstile secret for anti-spam
+
+[env.production]
+name = "pinconsole-marketing"
+routes = [
+  # { pattern = "your-domain.com/*", custom_domain = true }  # bind after domain ready
+]
+
+[env.preview]
+name = "pinconsole-marketing-preview"

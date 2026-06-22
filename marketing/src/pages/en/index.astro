@@ -1,0 +1,23 @@
+---
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import Hero from '../../components/Hero.astro';
+import Problem from '../../components/Problem.astro';
+import Features from '../../components/Features.astro';
+import DataSovereignty from '../../components/DataSovereignty.astro';
+import SelfHost from '../../components/SelfHost.astro';
+import Roadmap from '../../components/Roadmap.astro';
+import FAQ from '../../components/FAQ.astro';
+import FinalCTA from '../../components/FinalCTA.astro';
+import { en as content } from '../../content/en';
+---
+
+<MarketingLayout content={content}>
+  <Hero content={content} />
+  <Problem content={content} />
+  <Features content={content} />
+  <DataSovereignty content={content} />
+  <SelfHost content={content} />
+  <Roadmap content={content} />
+  <FAQ content={content} />
+  <FinalCTA content={content} />
+</MarketingLayout>

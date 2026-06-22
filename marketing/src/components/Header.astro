@@ -1,0 +1,122 @@
+---
+import type { PageContent } from '../content/types';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="brand" aria-label="pinconsole">
+      <span class="brand-dot">·</span>
+      <span class="brand-word">pinconsole</span>
+    </a>
+
+    <nav class="nav-links" aria-label="primary">
+      {content.nav.links.map((link) => <a href={link.href}>{link.label}</a>)}
+    </nav>
+
+    <div class="nav-actions">
+      <a href={content.nav.localeSwitch.href} class="locale-switch" aria-label="switch language">
+        {content.nav.localeSwitch.label}
+      </a>
+      <a href="#consult" class="btn btn-primary header-cta">{content.nav.cta}</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--pc-z-header);
+    height: var(--pc-header-height);
+    background: color-mix(in srgb, var(--pc-color-bg-canvas) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+
+  .header-inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-body-lg);
+    font-weight: var(--pc-weight-semibold);
+    color: var(--pc-color-text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .brand:hover {
+    color: var(--pc-color-text-primary);
+  }
+
+  .brand-dot {
+    color: var(--pc-color-accent-default);
+    font-weight: var(--pc-weight-bold);
+    font-size: 1.4em;
+    line-height: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-links a {
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body-sm);
+    font-weight: var(--pc-weight-medium);
+    transition: color var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .nav-links a:hover {
+    color: var(--pc-color-text-primary);
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .locale-switch {
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body-sm);
+    font-weight: var(--pc-weight-medium);
+    padding: 6px 12px;
+    border-radius: var(--pc-radius-sm);
+    transition: all var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .locale-switch:hover {
+    color: var(--pc-color-text-primary);
+    background: var(--pc-color-bg-subtle);
+  }
+
+  .header-cta {
+    padding: 8px 18px;
+    font-size: var(--pc-text-body-sm);
+  }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none;
+    }
+  }
+</style>

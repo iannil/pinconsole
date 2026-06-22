@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-21(全量前端设计基线 /frontend-design + /grill-me 14 轮访谈,落 docs/design-system.md)
+**最后更新**：2026-06-22(官网 + README 设计 17 轮 grill-me + Phase 1 marketing/ Astro 骨架落地)
 
 ---
 
@@ -18,7 +18,7 @@
 ### 工作风格
 - 推荐方案时直接给出首选 + 理由，不堆叠"on the other hand"
 - 偏好"先架构后实施"——重大决策不绕过 grill-me 风格访谈
-- 范围控制严格——"不考虑客户和销售"是硬约束，不要替用户加 SaaS/计费/多租户
+- 范围控制严格——产品本身仍 OSS / 不做计费 / 不做注册流 / 不做多租户 SaaS / 不做云托管；**但 maintainer 自有 `marketing/` 独立目录可做咨询转化**（2026-06-22 解禁，与 OSS `landing/` 严格区隔）
 
 ### 技术倾向
 - **OSS 立场**：AGPL-3.0、防云厂商 SaaS 化
@@ -66,9 +66,10 @@
 - T2/T3 backlog(40 项,~15 小时)— admin/SDK i18n keys + minor 路径,不阻塞 v1 release
 
 ### 范围边界
-- **不做**：多租户 SaaS、计费、注册流、营销页
-- **v1 不做**：页面编辑器、Tauri 桌面端、自定义域名（这些是 v1 之后的切片）
-- **v1 做**：监控 + 全套互动 + 录像 + 反爬虫 + i18n + CI
+- **不做（产品本身，永久）**：多租户 SaaS、计费、注册流、云托管服务
+- **v1 不做（post-v1 切片）**：页面编辑器、Tauri 桌面端、自定义域名
+- **v1 做**：监控 + 全套互动 + 录像 + 反爬虫 + i18n + CI（已完成）
+- **maintainer 营销层（2026-06-22 解禁）**：`marketing/` 独立目录做 maintainer 自有官网 + 咨询转化（Astro + Cloudflare Pages + Workers + D1）；**与 OSS `landing/` 严格区隔**——OSS 用户部署不包含 maintainer 营销代码，用户实例不收集询盘数据。详见 [`docs/progress/2026-06-22-landing-readme-design.md`](../docs/progress/2026-06-22-landing-readme-design.md)
 
 ### 部署目标
 - OSS 自托管为主
@@ -103,6 +104,28 @@
 - 认证：Email/password + bcrypt + HttpOnly cookie
 - 域名：v1 仅平台域名
 - 反爬虫：rate limit + UA + 行为 + fingerprint（中等深度）
+
+### Maintainer 营销层（2026-06-22 17 轮 grill-me 共识）
+
+详见 [`docs/progress/2026-06-22-landing-readme-design.md`](../docs/progress/2026-06-22-landing-readme-design.md)。索引：
+
+- **策略**：v1 完成后，maintainer 接受 ToB 咨询（PLG + 咨询式）。产品本身仍 OSS 自托管 / AGPL / 不计费 / 不做注册流
+- **目标客户**：国内 ToB/SaaS 决策者（CEO/CTO/运营/市场），正在用美洽/智齿/Udesk/风车/小能/Live800 等
+- **Hero hook**：数据主权（"你的访客，你的数据。"）
+- **CTA**：留资表单（Cloudflare Worker + D1）+ 文档次级
+- **不提竞品名**：只讲类别（国内不正当竞争法 + 投诉文化风险）
+- **语言**：中英镜像同内容互译（同 i18n from day 1 原则）
+- **IA**：单页长滚动 8 段漏斗型（Hero/Problem/Features/数据主权/Self-host/Roadmap/FAQ/FinalCTA）
+- **视觉**：Calm Crafted 营销变体（复用 docs/design-system.md `--pc-*` tokens，加大字号 hero + 更宽留白 + Gentle & Restrained 动效）
+- **技术栈**：Astro + Vue → Cloudflare Pages + Workers + D1
+- **仓库结构**：`marketing/` 独立目录与 OSS `landing/` 区隔（避免营销代码污染用户部署）
+- **README**：顶部加营销概述（tagline + 4 个 badge + 决策者引导）+ 保留 dev 主体
+
+**Phase 进度**：
+- ✅ Phase 1：marketing/ Astro 骨架 + Calm Crafted 营销变体 tokens + 中英双语路由 + 8 段组件 + 表单/Worker/D1 schema 代码（2026-06-22）
+- ✅ Phase 2：5 张真实截图（dashboard/cobrowse-active/replay/chat/privacy）+ Features 真图 + Hero Live demo 徽章 + video poster 兜底；**仅 defer 真实 demo.mp4 录制给用户**
+- ✅ Phase 3：本地 wrangler pages dev + D1 端到端验证通过（POST → D1 INSERT、honeypot 静默、validation 400、UI Vue 表单 → D1 全链路）；修 2 bug（`prerender = false` 漏加 / `message != null` 容忍 undefined）；**仅 defer `wrangler login` + remote D1 create 给用户**
+- ⏳ Phase 4：README 顶部 + PLAN.md §1 + MEMORY.md 同步 ✅；**仅 defer Cloudflare Pages deploy + 自有域名绑定给用户**
 
 ### 工作流
 

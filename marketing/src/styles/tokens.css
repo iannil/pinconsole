@@ -1,0 +1,160 @@
+/**
+ * pinconsole marketing — Calm Crafted (营销变体)
+ *
+ * Extends docs/design-system.md tokens for marketing context:
+ * - Larger hero/section type scale
+ * - Wider container
+ * - Bigger section padding
+ *
+ * Prefix: --pc-* (与 admin/SDK 镜像，符合 design-system.md §6.2)
+ *
+ * 反 AI-slop 红线（继承 design-system.md §1.2）：
+ * ❌ 紫渐变 / Inter/Geist/Roboto / slate+indigo / emoji-as-icon
+ * ❌ Element Plus 默认蓝 #409eff / 单层 box-shadow / 首屏 stagger
+ */
+
+:root {
+  /* ===== Typography ===== */
+  --pc-font-sans: "IBM Plex Sans", "IBM Plex Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pc-font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", "SF Mono", monospace;
+
+  /* Marketing variant — larger type scale */
+  --pc-text-hero-h1: clamp(48px, 8vw, 96px);
+  --pc-text-hero-h2: clamp(20px, 2.5vw, 32px);
+  --pc-text-section-h2: clamp(32px, 4vw, 48px);
+  --pc-text-section-h3: clamp(20px, 2vw, 24px);
+  --pc-text-body-lg: 18px;
+  --pc-text-body: 16px;
+  --pc-text-body-sm: 14px;
+  --pc-text-caption: 12px;
+
+  --pc-line-tight: 1.1;
+  --pc-line-snug: 1.3;
+  --pc-line-normal: 1.5;
+  --pc-line-relaxed: 1.7;
+
+  --pc-weight-regular: 400;
+  --pc-weight-medium: 500;
+  --pc-weight-semibold: 600;
+  --pc-weight-bold: 700;
+
+  /* ===== Color — Stone (暖中性) ===== */
+  --pc-color-bg-canvas: #FAF8F5;
+  --pc-color-bg-surface: #FFFFFF;
+  --pc-color-bg-subtle: #F5F1EC;
+  --pc-color-bg-inverse: #1C1917;
+
+  --pc-color-border-default: #E7E5E4;
+  --pc-color-border-strong: #D6D3D1;
+
+  --pc-color-text-primary: #1C1917;
+  --pc-color-text-secondary: #57534E;
+  --pc-color-text-muted: #78716C;
+  --pc-color-text-inverse: #FAF8F5;
+
+  /* ===== Color — Teal (主色) ===== */
+  --pc-color-accent-default: #0F766E;
+  --pc-color-accent-hover: #115E59;
+  --pc-color-accent-active: #134E4A;
+  --pc-color-accent-subtle: #CCFBF1;
+  --pc-color-accent-on: #FFFFFF;
+
+  /* ===== Color — Signal ===== */
+  --pc-color-success: #15803D;
+  --pc-color-success-subtle: #DCFCE7;
+  --pc-color-warning: #B45309;
+  --pc-color-warning-subtle: #FEF3C7;
+  --pc-color-danger: #B91C1C;
+  --pc-color-info: #0E7490;
+
+  /* ===== Spacing — Calm Macro ===== */
+  --pc-space-page: 32px;
+  --pc-space-section-y: 96px;
+  --pc-space-section-y-sm: 64px;
+  --pc-space-card: 24px;
+  --pc-space-component: 16px;
+  --pc-space-field: 8px;
+
+  /* ===== Container ===== */
+  --pc-container-max: 1200px;
+  --pc-container-narrow: 768px;
+  --pc-container-wide: 1440px;
+
+  /* ===== Radius ===== */
+  --pc-radius-sm: 6px;
+  --pc-radius-md: 8px;
+  --pc-radius-lg: 12px;
+  --pc-radius-xl: 16px;
+  --pc-radius-2xl: 24px;
+  --pc-radius-pill: 9999px;
+
+  /* ===== Shadow — 多层堆叠 ===== */
+  --pc-shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --pc-shadow-sm: 0 2px 4px rgba(28, 25, 23, 0.05), 0 1px 2px rgba(28, 25, 23, 0.04);
+  --pc-shadow-md: 0 4px 8px rgba(28, 25, 23, 0.06), 0 2px 4px rgba(28, 25, 23, 0.04);
+  --pc-shadow-lg: 0 8px 16px rgba(28, 25, 23, 0.08), 0 4px 8px rgba(28, 25, 23, 0.05);
+  --pc-shadow-xl: 0 16px 32px rgba(28, 25, 23, 0.10), 0 8px 16px rgba(28, 25, 23, 0.06);
+  --pc-shadow-accent: 0 8px 24px rgba(15, 118, 110, 0.18), 0 4px 8px rgba(15, 118, 110, 0.10);
+
+  /* ===== Motion — Gentle & Restrained ===== */
+  --pc-duration-fast: 120ms;
+  --pc-duration-base: 180ms;
+  --pc-duration-slow: 240ms;
+  --pc-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --pc-easing-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* ===== Z-index ===== */
+  --pc-z-base: 1;
+  --pc-z-header: 50;
+  --pc-z-overlay: 100;
+  --pc-z-modal: 200;
+
+  /* ===== Layout ===== */
+  --pc-header-height: 64px;
+}
+
+/* ===== Dark mode (跟随系统，design-system.md §6.3) ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pc-color-bg-canvas: #1C1917;
+    --pc-color-bg-surface: #292524;
+    --pc-color-bg-subtle: #44403C;
+    --pc-color-bg-inverse: #FAF8F5;
+
+    --pc-color-border-default: #57534E;
+    --pc-color-border-strong: #78716C;
+
+    --pc-color-text-primary: #FAF8F5;
+    --pc-color-text-secondary: #D6D3D1;
+    --pc-color-text-muted: #A8A29E;
+    --pc-color-text-inverse: #1C1917;
+
+    --pc-color-accent-default: #2DD4BF;
+    --pc-color-accent-hover: #5EEAD4;
+    --pc-color-accent-active: #14B8A6;
+    --pc-color-accent-subtle: #134E4A;
+    --pc-color-accent-on: #1C1917;
+
+    --pc-color-success: #4ADE80;
+    --pc-color-success-subtle: #14532D;
+    --pc-color-warning: #FBBF24;
+    --pc-color-warning-subtle: #78350F;
+    --pc-color-danger: #FCA5A5;
+    --pc-color-info: #67E8F9;
+
+    --pc-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --pc-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --pc-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+    --pc-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.35);
+    --pc-shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.4);
+    --pc-shadow-accent: 0 8px 24px rgba(45, 212, 191, 0.25), 0 4px 8px rgba(45, 212, 191, 0.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pc-duration-fast: 0ms;
+    --pc-duration-base: 0ms;
+    --pc-duration-slow: 0ms;
+  }
+}

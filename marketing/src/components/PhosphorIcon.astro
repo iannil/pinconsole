@@ -1,0 +1,85 @@
+---
+/**
+ * Inline SVG icon registry — Phosphor-style outline (1.5 stroke, rounded).
+ *
+ * Phase 1 skeleton: hand-crafted minimalist paths covering the icon set we use.
+ * Phase 2 polish: optionally swap to @phosphor-icons/vue for full set.
+ *
+ * Compliance with docs/design-system.md §2.7: Phosphor style, NOT emoji.
+ */
+
+interface Props {
+  name: string;
+  size?: number;
+  weight?: 'light' | 'regular' | 'bold';
+  color?: 'current' | 'accent' | 'success' | 'warning' | 'danger';
+}
+
+const { name, size = 24, weight = 'regular', color = 'current' } = Astro.props;
+
+const strokeWidth = weight === 'bold' ? 2.5 : weight === 'light' ? 1 : 1.5;
+
+const paths: Record<string, string> = {
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  'lock-open':
+    '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  'trending-up': '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
+  'arrows-out-cardinal':
+    '<path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><path d="M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/>',
+  video:
+    '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',
+  'chat-circle-dots':
+    '<path d="M3 12a9 9 0 1 1 4 7.5L3 21l1.5-4A8.96 8.96 0 0 1 3 12Z"/><circle cx="9" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>',
+  'shield-check':
+    '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/>',
+  scale:
+    '<path d="M12 3v18M5 21h14M7 7l-4 8a4 4 0 0 0 8 0L7 7Zm10 0l-4 8a4 4 0 0 0 8 0l-4-8Z"/><path d="M7 7h10"/>',
+  stack:
+    '<path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5M3 17l9 5 9-5"/>',
+  certificate:
+    '<circle cx="12" cy="9" r="5"/><path d="M9 13l-2 8 5-3 5 3-2-8"/><path d="M12 6v3l2 1"/>',
+  'arrow-right': '<path d="M5 12h14M13 5l7 7-7 7"/>',
+  'check-circle': '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/>',
+  github:
+    '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.5a3 3 0 0 0-.85-2.25c2.85-.3 5.85-1.4 5.85-6.25a4.86 4.86 0 0 0-1.35-3.35 4.5 4.5 0 0 0-.1-3.35S18.85 1.65 16 3.5a13 13 0 0 0-7 0C6.15 1.65 5.15 2.15 5.15 2.15a4.5 4.5 0 0 0-.1 3.35 4.86 4.86 0 0 0-1.35 3.35c0 4.8 3 5.95 5.85 6.25A3 3 0 0 0 8.7 18.5V22"/>',
+};
+
+const pathContent = paths[name] || paths['check-circle'];
+const colorClass = color === 'current' ? '' : `icon-${color}`;
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width={strokeWidth}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class={`phosphor-icon ${colorClass}`}
+  aria-hidden="true"
+  set:html={pathContent}
+/>
+
+<style>
+  .phosphor-icon {
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+  .icon-accent {
+    color: var(--pc-color-accent-default);
+  }
+  .icon-success {
+    color: var(--pc-color-success);
+  }
+  .icon-warning {
+    color: var(--pc-color-warning);
+  }
+  .icon-danger {
+    color: var(--pc-color-danger);
+  }
+</style>

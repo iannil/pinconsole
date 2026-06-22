@@ -1,0 +1,21 @@
+# build output
+dist/
+.astro/
+.tmp-screenshots/
+
+# deps
+node_modules/
+
+# wrangler
+.wrangler/
+
+# env
+.env
+.env.local
+.dev.vars
+
+# macOS
+.DS_Store
+
+# logs
+*.log

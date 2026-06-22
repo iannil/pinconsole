@@ -1,0 +1,132 @@
+---
+import type { PageContent } from '../content/types';
+import PhosphorIcon from './PhosphorIcon.astro';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const r = content.roadmap;
+
+const statusIcon = {
+  shipped: 'check-circle',
+  coming: 'trending-up',
+  'out-of-scope': 'lock',
+};
+
+const statusColor = {
+  shipped: 'success',
+  coming: 'warning',
+  'out-of-scope': 'muted',
+} as const;
+---
+
+<section id="roadmap" class="section roadmap-section">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">{r.eyebrow}</span>
+      <h2 class="section-title">{r.title}</h2>
+      <p class="section-subtitle">{r.subtitle}</p>
+    </div>
+
+    <div class="roadmap-grid">
+      {r.columns.map((col, i) => (
+        <article class={`roadmap-card roadmap-${col.status} reveal`} style={`--i:${i}`}>
+          <h3 class="roadmap-title">{col.title}</h3>
+          <ul class="roadmap-list">
+            {col.items.map((item) => (
+              <li class="roadmap-item">
+                <PhosphorIcon
+                  name={statusIcon[col.status]}
+                  size={16}
+                  weight={col.status === 'shipped' ? 'bold' : 'regular'}
+                  color={statusColor[col.status] === 'muted' ? 'current' : statusColor[col.status]}
+                />
+                <span class={col.status === 'out-of-scope' ? 'item-strike' : ''}>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .roadmap-section {
+    background: var(--pc-color-bg-canvas);
+  }
+
+  .section-header {
+    max-width: 720px;
+    margin-bottom: 64px;
+  }
+
+  .roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .roadmap-card {
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-lg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .roadmap-shipped {
+    border-color: color-mix(in srgb, var(--pc-color-success) 30%, var(--pc-color-border-default));
+    background: color-mix(in srgb, var(--pc-color-success-subtle) 30%, var(--pc-color-bg-surface));
+  }
+
+  .roadmap-coming {
+    border-color: color-mix(in srgb, var(--pc-color-warning) 30%, var(--pc-color-border-default));
+  }
+
+  .roadmap-out-of-scope {
+    opacity: 0.78;
+  }
+
+  .roadmap-title {
+    font-size: var(--pc-text-section-h3);
+    font-weight: var(--pc-weight-semibold);
+    color: var(--pc-color-text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .roadmap-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: var(--pc-text-body-sm);
+    color: var(--pc-color-text-primary);
+    line-height: 1.5;
+  }
+
+  .roadmap-out-of-scope .roadmap-item {
+    color: var(--pc-color-text-muted);
+  }
+
+  .item-strike {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+
+  @media (max-width: 960px) {
+    .roadmap-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

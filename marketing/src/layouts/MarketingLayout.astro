@@ -1,0 +1,77 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import type { PageContent } from '../content/types';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const locale = content.locale;
+---
+
+<!doctype html>
+<html lang={content.htmlLang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{content.meta.title}</title>
+    <meta name="description" content={content.meta.description} />
+    <meta property="og:title" content={content.meta.ogTitle} />
+    <meta property="og:description" content={content.meta.ogDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={locale === 'zh' ? 'zh_CN' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" hreflang="zh-CN" href="/" />
+    <link rel="alternate" hreflang="en-US" href="/en" />
+    <link rel="alternate" hreflang="x-default" href="/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Header content={content} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer content={content} />
+    <script>
+      // Gentle & Restrained scroll reveal — single observer, no stagger
+      const reveals = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && reveals.length > 0) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
+        );
+        reveals.forEach((el) => io.observe(el));
+      } else {
+        reveals.forEach((el) => el.classList.add('is-visible'));
+      }
+    </script>
+    <style>
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 8px;
+        z-index: var(--pc-z-overlay);
+        padding: 8px 16px;
+        background: var(--pc-color-bg-surface);
+        color: var(--pc-color-text-primary);
+        border-radius: var(--pc-radius-sm);
+        transition: top var(--pc-duration-fast) var(--pc-easing);
+      }
+      .skip-link:focus {
+        top: 8px;
+      }
+    </style>
+  </body>
+</html>

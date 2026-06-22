@@ -1,0 +1,215 @@
+---
+import type { PageContent } from '../content/types';
+import PhosphorIcon from './PhosphorIcon.astro';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const hero = content.hero;
+const h1Lines = hero.h1.split('\n');
+---
+
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <span class="eyebrow hero-eyebrow">
+        <PhosphorIcon name="shield-check" size={14} weight="bold" />
+        {hero.eyebrow}
+      </span>
+
+      <h1 class="hero-h1">
+        {h1Lines.map((line, i) => (
+          <span class="hero-h1-line" style={`--i:${i}`}>{line}</span>
+        ))}
+      </h1>
+
+      <p class="hero-h2">{hero.h2}</p>
+
+      <div class="hero-cta">
+        <a href={hero.cta.primary.href} class="btn btn-primary">
+          {hero.cta.primary.label}
+          <PhosphorIcon name="arrow-right" size={16} weight="bold" />
+        </a>
+        {hero.cta.secondary && (
+          <a href={hero.cta.secondary.href} class="btn btn-secondary">
+            {hero.cta.secondary.label}
+          </a>
+        )}
+        {hero.cta.tertiary && (
+          <a href={hero.cta.tertiary.href} class="btn btn-ghost" target="_blank" rel="noopener">
+            <PhosphorIcon name="github" size={16} />
+            {hero.cta.tertiary.label}
+          </a>
+        )}
+      </div>
+    </div>
+
+    <div class="hero-media">
+      <div class="hero-media-frame">
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          poster={hero.videoPoster}
+          class="hero-video"
+          aria-label="pinconsole demo"
+        >
+          <source src={hero.videoSrc} type="video/mp4" />
+        </video>
+        <div class="hero-media-badge">
+          <span class="dot"></span>
+          <span>{content.locale === 'zh' ? 'Live demo' : 'Live demo'}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-top: 96px;
+    padding-bottom: 96px;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 50% at 20% 0%, var(--pc-color-accent-subtle) 0%, transparent 60%),
+      radial-gradient(40% 40% at 80% 100%, var(--pc-color-bg-subtle) 0%, transparent 60%);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--pc-color-accent-subtle);
+    color: var(--pc-color-accent-default);
+    border-radius: var(--pc-radius-pill);
+    margin-bottom: 24px;
+    font-size: var(--pc-text-caption);
+    font-weight: var(--pc-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .hero-h1 {
+    font-size: var(--pc-text-hero-h1);
+    font-weight: var(--pc-weight-bold);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+    color: var(--pc-color-text-primary);
+  }
+
+  .hero-h1-line {
+    display: block;
+  }
+
+  .hero-h2 {
+    font-size: var(--pc-text-hero-h2);
+    line-height: var(--pc-line-snug);
+    color: var(--pc-color-text-secondary);
+    max-width: 560px;
+    margin-bottom: 40px;
+  }
+
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-media {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hero-media-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--pc-radius-xl);
+    box-shadow: var(--pc-shadow-xl);
+    overflow: hidden;
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-default);
+    transition: transform var(--pc-duration-slow) var(--pc-easing);
+  }
+
+  .hero-media-frame:hover {
+    transform: translateY(-4px);
+  }
+
+  .hero-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .hero-media-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(28, 25, 23, 0.72);
+    color: var(--pc-color-text-inverse);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--pc-radius-pill);
+    font-size: var(--pc-text-caption);
+    font-weight: var(--pc-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .hero-media-badge .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--pc-color-success);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  @media (max-width: 960px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .hero {
+      padding-top: 48px;
+      padding-bottom: 48px;
+    }
+  }
+</style>

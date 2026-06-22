@@ -1,0 +1,216 @@
+---
+import type { PageContent } from '../content/types';
+import LeadForm from './LeadForm.vue';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const cta = content.finalCTA;
+---
+
+<section id="consult" class="section final-cta-section">
+  <div class="final-cta-bg" aria-hidden="true"></div>
+  <div class="container">
+    <div class="final-cta-grid">
+      <div class="final-cta-copy reveal">
+        <span class="eyebrow">{cta.eyebrow}</span>
+        <h2 class="section-title">{cta.title}</h2>
+        <p class="section-subtitle">{cta.subtitle}</p>
+
+        <div class="trust-points">
+          <div class="trust-item">
+            <span class="trust-check">✓</span>
+            <span>{content.locale === 'zh' ? '48 小时内人工回复' : 'Human reply within 48 hours'}</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-check">✓</span>
+            <span>{content.locale === 'zh' ? '数据存于 maintainer 自托管 D1' : 'Data in maintainer self-hosted D1'}</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-check">✓</span>
+            <span>{content.locale === 'zh' ? '不分享第三方，可申请删除' : 'Not shared, deletable on request'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="final-cta-form reveal">
+        <LeadForm content={cta.form} locale={content.locale} client:load />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .final-cta-section {
+    position: relative;
+    background: var(--pc-color-bg-canvas);
+    overflow: hidden;
+  }
+
+  .final-cta-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(50% 50% at 100% 0%, var(--pc-color-accent-subtle) 0%, transparent 60%),
+      radial-gradient(40% 40% at 0% 100%, var(--pc-color-bg-subtle) 0%, transparent 60%);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .final-cta-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .trust-points {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body);
+  }
+
+  .trust-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--pc-radius-pill);
+    background: var(--pc-color-success-subtle);
+    color: var(--pc-color-success);
+    font-size: 14px;
+    font-weight: var(--pc-weight-bold);
+  }
+
+  .final-cta-form {
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-xl);
+    padding: 32px;
+    box-shadow: var(--pc-shadow-lg);
+  }
+
+  :global(.lead-form) {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  :global(.lead-form-field) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  :global(.lead-form-label) {
+    font-size: var(--pc-text-body-sm);
+    font-weight: var(--pc-weight-medium);
+    color: var(--pc-color-text-primary);
+  }
+
+  :global(.lead-form-input),
+  :global(.lead-form-textarea),
+  :global(.lead-form-select) {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--pc-color-bg-canvas);
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-md);
+    color: var(--pc-color-text-primary);
+    font-size: var(--pc-text-body);
+    font-family: inherit;
+    transition: all var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  :global(.lead-form-input:focus),
+  :global(.lead-form-textarea:focus),
+  :global(.lead-form-select:focus) {
+    outline: none;
+    border-color: var(--pc-color-accent-default);
+    box-shadow: 0 0 0 3px var(--pc-color-accent-subtle);
+  }
+
+  :global(.lead-form-textarea) {
+    min-height: 96px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  :global(.lead-form-submit) {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--pc-color-accent-default);
+    color: var(--pc-color-accent-on);
+    border: none;
+    border-radius: var(--pc-radius-md);
+    font-size: var(--pc-text-body);
+    font-weight: var(--pc-weight-semibold);
+    cursor: pointer;
+    transition: all var(--pc-duration-base) var(--pc-easing);
+    box-shadow: var(--pc-shadow-sm);
+  }
+
+  :global(.lead-form-submit:hover:not(:disabled)) {
+    background: var(--pc-color-accent-hover);
+    box-shadow: var(--pc-shadow-accent);
+    transform: translateY(-1px);
+  }
+
+  :global(.lead-form-submit:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  :global(.lead-form-privacy) {
+    font-size: var(--pc-text-caption);
+    color: var(--pc-color-text-muted);
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  :global(.lead-form-message) {
+    padding: 16px;
+    border-radius: var(--pc-radius-md);
+    font-size: var(--pc-text-body-sm);
+    text-align: center;
+  }
+
+  :global(.lead-form-message.success) {
+    background: var(--pc-color-success-subtle);
+    color: var(--pc-color-success);
+  }
+
+  :global(.lead-form-message.error) {
+    background: color-mix(in srgb, var(--pc-color-danger) 12%, var(--pc-color-bg-canvas));
+    color: var(--pc-color-danger);
+  }
+
+  :global(.lead-form-honeypot) {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  @media (max-width: 960px) {
+    .final-cta-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>
