@@ -48,7 +48,10 @@ interface RRWebPlayerInstance {
   setSpeed: (speed: number) => void;
   toggleSkipInactive: () => void;
   getMetaData: () => { startTime: number; endTime: number; totalTime: number };
-  addEventListener: (event: string, handler: (e: { detail?: { payload?: unknown } }) => void) => void;
+  // rrweb-player 把 dispatch 的 detail({ payload }) 直接传给 handler(见
+  // node_modules/.../rrweb-player.js:14750 `controller.$on(event, ({ detail }) => handler(detail))`)。
+  // 所以 handler 收到的就是 { payload },不是再裹一层 { detail: { payload } }。
+  addEventListener: (event: string, handler: (e: { payload?: unknown }) => void) => void;
   append?: (events: unknown[]) => void;
   // v2 支持 $set 热更新 props(width/height 等),用于响应式 sizing
   $set?: (props: Record<string, unknown>) => void;
@@ -126,6 +129,11 @@ async function loadMore() {
 async function initPlayer() {
   if (!playerContainer.value || events.value.length === 0) return;
   try {
+    // 必须同时加载 rrweb-player/dist/style.css,否则 .rr-player__frame 缺
+    // overflow:hidden、.replayer-wrapper 缺 transform-origin:left top + left:50%/top:50%,
+    // iframe 布局尺寸外溢触发 .player-container 滚动条 → responsive sizing 算小。
+    // 详见 ReplayPlayer.vue 同名注释。
+    await import('rrweb-player/dist/style.css');
     const mod = await import('rrweb-player');
     const Player = mod.default;
     playerContainer.value.replaceChildren();
@@ -164,13 +172,13 @@ async function initPlayer() {
 
     // 跟踪 current time / player state
     player.addEventListener('ui-update-current-time', (e) => {
-      const payload = e?.detail?.payload;
+      const payload = e?.payload;
       if (typeof payload === 'number') {
         currentTimeMs.value = payload;
       }
     });
     player.addEventListener('ui-update-player-state', (e) => {
-      const payload = e?.detail?.payload;
+      const payload = e?.payload;
       isPlaying.value = payload === 'playing';
     });
 

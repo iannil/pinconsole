@@ -267,3 +267,95 @@ this.iframe.setAttribute("sandbox", attributes.join(" "));
 - 服务端 `extractFullSnapshotEnvelope` 改为同时缓存 meta event(`ws.go:557`),subscribe 时一起下发。这样 admin 收到的初始事件流是 [meta, full snapshot],更符合 rrweb 协议期望,可能解决一些其他依赖 meta event 的边界 case。
 - 但 client-side 修复已经解决问题,服务端改动风险更大,暂不动。
 - sandbox 剩余的通用 escape warning 彻底消除:fork rrweb 拆 `createSandboxedIframe` 让 `allow-scripts` 独立可配,不再绑定 `UNSAFE_replayCanvas`。当前方案可接受,post-v1 再考虑。
+
+## 2026-06-22 — rrweb-player CSS 未加载导致 player 算小一圈(`.rr-player` 1067×504 而非 1078×509)
+
+**现象**:用户在 admin dashboard 选定 visitor 后报告"client 页面没有占据 admin 会话内容区全部"。DevTools 度量:
+- `.rr-player` 外框:`1067×504`(容器 `.player-container` 是 `1078×723`)
+- `.player-container` clientWidth `1078 → 1067`(垂直滚动条吃掉 11px)
+- `.player-container` scrollHeight `813 > clientHeight 723`(存在垂直溢出)
+- `.rr-player__frame` computed `overflow: visible`(应为 `hidden`)
+- `.replayer-wrapper` `transform-origin: 533.5px 704.105px`(默认 50% 50%,应为 `top left`)
+- `.replayer-wrapper` computed `position: static`(应为 `relative`),`left/top: auto`(应为 `50%/50%`)
+
+**根因**:`rrweb-player/dist/style.css` **从未被任何代码 import**。`grep -rn "rrweb-player/dist/style.css" admin/src` 无结果。
+
+rrweb-player 是 Svelte 组件,Vite 默认不会把它的样式自动注入。它的关键布局 CSS 全在那份 CSS 里:
+- `.rr-player__frame { overflow: hidden }` —— 没有 iframe 布局尺寸(1913×904)就溢出 frame
+- `.replayer-wrapper { float: left; clear: both; transform-origin: top left; left: 50%; top: 50% }` —— 没有它 wrapper 在 frame 内部定位错误
+- `.replayer-mouse { position: absolute }` —— 没有它鼠标指示器变成 block 占位
+
+CSS 缺失下,wrapper 的 `position: relative`(来自 CSS 第一行)和 `transform-origin: top left`(来自 CSS 第二行)都没生效,变成默认值。iframe(`width=1913 height=904` 属性,layout 尺寸)+ canvas(`1067×504` CSS 尺寸)在 wrapper 内作为 block 元素纵向堆叠 → wrapper layout 高度 `904 + 504 = 1408`。`.rr-player__frame` 没 `overflow:hidden`,wrapper 经 transform 后视觉 bbox 在 frame 之外 → 滚动条出现 → 吃掉 11px clientWidth → responsive sizing `apply()` 用缩小的 `clientWidth=1067` 计算 → rr-player 被设成 `1067×504`。
+
+**修复**(两处,因为 `ReplayPlayer.vue`(实时)和 `ReplayViewer.vue`(历史)各自独立 `import('rrweb-player')`):
+
+```ts
+// ReplayPlayer.vue loadPack()
+await import('rrweb-player/dist/style.css');
+pack = (await import('rrweb-player')) as unknown as RRWebPlayerPack;
+
+// ReplayViewer.vue initPlayer()
+await import('rrweb-player/dist/style.css');
+const mod = await import('rrweb-player');
+```
+
+放在 `import('rrweb-player')` 之前,确保 Player 构造时 CSS 已注入(Svelte onMount 会立即建 iframe,样式必须先就位)。
+
+**浏览器验证**(Chrome DevTools MCP,`http://localhost:5173/admin/dashboard`):
+- `.rr-player` inline style:`width: 1067px;height: 504px` → `width: 1078px;height: 509px` ✅
+- `.player-container` clientWidth:`1067 → 1078`(无滚动条损耗)✅
+- `.player-container` scrollHeight:`813 → 723`(无垂直溢出)✅
+- `.rr-player__frame` overflow:`visible → hidden` ✅
+- `.replayer-wrapper` transform-origin:`533.5px 704.105px → 0px 0px`(top left)✅
+- `.replayer-wrapper` position:`static → relative` ✅
+- `.replayer-wrapper` transform scale:`0.557522 → 0.563053`(`1078/1913`,正好按容器宽算)✅
+- 视觉效果:iframe 视觉 `1078×509` 正好填满 rr-player frame,无 letterbox ✅
+
+**验证深度**:🟢 verified-deep
+- DOM computed style 六项指标前后比对
+- 视觉效果(iframe rect 精确匹配 rr-player frame)
+- 无单测改动(纯依赖加载问题,无逻辑变化)
+
+**为什么以前没发现**:之前几次 bug(双 mount race、iframe height 150px fallback、`initialized` flag、snapshot TTL)掩盖了这条。这些 bug 修复后 player 能正常显示,但宽高比恰好接近录制视口比例,视觉上没明显 letterbox,直到用户专门对比 "外框没占满容器宽" 才注意到 11px 差距。
+
+## 2026-06-22 — 退出协助后录屏没占满 + 历史回放进度条不动(两个新 bug)
+
+### Bug A:`$set` 不重算 wrapper scale → 退出协助后外框/内容缩放不一致
+
+**现象**:用户报告"退出协助以后,client 页面没有在 admin 会话中占据全部"。提供的 HTML:`.rr-player` 外框 `707×483`,但 `.replayer-wrapper` 是 `transform: scale(0.616901)`,iframe 录制尺寸 `1558×1065`。
+
+**矛盾点**:`707×483` 的外框,正确 scale 应为 `min(707/1558, 483/1065) = 0.4535`;但实际 scale `0.616901` 对应的是 `~961` 宽的外框。**外框 inline 尺寸与 wrapper scale 不一致** —— 最后一次 `$set({width:707})` 改了外框尺寸但 scale 停留在上一次(961 宽)的值。
+
+**根因**(读 rrweb-player alpha.20 源码确认):
+- `rrweb-player.js:14873` 的响应式块:`width`/`height` props 变化时**只**更新 `.rr-player` 外框 inline 尺寸(`style`/`playerStyle`),**不调用 `updateScale`**。
+- `updateScale`(`:14726`)只在两处触发:`replayer.on("resize")`(访客录制视口变化时)和全屏切换。**我们 `$set` 改外框尺寸不属于任何一种** → scale 不重算。
+- 进入/退出协助(EngagementPanel 出现/消失)使 `.player-container` 变窄/变宽 → ResizeObserver → `apply()` → `$set` 新尺寸,但 scale 保持旧值 → 内容缩放与外框对不上,表现为"退出协助后没占满"。
+
+**修复**:`admin/src/composables/useResponsivePlayerSize.ts` `apply()` 在 `player.$set({width,height})` 之后调用 `player.triggerResize?.()`。`triggerResize`(`rrweb-player.js:14733`,作为 public getter `:14971` 暴露)用**当前** width/height props 重算 `.replayer-wrapper` 的 `transform: scale`。顺序关键:先 `$set`(同步更新 width/height 闭包变量)再 `triggerResize`(读新值算 scale)。`PlayerLike` interface 加 `triggerResize?: () => void`。
+
+**验证**(Chrome DevTools MCP,`localhost:5173` 历史回放页 —— 与实时 Dashboard 共用同一 composable 代码路径):
+- 模拟协助面板出现/消失(改 `.player-area` 宽度触发 ResizeObserver):
+  - full:外框 `928×633`,scale `0.5937`,缩放后内容 `928×632` == 外框 ✅
+  - 变窄 700:外框 `700×476`,scale `0.4469`,内容 `699×476` == 外框 ✅
+  - 还原(模拟退出协助):外框 `928×633`,scale `0.5937`,内容 `928×632` == 外框 ✅
+- 每一步缩放后内容精确填满外框(旧代码下 scale 会停在变窄时的 0.4469,还原后内容只有 699 宽,不占满)。
+- 单测:新增"apply 后调用 triggerResize"回归用例(断言调用 + `set`→`resize` 顺序),`useResponsivePlayerSize.test.ts` 13 个全绿。
+
+**验证深度**:🟡 verified-shallow(机制层 🟢:同 composable 代码路径浏览器实测 scale/外框一致性 + 单测;但**未在真实 Dashboard co-browse 进入/退出流程**实测 —— 需要在线访客 + claim,未搭建)。
+
+### Bug B:历史回放进度条不动(`ui-update-current-time` 读错字段)
+
+**现象**:`http://localhost:8080/admin/replay/:id` 播放回放,进度条(scrubber)不动,当前时间停在 `0:00`,但 iframe 内录屏正常播放。
+
+**根因**(读 rrweb-player 源码 + 浏览器确认):
+- `rrweb-player.js:14750`:`controller.$on(event, ({ detail }) => handler(detail))` —— rrweb-player 把事件的 `detail`(即 `{ payload: currentTime }`)**直接**传给我们的 handler。
+- `ReplayViewer.vue` 的 handler 读 `e?.detail?.payload`(多套了一层)→ 永远 `undefined` → `currentTimeMs` 不更新 → 进度条停在 0。`ui-update-player-state` 同样的 bug → `isPlaying` 永远 false。
+- 浏览器确认:点播放后 iframe DOM 变化(`6397→6439`)、`.replayer-mouse` 移动(`→461px,68px`)= 播放确实在跑,但 scrubber `value` 停在 0 = 纯读数 bug。
+
+**修复**:`admin/src/views/ReplayViewer.vue` 两个 handler 把 `e?.detail?.payload` 改为 `e?.payload`;interface 类型从 `{ detail?: { payload? } }` 改为 `{ payload? }`。
+
+**验证**(Chrome DevTools MCP,`localhost:5173` HMR):点播放后 scrubber `value` `0→3000`、当前时间 `0:00→0:02`、播放键 aria `Play→Pause`、进度填充 `--progress 1.05%`。✅ **验证深度**:🟢 verified-deep(真实用户流程浏览器实测)。
+
+### 测试 / 构建
+- `pnpm exec vue-tsc --noEmit` 通过。
+- `pnpm test` 153 个全绿(原 152 + 新增 1 个 triggerResize 回归)。

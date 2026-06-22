@@ -14,11 +14,16 @@ const { t } = useI18n();
 // 仍用最小化 interface + 透传 unknown 模式,保留动态 import 的代码分割。
 type RRWebPlayerInstance = {
   addEvent?: (e: unknown) => void;
+  // 监听 rrweb-player 事件(用于在播放结束时切到 live 模式)
+  addEventListener?: (event: string, handler: (...args: unknown[]) => void) => void;
   // v2 支持 $set 热更新 props(width/height 等),用于响应式 sizing
   $set?: (props: Record<string, unknown>) => void;
   // v2 暴露 getReplayer 拿到内部 Replayer,用于兜底手动触发 handleResize
-  // (admin 没收到 meta event 时让 iframe 显示)
-  getReplayer?: () => { handleResize?: (dimension: { width: number; height: number }) => void } | null;
+  // (admin 没收到 meta event 时让 iframe 显示)+ startLive 切实时模式
+  getReplayer?: () => {
+    handleResize?: (dimension: { width: number; height: number }) => void;
+    startLive?: (baselineTime?: number) => void;
+  } | null;
 } & Record<string, unknown>;
 type RRWebPlayerPack = {
   default: {
@@ -61,6 +66,11 @@ let iframeObserver: MutationObserver | null = null;
 // 原比例缩放并 overflow → "大片空白 + 一小块录屏" 视觉 bug。
 // 每次 rebuildPlayer 递增 token,await 完成后检查自己是否仍是最新;若不是则放弃。
 let rebuildToken = 0;
+// 是否已切入 rrweb live 模式。autoPlay 播完缓冲事件后 player 会 END→paused 停表,
+// 此后 addEvent 推送的实时事件因 timer 不活跃只入队不渲染(表现为"client 操作不
+// 实时更新,需刷新重进会话才看见")。播放结束时切到 live 模式后,后续 addEvent
+// 会被立即渲染。详见 rebuildPlayer 内 finish 监听。
+let liveMode = false;
 // 响应式 sizing:覆盖 rrweb-player 默认 1024x576,按真实录制视口比例动态算
 // player 外框尺寸,避免 letterbox / 视觉错位。详见 composable 注释。
 const { start: startResponsiveSizing, stop: stopResponsiveSizing } =
@@ -123,8 +133,15 @@ function extractRRWeb(events: EventPayload[]): unknown[] {
 }
 
 // 动态加载 rrweb-player(避免进首屏 bundle)
+// 必须同时加载 rrweb-player/dist/style.css:它定义了 .rr-player__frame{overflow:hidden}
+// 和 .replayer-wrapper{transform-origin:top left;left:50%;top:50%} 等关键布局。
+// 不加载时 wrapper 会按 iframe 布局尺寸(如 1913x904)+ canvas(1067x504)纵向堆叠,
+// 经 transform 后向下溢出 .rr-player,撑出 .player-container 的垂直滚动条,
+// 滚动条再吃掉 ~11px clientWidth,responsive sizing 因此把 player 算小一圈,
+// 表现为"client 没占满 admin 内容区"。
 async function loadPack(): Promise<RRWebPlayerPack> {
   if (pack) return pack;
+  await import('rrweb-player/dist/style.css');
   pack = (await import('rrweb-player')) as unknown as RRWebPlayerPack;
   return pack;
 }
@@ -136,6 +153,7 @@ async function rebuildPlayer() {
   const myToken = ++rebuildToken;
   loading.value = true;
   errorMsg.value = null;
+  liveMode = false;
 
   // **无条件**清空 DOM + 释放 observer(不放在 `if (player)` 守卫里)。
   // 原因:首次 mount 时 player 仍是 null,但若 onMounted 和 watch(events) 在
@@ -198,6 +216,26 @@ async function rebuildPlayer() {
     // player 还是 null,initialized 永远 false → 每个 WS 事件都触发完整 rebuild →
     // 浏览器对每次新建的 iframe 都报 sandbox warning(实测 123 条)。
     initialized = true;
+    // **关键(live 实时性)**:autoPlay 把缓冲事件快进播完后,player 会
+    // END→paused 并 timer.clear()。此后通过 addEvent 推送的实时事件
+    // (input / mousemove 等),其 timestamp 已晚于 baselineTime 且 timer 不活跃,
+    // rrweb 的 addEvent action 只把事件塞进内部数组而**不渲染** → 运营端看不到
+    // client 的实时操作,必须刷新重进会话(重建 player)才看见。
+    // 修复:监听 finish(播放结束),切入 rrweb live 模式。baselineTime 设为远未来,
+    // 使后续 addEvent 的 event.timestamp < baselineTime 恒成立 → 同步立即渲染,
+    // 同时规避访客/运营两端时钟偏移导致的渲染延迟。
+    try {
+      player.addEventListener?.('finish', () => {
+        if (liveMode || !player) return;
+        const replayer = player.getReplayer?.();
+        if (replayer?.startLive) {
+          replayer.startLive(Date.now() + 365 * 24 * 60 * 60 * 1000);
+          liveMode = true;
+        }
+      });
+    } catch {
+      // ignore:addEventListener 不可用时退化为旧行为(仍需刷新)
+    }
     // rrweb-player v2 alpha 的 iframe sandbox 默认只设 allow-same-origin,
     // 导致 Replayer 内部脚本被浏览器阻断("frame is sandboxed and 'allow-scripts'
     // permission is not set")→ player 渲染空白。

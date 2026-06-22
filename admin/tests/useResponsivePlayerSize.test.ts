@@ -93,6 +93,29 @@ describe('useResponsivePlayerSize', () => {
     expect($set).toHaveBeenCalledWith({ width: 1024, height: 576 });
   });
 
+  it('apply 后调用 triggerResize 重算 wrapper scale($set 不会自己重算)', () => {
+    // 回归:rrweb-player 的 $set({width,height}) 只更新 .rr-player 外框 inline 尺寸,
+    // 不重算 .replayer-wrapper 的 transform:scale。必须显式 triggerResize,
+    // 否则改尺寸(进入/退出协助、窗口 resize)后内容缩放与外框不一致。
+    const container = makeContainer(1024, 768);
+    const containerRef = ref<HTMLElement | null>(container);
+    const iframe = makeIframe(1920, 1080);
+    container.appendChild(iframe);
+
+    const calls: string[] = [];
+    const $set = vi.fn(() => calls.push('set'));
+    const triggerResize = vi.fn(() => calls.push('resize'));
+    const player = { $set, triggerResize };
+    const { start } = useResponsivePlayerSize(containerRef, () => player);
+
+    start();
+
+    expect($set).toHaveBeenCalledWith({ width: 1024, height: 576 });
+    expect(triggerResize).toHaveBeenCalledTimes(1);
+    // 顺序:必须先 $set(更新 width/height props)再 triggerResize(用新值重算 scale)
+    expect(calls).toEqual(['set', 'resize']);
+  });
+
   it('容器更宽(16:10)装下 4:3 录制 → 高度撑满', () => {
     const container = makeContainer(1920, 1080); // 16:9 ≈ 1.778
     const containerRef = ref<HTMLElement | null>(container);

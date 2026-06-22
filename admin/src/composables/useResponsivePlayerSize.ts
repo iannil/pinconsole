@@ -26,6 +26,13 @@ export interface PlayerLike {
   $set?: (props: Record<string, unknown>) => void;
   // v2 暴露 getReplayer 拿到内部 Replayer 实例(用于兜底手动触发 handleResize)
   getReplayer?: () => { handleResize?: (dimension: { width: number; height: number }) => void } | null;
+  // v2 暴露 triggerResize:用当前 width/height props 重算 .replayer-wrapper 的
+  // transform:scale。必须在 $set({width,height}) 之后调用 —— rrweb-player 的响应式
+  // 块(rrweb-player.js:14873)只在 width/height 变化时更新 .rr-player 外框的 inline
+  // 尺寸,**不会**重算 wrapper scale(updateScale 只在 replayer 'resize' 事件或全屏时跑)。
+  // 不手动触发 triggerResize,$set 改了外框尺寸但 scale 停留在上一次的值 → 外框与
+  // 内容缩放不一致(如外框 707×483 但 scale 仍是 961 宽时的 0.617)。
+  triggerResize?: () => void;
 }
 
 // 从 container 中找 rrweb-player 创建的渲染 iframe,读 width/height attribute。
@@ -138,6 +145,11 @@ export function useResponsivePlayerSize(
       newH = cw / ratio;
     }
     player.$set?.({ width: Math.floor(newW), height: Math.floor(newH) });
+    // **关键**:$set 只更新 .rr-player 外框 inline 尺寸,不重算 wrapper 的
+    // transform:scale。必须显式 triggerResize 用新 width/height 重算 scale,
+    // 否则改尺寸(如进入/退出协助导致容器变宽变窄)后内容缩放与外框不一致,
+    // 表现为"退出协助后录屏没占满外框 / 外框没占满容器"。
+    player.triggerResize?.();
   };
 
   /** 在 player 创建成功后调用:启动 ResizeObserver + DOM observer。 */
