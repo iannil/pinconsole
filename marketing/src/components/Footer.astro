@@ -1,5 +1,6 @@
 ---
 import type { PageContent } from '../content/types';
+import Logo from './Logo.astro';
 
 interface Props {
   content: PageContent;
@@ -10,84 +11,115 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <a href="/" class="brand">
-        <span class="brand-dot">·</span>
-        <span class="brand-word">pinconsole</span>
-      </a>
-      <p class="footer-tagline">{content.footer.tagline}</p>
-      <p class="footer-license">{content.footer.license}</p>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand-block">
+        <a href="/" class="footer-brand" aria-label="pinconsole">
+          <Logo size={18} />
+          <span class="footer-word">pinconsole</span>
+        </a>
+        <p class="footer-tagline">{content.footer.tagline}</p>
+      </div>
+
+      <div class="footer-cols">
+        {content.footer.columns.map((col) => (
+          <div class="footer-col">
+            <span class="col-label">{col.title}</span>
+            <ul>
+              {col.links.map((link) => (
+                <li><a href={link.href}>{link.label}</a></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
 
-    {content.footer.columns.map((col) => (
-      <div class="footer-col">
-        <h4>{col.title}</h4>
-        <ul>
-          {col.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-        </ul>
-      </div>
-    ))}
-  </div>
+    <hr class="footer-rule" />
 
-  <div class="container footer-bottom">
-    <span>{content.footer.sourceNote.replace('2026', String(year))}</span>
+    <div class="footer-bottom">
+      <span class="footer-meta">
+        <span class="meta-item">{content.footer.license}</span>
+        <span class="meta-sep" aria-hidden="true">·</span>
+        <span class="meta-item">{content.footer.sourceNote.replace('2026', String(year))}</span>
+      </span>
+      <span class="footer-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>{content.locale === 'zh' ? 'v1 现已交付' : 'v1 shipped'}</span>
+      </span>
+    </div>
   </div>
 </footer>
 
 <style>
   .site-footer {
-    background: var(--pc-color-bg-surface);
+    background: var(--pc-color-bg-canvas);
     border-top: 1px solid var(--pc-color-border-default);
     padding-top: 64px;
+    padding-bottom: 32px;
   }
 
-  .footer-grid {
+  .footer-top {
     display: grid;
-    grid-template-columns: 2fr repeat(3, 1fr);
-    gap: 48px;
+    grid-template-columns: 1.5fr 2fr;
+    gap: 64px;
     padding-bottom: 48px;
   }
 
-  .footer-brand .brand {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 2px;
-    font-size: var(--pc-text-body-lg);
-    font-weight: var(--pc-weight-semibold);
-    color: var(--pc-color-text-primary);
-    margin-bottom: 12px;
+  .footer-brand-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .footer-brand .brand-dot {
-    color: var(--pc-color-accent-default);
-    font-weight: var(--pc-weight-bold);
-    font-size: 1.4em;
-    line-height: 0;
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--pc-color-text-primary);
+  }
+
+  .footer-word {
+    font-family: var(--pc-font-mono);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--pc-color-text-primary);
+  }
+
+  :lang(zh) .footer-word,
+  :lang(zh-CN) .footer-word {
+    font-family: var(--pc-font-sans-zh);
   }
 
   .footer-tagline {
+    font-family: var(--pc-font-sans);
     font-size: var(--pc-text-body);
     color: var(--pc-color-text-secondary);
-    font-style: italic;
-    margin-bottom: 8px;
+    line-height: var(--pc-line-relaxed);
+    max-width: 32ch;
   }
 
-  .footer-license {
+  :lang(zh) .footer-tagline,
+  :lang(zh-CN) .footer-tagline {
+    font-family: var(--pc-font-sans-zh);
+  }
+
+  .footer-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+
+  .col-label {
+    display: block;
     font-family: var(--pc-font-mono);
-    font-size: var(--pc-text-caption);
-    color: var(--pc-color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .footer-col h4 {
-    font-size: var(--pc-text-body-sm);
-    font-weight: var(--pc-weight-semibold);
-    color: var(--pc-color-text-primary);
-    margin-bottom: 16px;
-    text-transform: uppercase;
+    font-size: var(--pc-text-micro);
     letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pc-color-text-muted);
+    margin-bottom: 14px;
+    font-weight: var(--pc-weight-medium);
   }
 
   .footer-col ul {
@@ -101,24 +133,74 @@ const year = new Date().getFullYear();
     color: var(--pc-color-text-secondary);
     font-size: var(--pc-text-body-sm);
     transition: color var(--pc-duration-fast) var(--pc-easing);
+    font-family: var(--pc-font-sans);
+  }
+
+  :lang(zh) .footer-col a,
+  :lang(zh-CN) .footer-col a {
+    font-family: var(--pc-font-sans-zh);
   }
 
   .footer-col a:hover {
     color: var(--pc-color-accent-default);
   }
 
+  .footer-rule {
+    border: 0;
+    height: 1px;
+    background: var(--pc-color-border-default);
+    margin: 0;
+  }
+
   .footer-bottom {
-    border-top: 1px solid var(--pc-color-border-default);
-    padding: 24px var(--pc-space-page);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .footer-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
     color: var(--pc-color-text-muted);
-    font-size: var(--pc-text-caption);
+    letter-spacing: 0.04em;
+  }
+
+  .meta-sep {
+    color: var(--pc-color-text-muted);
+    opacity: 0.5;
+  }
+
+  .footer-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-secondary);
+    letter-spacing: 0.04em;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pc-color-accent-default);
+    box-shadow: 0 0 6px var(--pc-color-accent-default);
   }
 
   @media (max-width: 768px) {
-    .footer-grid {
+    .footer-top {
       grid-template-columns: 1fr;
-      gap: 32px;
+      gap: 40px;
+    }
+    .footer-cols {
+      grid-template-columns: 1fr 1fr;
     }
   }
 </style>

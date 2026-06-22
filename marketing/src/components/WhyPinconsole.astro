@@ -1,0 +1,446 @@
+---
+import type { PageContent } from '../content/types';
+import PhosphorIcon from './PhosphorIcon.astro';
+
+interface Props {
+  content: PageContent;
+}
+
+const { content } = Astro.props;
+const d = content.dataSovereignty;
+const s = content.selfHost;
+const isZh = content.locale === 'zh';
+
+const flowNodes = isZh
+  ? [
+      { label: '访客浏览器', sub: 'visitor SDK' },
+      { label: 'pinconsole-server', sub: '你的服务器' },
+      { label: 'PostgreSQL · Redis · MinIO', sub: '你的存储' },
+    ]
+  : [
+      { label: 'Visitor browser', sub: 'visitor SDK' },
+      { label: 'pinconsole-server', sub: 'your server' },
+      { label: 'PostgreSQL · Redis · MinIO', sub: 'your storage' },
+    ];
+
+const codeLines = s.code.split('\n');
+---
+
+<section id="data-sovereignty" class="section why-section">
+  <div class="container">
+    <header class="section-header reveal">
+      <span class="section-number">01 — {d.eyebrow}</span>
+      <h2 class="headline">{d.title}</h2>
+      <p class="lead section-subtitle">{d.subtitle}</p>
+    </header>
+
+    <!-- Top: 3 pillars as trust anchors -->
+    <ol class="pillars-list">
+      {d.pillars.map((pillar, i) => (
+        <li class="pillar-item reveal" style={`--reveal-delay:${i}`}>
+          <div class="pillar-head">
+            <span class="pillar-icon" aria-hidden="true">
+              <PhosphorIcon name={pillar.icon} size={18} weight="regular" />
+            </span>
+            <span class="pillar-numeral">{(i + 1).toString().padStart(2, '0')}</span>
+          </div>
+          <h3 class="pillar-title">{pillar.title}</h3>
+          <p class="pillar-description">{pillar.description}</p>
+        </li>
+      ))}
+    </ol>
+
+    <!-- Middle: flow diagram (full width) -->
+    <div class="why-flow-wrap reveal">
+      <div class="flow-window" aria-label={d.architectureAlt}>
+        <header class="flow-header">
+          <span class="flow-dot" aria-hidden="true"></span>
+          <span class="flow-title">{isZh ? '数据流' : 'Data flow'}</span>
+          <span class="flow-meta">{isZh ? '边界 = 你的基础设施' : 'boundary = your infra'}</span>
+        </header>
+        <ol class="flow-nodes">
+          {flowNodes.map((node, i) => (
+            <li class="flow-node-row">
+              <div class={`flow-node ${i === 1 ? 'is-server' : ''}`}>
+                <span class="flow-node-label">{node.label}</span>
+                <span class="flow-node-sub">{node.sub}</span>
+              </div>
+              {i < flowNodes.length - 1 && (
+                <span class="flow-arrow" aria-hidden="true">→</span>
+              )}
+            </li>
+          ))}
+        </ol>
+        <footer class="flow-footer">
+          <span class="flow-badge">
+            <PhosphorIcon name="shield-check" size={12} weight="bold" color="accent" />
+            {isZh ? '无外部依赖' : 'No external dependencies'}
+          </span>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Bottom: code window (full width) -->
+    <div class="why-code-wrap reveal">
+      <div class="code-window">
+        <header class="code-window-header">
+          <span class="code-window-dot" aria-hidden="true"></span>
+          <span class="code-window-title">~/pinconsole</span>
+          <span class="code-window-meta">bash · 5 min</span>
+        </header>
+        <pre class="code-window-body"><code>{codeLines.map((line) => (
+          <span class="code-line">
+            {line.startsWith('#') || line.startsWith('//')
+              ? <span class="code-comment">{line}</span>
+              : <span class="code-text">{line || ' '}</span>}
+          </span>
+        ))}</code></pre>
+        <footer class="code-window-footer">
+          <a href={s.docsLink.href} class="docs-link" target="_blank" rel="noopener">
+            <PhosphorIcon name="arrow-right" size={12} weight="bold" />
+            {s.docsLink.label}
+          </a>
+        </footer>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .why-section {
+    background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+
+  .section-header {
+    max-width: 720px;
+    margin-bottom: 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ===== Top: pillars as trust anchors ===== */
+  .pillars-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-bottom: 64px;
+  }
+
+  .pillar-item {
+    padding: 32px 28px;
+    border-left: 1px solid var(--pc-color-border-default);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .pillar-item:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .pillar-item:last-child {
+    padding-right: 0;
+  }
+
+  .pillar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .pillar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--pc-color-accent-subtle);
+    border: 1px solid color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
+    border-radius: var(--pc-radius-sm);
+    color: var(--pc-color-accent-default);
+  }
+
+  .pillar-numeral {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    letter-spacing: 0.06em;
+    color: var(--pc-color-text-muted);
+    font-weight: var(--pc-weight-medium);
+  }
+
+  .pillar-title {
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-title);
+    font-weight: 600;
+    line-height: var(--pc-line-headline);
+    letter-spacing: -0.01em;
+    color: var(--pc-color-text-primary);
+    margin: 0;
+  }
+
+  :lang(zh) .pillar-title,
+  :lang(zh-CN) .pillar-title {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: 0;
+  }
+
+  .pillar-description {
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body-sm);
+    line-height: var(--pc-line-relaxed);
+    margin: 0;
+  }
+
+  /* ===== Middle: flow diagram ===== */
+  .why-flow-wrap {
+    margin-bottom: 32px;
+  }
+
+  .flow-window {
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-strong);
+    border-radius: var(--pc-radius-lg);
+    overflow: hidden;
+  }
+
+  .flow-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-elevated);
+  }
+
+  .flow-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pc-color-accent-default);
+    box-shadow: 0 0 4px var(--pc-color-accent-default);
+  }
+
+  .flow-title {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-primary);
+    letter-spacing: 0.04em;
+    font-weight: var(--pc-weight-medium);
+  }
+
+  .flow-meta {
+    margin-left: auto;
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .flow-nodes {
+    list-style: none;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .flow-node-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .flow-node-row:last-child {
+    flex: 0 0 auto;
+  }
+
+  .flow-node {
+    flex: 1;
+    background: var(--pc-color-bg-elevated);
+    border: 1px solid var(--pc-color-border-default);
+    padding: 14px 18px;
+    border-radius: var(--pc-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .flow-node.is-server {
+    background: var(--pc-color-accent-subtle);
+    border-color: color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
+  }
+
+  .flow-node-label {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-body-sm);
+    color: var(--pc-color-text-primary);
+    font-weight: var(--pc-weight-medium);
+  }
+
+  .flow-node.is-server .flow-node-label {
+    color: var(--pc-color-accent-default);
+  }
+
+  .flow-node-sub {
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .flow-arrow {
+    font-family: var(--pc-font-mono);
+    color: var(--pc-color-text-muted);
+    font-size: 16px;
+    font-weight: var(--pc-weight-medium);
+    flex-shrink: 0;
+  }
+
+  .flow-footer {
+    padding: 14px 32px;
+    border-top: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-elevated);
+  }
+
+  .flow-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-accent-default);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: var(--pc-weight-semibold);
+  }
+
+  /* ===== Bottom: code window ===== */
+  .code-window {
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-strong);
+    border-radius: var(--pc-radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--pc-shadow-lg);
+  }
+
+  .code-window-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-elevated);
+  }
+
+  .code-window-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pc-color-accent-default);
+    box-shadow: 0 0 4px var(--pc-color-accent-default);
+  }
+
+  .code-window-title {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .code-window-meta {
+    margin-left: auto;
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .code-window-body {
+    margin: 0;
+    padding: 20px 24px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    font-family: var(--pc-font-mono);
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--pc-color-text-primary);
+    overflow-x: auto;
+  }
+
+  .code-line {
+    display: block;
+    min-height: 1.9em;
+    white-space: pre;
+  }
+
+  .code-comment {
+    color: var(--pc-color-text-muted);
+  }
+
+  .code-text {
+    color: var(--pc-color-text-primary);
+  }
+
+  .code-window-footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-elevated);
+  }
+
+  .docs-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--pc-font-mono);
+    font-size: 11px;
+    color: var(--pc-color-accent-default);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: var(--pc-weight-semibold);
+    transition: gap var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .docs-link:hover {
+    gap: 10px;
+  }
+
+  @media (max-width: 880px) {
+    .pillars-list {
+      grid-template-columns: 1fr;
+    }
+    .pillar-item {
+      padding: 24px 0;
+      border-left: none;
+      border-bottom: 1px solid var(--pc-color-border-default);
+    }
+    .pillar-item:last-child {
+      border-bottom: none;
+    }
+    .flow-nodes {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .flow-node-row {
+      flex-direction: row;
+    }
+    .flow-arrow {
+      transform: rotate(90deg);
+    }
+  }
+</style>

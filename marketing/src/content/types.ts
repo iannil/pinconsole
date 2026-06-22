@@ -21,12 +21,6 @@ export interface CTA {
   tertiary?: { label: string; href: string };
 }
 
-export interface Problem {
-  icon: string;
-  title: string;
-  description: string;
-}
-
 export interface Feature {
   icon: string;
   title: string;
@@ -65,14 +59,6 @@ export interface PageContent {
     h1: string;
     h2: string;
     cta: CTA;
-    videoSrc: string;
-    videoPoster: string;
-  };
-  problem: {
-    eyebrow: string;
-    title: string;
-    subtitle: string;
-    items: Problem[];
   };
   features: {
     eyebrow: string;

@@ -9,122 +9,253 @@ interface Props {
 const { content } = Astro.props;
 const r = content.roadmap;
 
+// Split columns: shipped + coming go into 2-col grid; out-of-scope becomes callout below
+const gridColumns = r.columns.filter((c) => c.status === 'shipped' || c.status === 'coming');
+const outOfScope = r.columns.find((c) => c.status === 'out-of-scope');
+
 const statusIcon = {
   shipped: 'check-circle',
   coming: 'trending-up',
   'out-of-scope': 'lock',
 };
-
-const statusColor = {
-  shipped: 'success',
-  coming: 'warning',
-  'out-of-scope': 'muted',
-} as const;
 ---
 
 <section id="roadmap" class="section roadmap-section">
   <div class="container">
-    <div class="section-header reveal">
-      <span class="eyebrow">{r.eyebrow}</span>
-      <h2 class="section-title">{r.title}</h2>
-      <p class="section-subtitle">{r.subtitle}</p>
-    </div>
+    <header class="section-header reveal">
+      <span class="section-number">03 — {r.eyebrow}</span>
+      <h2 class="headline">{r.title}</h2>
+      <p class="lead section-subtitle">{r.subtitle}</p>
+    </header>
 
     <div class="roadmap-grid">
-      {r.columns.map((col, i) => (
-        <article class={`roadmap-card roadmap-${col.status} reveal`} style={`--i:${i}`}>
-          <h3 class="roadmap-title">{col.title}</h3>
+      {gridColumns.map((col, i) => (
+        <article class={`roadmap-col roadmap-${col.status} reveal`} style={`--reveal-delay:${i}`}>
+          <header class="roadmap-col-header">
+            <span class={`roadmap-status status-${col.status}`}>
+              <PhosphorIcon
+                name={statusIcon[col.status]}
+                size={11}
+                weight="bold"
+                color={col.status === 'shipped' ? 'accent' : 'current'}
+              />
+              <span>{col.status}</span>
+            </span>
+            <h3 class="roadmap-col-title">{col.title}</h3>
+          </header>
           <ul class="roadmap-list">
             {col.items.map((item) => (
               <li class="roadmap-item">
-                <PhosphorIcon
-                  name={statusIcon[col.status]}
-                  size={16}
-                  weight={col.status === 'shipped' ? 'bold' : 'regular'}
-                  color={statusColor[col.status] === 'muted' ? 'current' : statusColor[col.status]}
-                />
-                <span class={col.status === 'out-of-scope' ? 'item-strike' : ''}>{item}</span>
+                <span class="item-marker" aria-hidden="true">
+                  {col.status === 'shipped' ? '✓' : '·'}
+                </span>
+                <span>{item}</span>
               </li>
             ))}
           </ul>
         </article>
       ))}
     </div>
+
+    {outOfScope && (
+      <aside class="roadmap-callout reveal">
+        <div class="callout-icon" aria-hidden="true">
+          <PhosphorIcon name="x-circle" size={16} weight="bold" color="accent" />
+        </div>
+        <div class="callout-body">
+          <span class="callout-label">{outOfScope.title}</span>
+          <p class="callout-items">
+            {outOfScope.items.filter((i) => !i.includes('立场') && !i.includes('Stance')).join(' · ')}
+          </p>
+          <p class="callout-stance">
+            {content.locale === 'zh' ? '—— 立场不变。' : '—— stance unchanged.'}
+          </p>
+        </div>
+      </aside>
+    )}
   </div>
 </section>
 
 <style>
   .roadmap-section {
     background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
   }
 
   .section-header {
     max-width: 720px;
-    margin-bottom: 64px;
-  }
-
-  .roadmap-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-
-  .roadmap-card {
-    background: var(--pc-color-bg-surface);
-    border: 1px solid var(--pc-color-border-default);
-    border-radius: var(--pc-radius-lg);
-    padding: 32px;
+    margin-bottom: 48px;
     display: flex;
     flex-direction: column;
     gap: 20px;
   }
 
-  .roadmap-shipped {
-    border-color: color-mix(in srgb, var(--pc-color-success) 30%, var(--pc-color-border-default));
-    background: color-mix(in srgb, var(--pc-color-success-subtle) 30%, var(--pc-color-bg-surface));
+  .roadmap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
   }
 
-  .roadmap-coming {
-    border-color: color-mix(in srgb, var(--pc-color-warning) 30%, var(--pc-color-border-default));
+  .roadmap-col {
+    padding: 24px;
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-md);
+    background: var(--pc-color-bg-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  .roadmap-out-of-scope {
-    opacity: 0.78;
+  .roadmap-col-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--pc-color-border-default);
   }
 
-  .roadmap-title {
-    font-size: var(--pc-text-section-h3);
+  .roadmap-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    padding: 3px 8px;
+    border-radius: var(--pc-radius-pill);
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
     font-weight: var(--pc-weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-shipped {
+    background: var(--pc-color-accent-subtle);
+    color: var(--pc-color-accent-default);
+    border: 1px solid color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
+  }
+
+  .status-coming {
+    background: var(--pc-color-bg-elevated);
+    color: var(--pc-color-text-secondary);
+    border: 1px solid var(--pc-color-border-strong);
+  }
+
+  .roadmap-col-title {
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-title);
+    font-weight: 600;
     color: var(--pc-color-text-primary);
-    letter-spacing: -0.02em;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  :lang(zh) .roadmap-col-title,
+  :lang(zh-CN) .roadmap-col-title {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: 0;
   }
 
   .roadmap-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    flex: 1;
   }
 
   .roadmap-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    gap: 8px;
+    align-items: start;
     font-size: var(--pc-text-body-sm);
     color: var(--pc-color-text-primary);
     line-height: 1.5;
+    font-family: var(--pc-font-sans);
   }
 
-  .roadmap-out-of-scope .roadmap-item {
+  :lang(zh) .roadmap-item,
+  :lang(zh-CN) .roadmap-item {
+    font-family: var(--pc-font-sans-zh);
+  }
+
+  .item-marker {
+    font-family: var(--pc-font-mono);
+    font-weight: var(--pc-weight-bold);
     color: var(--pc-color-text-muted);
+    text-align: center;
+    line-height: 1.5;
+    font-size: 12px;
   }
 
-  .item-strike {
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
+  .roadmap-shipped .item-marker {
+    color: var(--pc-color-accent-default);
   }
 
-  @media (max-width: 960px) {
+  /* ===== Out-of-scope callout ===== */
+  .roadmap-callout {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-strong);
+    border-left: 3px solid var(--pc-color-accent-default);
+    border-radius: var(--pc-radius-md);
+  }
+
+  .callout-icon {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+    color: var(--pc-color-accent-default);
+  }
+
+  .callout-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .callout-label {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pc-color-text-primary);
+    font-weight: var(--pc-weight-semibold);
+  }
+
+  .callout-items {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-body-sm);
+    color: var(--pc-color-text-secondary);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  :lang(zh) .callout-items,
+  :lang(zh-CN) .callout-items {
+    font-family: var(--pc-font-sans-zh);
+  }
+
+  .callout-stance {
+    font-family: var(--pc-font-sans);
+    font-style: italic;
+    font-size: var(--pc-text-body-sm);
+    color: var(--pc-color-text-muted);
+    margin: 0;
+  }
+
+  :lang(zh) .callout-stance,
+  :lang(zh-CN) .callout-stance {
+    font-family: var(--pc-font-sans-zh);
+    font-style: normal;
+  }
+
+  @media (max-width: 880px) {
     .roadmap-grid {
       grid-template-columns: 1fr;
     }

@@ -1,5 +1,6 @@
 ---
 import type { PageContent } from '../content/types';
+import Logo from './Logo.astro';
 
 interface Props {
   content: PageContent;
@@ -11,19 +12,48 @@ const { content } = Astro.props;
 <header class="site-header">
   <div class="container header-inner">
     <a href="/" class="brand" aria-label="pinconsole">
-      <span class="brand-dot">·</span>
+      <Logo size={20} />
       <span class="brand-word">pinconsole</span>
     </a>
 
     <nav class="nav-links" aria-label="primary">
-      {content.nav.links.map((link) => <a href={link.href}>{link.label}</a>)}
+      {content.nav.links.map((link) => (
+        <a href={link.href} class="nav-item">
+          <span class="nav-label">{link.label}</span>
+        </a>
+      ))}
     </nav>
 
     <div class="nav-actions">
-      <a href={content.nav.localeSwitch.href} class="locale-switch" aria-label="switch language">
+      <a href={content.nav.localeSwitch.href} class="locale-switch">
         {content.nav.localeSwitch.label}
       </a>
       <a href="#consult" class="btn btn-primary header-cta">{content.nav.cta}</a>
+    </div>
+  </div>
+
+  <div class="credibility-strip" aria-label="project facts">
+    <div class="container credibility-inner">
+      <span class="cred-item">
+        <span class="cred-dot" aria-hidden="true"></span>
+        <span class="cred-value">AGPL-3.0</span>
+        <span class="cred-label">{content.locale === 'zh' ? '开源' : 'open source'}</span>
+      </span>
+      <span class="cred-sep" aria-hidden="true"></span>
+      <span class="cred-item">
+        <span class="cred-value">{content.locale === 'zh' ? '自托管' : 'self-hosted'}</span>
+        <span class="cred-label">{content.locale === 'zh' ? '你的基础设施' : 'your infra'}</span>
+      </span>
+      <span class="cred-sep" aria-hidden="true"></span>
+      <span class="cred-item">
+        <span class="cred-value">{content.locale === 'zh' ? 'GDPR-ready' : 'GDPR-ready'}</span>
+        <span class="cred-label">{content.locale === 'zh' ? '合规' : 'compliance'}</span>
+      </span>
+      <span class="cred-sep" aria-hidden="true"></span>
+      <span class="cred-item">
+        <span class="cred-value">48h</span>
+        <span class="cred-label">{content.locale === 'zh' ? '人回复' : 'human reply'}</span>
+      </span>
     </div>
   </div>
 </header>
@@ -33,15 +63,14 @@ const { content } = Astro.props;
     position: sticky;
     top: 0;
     z-index: var(--pc-z-header);
-    height: var(--pc-header-height);
     background: color-mix(in srgb, var(--pc-color-bg-canvas) 88%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
     border-bottom: 1px solid var(--pc-color-border-default);
   }
 
   .header-inner {
-    height: 100%;
+    height: var(--pc-header-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -50,24 +79,27 @@ const { content } = Astro.props;
 
   .brand {
     display: inline-flex;
-    align-items: baseline;
-    gap: 2px;
+    align-items: center;
+    gap: 8px;
     font-family: var(--pc-font-sans);
-    font-size: var(--pc-text-body-lg);
-    font-weight: var(--pc-weight-semibold);
+    font-size: 15px;
+    font-weight: 600;
     color: var(--pc-color-text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-word {
+    font-family: var(--pc-font-mono);
+    font-weight: 500;
+  }
+
+  :lang(zh) .brand-word,
+  :lang(zh-CN) .brand-word {
+    font-family: var(--pc-font-sans-zh);
   }
 
   .brand:hover {
     color: var(--pc-color-text-primary);
-  }
-
-  .brand-dot {
-    color: var(--pc-color-accent-default);
-    font-weight: var(--pc-weight-bold);
-    font-size: 1.4em;
-    line-height: 0;
   }
 
   .nav-links {
@@ -78,45 +110,124 @@ const { content } = Astro.props;
     justify-content: center;
   }
 
-  .nav-links a {
-    color: var(--pc-color-text-secondary);
+  .nav-item {
+    position: relative;
+  }
+
+  .nav-label {
+    font-family: var(--pc-font-sans);
     font-size: var(--pc-text-body-sm);
-    font-weight: var(--pc-weight-medium);
+    font-weight: var(--pc-weight-regular);
+    color: var(--pc-color-text-secondary);
     transition: color var(--pc-duration-fast) var(--pc-easing);
   }
 
-  .nav-links a:hover {
+  :lang(zh) .nav-label,
+  :lang(zh-CN) .nav-label {
+    font-family: var(--pc-font-sans-zh);
+  }
+
+  .nav-item:hover .nav-label {
     color: var(--pc-color-text-primary);
   }
 
   .nav-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
   }
 
   .locale-switch {
-    color: var(--pc-color-text-secondary);
-    font-size: var(--pc-text-body-sm);
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-caption);
     font-weight: var(--pc-weight-medium);
-    padding: 6px 12px;
+    letter-spacing: 0.04em;
+    color: var(--pc-color-text-muted);
+    padding: 6px 10px;
     border-radius: var(--pc-radius-sm);
-    transition: all var(--pc-duration-fast) var(--pc-easing);
+    transition: color var(--pc-duration-fast) var(--pc-easing),
+                background-color var(--pc-duration-fast) var(--pc-easing);
   }
 
   .locale-switch:hover {
     color: var(--pc-color-text-primary);
-    background: var(--pc-color-bg-subtle);
+    background: var(--pc-color-bg-elevated);
   }
 
   .header-cta {
-    padding: 8px 18px;
+    padding: 7px 14px;
     font-size: var(--pc-text-body-sm);
   }
 
-  @media (max-width: 768px) {
+  /* ===== Credibility strip ===== */
+  .credibility-strip {
+    border-top: 1px solid var(--pc-color-border-default);
+    background: color-mix(in srgb, var(--pc-color-bg-canvas) 60%, transparent);
+  }
+
+  .credibility-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 36px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .credibility-inner::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cred-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .cred-value {
+    color: var(--pc-color-text-primary);
+    font-weight: var(--pc-weight-semibold);
+  }
+
+  .cred-label {
+    color: var(--pc-color-text-muted);
+  }
+
+  .cred-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pc-color-accent-default);
+    box-shadow: 0 0 8px var(--pc-color-accent-default);
+    align-self: center;
+  }
+
+  .cred-sep {
+    width: 1px;
+    height: 12px;
+    background: var(--pc-color-border-default);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 880px) {
     .nav-links {
       display: none;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .locale-switch {
+      display: none;
+    }
+    .credibility-inner {
+      gap: 14px;
     }
   }
 </style>

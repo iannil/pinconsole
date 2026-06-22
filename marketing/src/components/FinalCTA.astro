@@ -1,5 +1,6 @@
 ---
 import type { PageContent } from '../content/types';
+import PhosphorIcon from './PhosphorIcon.astro';
 import LeadForm from './LeadForm.vue';
 
 interface Props {
@@ -8,34 +9,52 @@ interface Props {
 
 const { content } = Astro.props;
 const cta = content.finalCTA;
+const isZh = content.locale === 'zh';
+
+const trustBadges = isZh
+  ? [
+      { icon: 'clock-countdown', label: '48 小时人回复' },
+      { icon: 'lock-key', label: '数据在 maintainer 自托管 D1' },
+      { icon: 'shield-check', label: '不分享第三方 / 可申请删除' },
+    ]
+  : [
+      { icon: 'clock-countdown', label: '48h human reply' },
+      { icon: 'lock-key', label: 'Data in maintainer self-hosted D1' },
+      { icon: 'shield-check', label: 'Not shared / deletable on request' },
+    ];
 ---
 
 <section id="consult" class="section final-cta-section">
-  <div class="final-cta-bg" aria-hidden="true"></div>
   <div class="container">
-    <div class="final-cta-grid">
-      <div class="final-cta-copy reveal">
-        <span class="eyebrow">{cta.eyebrow}</span>
-        <h2 class="section-title">{cta.title}</h2>
-        <p class="section-subtitle">{cta.subtitle}</p>
+    <header class="cta-header reveal">
+      <span class="section-number">05 — {cta.eyebrow}</span>
+    </header>
 
-        <div class="trust-points">
-          <div class="trust-item">
-            <span class="trust-check">✓</span>
-            <span>{content.locale === 'zh' ? '48 小时内人工回复' : 'Human reply within 48 hours'}</span>
-          </div>
-          <div class="trust-item">
-            <span class="trust-check">✓</span>
-            <span>{content.locale === 'zh' ? '数据存于 maintainer 自托管 D1' : 'Data in maintainer self-hosted D1'}</span>
-          </div>
-          <div class="trust-item">
-            <span class="trust-check">✓</span>
-            <span>{content.locale === 'zh' ? '不分享第三方，可申请删除' : 'Not shared, deletable on request'}</span>
-          </div>
-        </div>
-      </div>
+    <!-- Band 1: manifesto title -->
+    <div class="cta-manifesto reveal">
+      <h2 class="manifesto-title">{cta.title}<span class="accent-period" aria-hidden="true">.</span></h2>
+      <p class="lead cta-subtitle">{cta.subtitle}</p>
+    </div>
 
-      <div class="final-cta-form reveal">
+    <!-- Band 2: 3 trust badges -->
+    <ol class="trust-badges reveal">
+      {trustBadges.map((badge, i) => (
+        <li class="trust-badge" style={`--reveal-delay:${i}`}>
+          <span class="badge-icon" aria-hidden="true">
+            <PhosphorIcon name={badge.icon} size={14} weight="bold" />
+          </span>
+          <span class="badge-label">{badge.label}</span>
+        </li>
+      ))}
+    </ol>
+
+    <!-- Band 3: centered form -->
+    <div class="cta-form-wrap reveal">
+      <div class="cta-form-card">
+        <header class="form-header">
+          <span class="form-label">{isZh ? '咨询表单' : 'Consultation form'}</span>
+          <span class="form-meta">— {isZh ? '必填项以 * 标注' : 'required fields marked *'}</span>
+        </header>
         <LeadForm content={cta.form} locale={content.locale} client:load />
       </div>
     </div>
@@ -44,70 +63,184 @@ const cta = content.finalCTA;
 
 <style>
   .final-cta-section {
-    position: relative;
     background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
+    position: relative;
     overflow: hidden;
+    text-align: center;
   }
 
-  .final-cta-bg {
+  /* Stronger emerald spotlight behind CTA */
+  .final-cta-section::before {
+    content: '';
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(50% 50% at 100% 0%, var(--pc-color-accent-subtle) 0%, transparent 60%),
-      radial-gradient(40% 40% at 0% 100%, var(--pc-color-bg-subtle) 0%, transparent 60%);
-    opacity: 0.5;
+    background: radial-gradient(
+      ellipse 50% 60% at 50% 30%,
+      var(--pc-spotlight-color) 0%,
+      transparent 60%
+    );
     pointer-events: none;
   }
 
-  .final-cta-grid {
+  .cta-header {
     position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: start;
+    margin-bottom: 32px;
   }
 
-  .trust-points {
+  .cta-header .section-number {
+    display: inline-block;
+  }
+
+  /* ===== Band 1: manifesto ===== */
+  .cta-manifesto {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto 40px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 32px;
-  }
-
-  .trust-item {
-    display: flex;
+    gap: 16px;
     align-items: center;
-    gap: 12px;
-    color: var(--pc-color-text-secondary);
-    font-size: var(--pc-text-body);
   }
 
-  .trust-check {
+  .manifesto-title {
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-display);
+    font-weight: 600;
+    line-height: var(--pc-line-display);
+    letter-spacing: -0.025em;
+    color: var(--pc-color-text-primary);
+    margin: 0;
+    text-align: center;
+  }
+
+  :lang(zh) .manifesto-title,
+  :lang(zh-CN) .manifesto-title {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: -0.01em;
+  }
+
+  .accent-mark {
+    color: var(--pc-color-accent-default);
+  }
+
+  .accent-period {
+    color: var(--pc-color-accent-default);
+    font-weight: 700;
+    margin-left: 2px;
+  }
+
+  .cta-subtitle {
+    max-width: 56ch;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  /* ===== Band 2: trust badges ===== */
+  .trust-badges {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 48px;
+    position: relative;
+    border-top: 1px solid var(--pc-color-border-default);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+
+  .trust-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 28px;
+    border-right: 1px solid var(--pc-color-border-default);
+    flex: 1;
+    justify-content: center;
+    min-width: 240px;
+  }
+
+  .trust-badge:last-child {
+    border-right: none;
+  }
+
+  .badge-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: var(--pc-radius-pill);
-    background: var(--pc-color-success-subtle);
-    color: var(--pc-color-success);
-    font-size: 14px;
-    font-weight: var(--pc-weight-bold);
+    width: 28px;
+    height: 28px;
+    background: var(--pc-color-accent-subtle);
+    border: 1px solid color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
+    border-radius: var(--pc-radius-sm);
+    color: var(--pc-color-accent-default);
+    flex-shrink: 0;
   }
 
-  .final-cta-form {
+  .badge-label {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-caption);
+    color: var(--pc-color-text-primary);
+    letter-spacing: 0.02em;
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  :lang(zh) .badge-label,
+  :lang(zh-CN) .badge-label {
+    font-family: var(--pc-font-sans-zh);
+  }
+
+  /* ===== Band 3: centered form ===== */
+  .cta-form-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cta-form-card {
     background: var(--pc-color-bg-surface);
-    border: 1px solid var(--pc-color-border-default);
-    border-radius: var(--pc-radius-xl);
-    padding: 32px;
+    border: 1px solid var(--pc-color-border-strong);
+    border-radius: var(--pc-radius-lg);
+    padding: 28px;
+    width: 100%;
+    max-width: 560px;
+    text-align: left;
     box-shadow: var(--pc-shadow-lg);
   }
 
+  .form-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+
+  .form-label {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pc-color-text-primary);
+    font-weight: var(--pc-weight-semibold);
+  }
+
+  .form-meta {
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* Vue form styling via :global */
   :global(.lead-form) {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
 
   :global(.lead-form-field) {
@@ -117,8 +250,11 @@ const cta = content.finalCTA;
   }
 
   :global(.lead-form-label) {
-    font-size: var(--pc-text-body-sm);
-    font-weight: var(--pc-weight-medium);
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    font-weight: var(--pc-weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--pc-color-text-primary);
   }
 
@@ -127,13 +263,14 @@ const cta = content.finalCTA;
   :global(.lead-form-select) {
     width: 100%;
     padding: 10px 14px;
-    background: var(--pc-color-bg-canvas);
+    background: var(--pc-color-bg-elevated);
     border: 1px solid var(--pc-color-border-default);
-    border-radius: var(--pc-radius-md);
+    border-radius: var(--pc-radius-sm);
     color: var(--pc-color-text-primary);
-    font-size: var(--pc-text-body);
-    font-family: inherit;
-    transition: all var(--pc-duration-fast) var(--pc-easing);
+    font-size: var(--pc-text-body-sm);
+    font-family: var(--pc-font-sans);
+    transition: border-color var(--pc-duration-fast) var(--pc-easing),
+                background-color var(--pc-duration-fast) var(--pc-easing);
   }
 
   :global(.lead-form-input:focus),
@@ -141,62 +278,72 @@ const cta = content.finalCTA;
   :global(.lead-form-select:focus) {
     outline: none;
     border-color: var(--pc-color-accent-default);
-    box-shadow: 0 0 0 3px var(--pc-color-accent-subtle);
+    background: var(--pc-color-bg-canvas);
+  }
+
+  :global(.lead-form-input::placeholder),
+  :global(.lead-form-textarea::placeholder) {
+    color: var(--pc-color-text-muted);
   }
 
   :global(.lead-form-textarea) {
-    min-height: 96px;
+    min-height: 80px;
     resize: vertical;
     font-family: inherit;
   }
 
   :global(.lead-form-submit) {
     width: 100%;
-    padding: 14px 24px;
+    padding: 12px 20px;
     background: var(--pc-color-accent-default);
     color: var(--pc-color-accent-on);
     border: none;
-    border-radius: var(--pc-radius-md);
-    font-size: var(--pc-text-body);
+    border-radius: var(--pc-radius-sm);
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-caption);
     font-weight: var(--pc-weight-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: all var(--pc-duration-base) var(--pc-easing);
-    box-shadow: var(--pc-shadow-sm);
+    transition: background-color var(--pc-duration-fast) var(--pc-easing);
   }
 
   :global(.lead-form-submit:hover:not(:disabled)) {
     background: var(--pc-color-accent-hover);
-    box-shadow: var(--pc-shadow-accent);
-    transform: translateY(-1px);
   }
 
   :global(.lead-form-submit:disabled) {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
   :global(.lead-form-privacy) {
-    font-size: var(--pc-text-caption);
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-micro);
     color: var(--pc-color-text-muted);
     line-height: 1.5;
-    margin-top: 8px;
-  }
-
-  :global(.lead-form-message) {
-    padding: 16px;
-    border-radius: var(--pc-radius-md);
-    font-size: var(--pc-text-body-sm);
+    margin-top: 2px;
     text-align: center;
   }
 
+  :global(.lead-form-message) {
+    padding: 10px 14px;
+    border-radius: var(--pc-radius-sm);
+    font-size: var(--pc-text-body-sm);
+    text-align: center;
+    font-family: var(--pc-font-sans);
+  }
+
   :global(.lead-form-message.success) {
-    background: var(--pc-color-success-subtle);
-    color: var(--pc-color-success);
+    background: var(--pc-color-accent-subtle);
+    color: var(--pc-color-accent-default);
+    border: 1px solid color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
   }
 
   :global(.lead-form-message.error) {
-    background: color-mix(in srgb, var(--pc-color-danger) 12%, var(--pc-color-bg-canvas));
+    background: var(--pc-color-danger-subtle);
     color: var(--pc-color-danger);
+    border: 1px solid color-mix(in srgb, var(--pc-color-danger) 30%, transparent);
   }
 
   :global(.lead-form-honeypot) {
@@ -207,10 +354,18 @@ const cta = content.finalCTA;
     overflow: hidden;
   }
 
-  @media (max-width: 960px) {
-    .final-cta-grid {
-      grid-template-columns: 1fr;
-      gap: 32px;
+  @media (max-width: 880px) {
+    .cta-form-card {
+      padding: 20px;
+    }
+    .trust-badge {
+      padding: 14px 20px;
+      min-width: 0;
+      border-right: none;
+      border-bottom: 1px solid var(--pc-color-border-default);
+    }
+    .trust-badge:last-child {
+      border-bottom: none;
     }
   }
 </style>

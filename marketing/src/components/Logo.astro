@@ -1,0 +1,48 @@
+---
+/**
+ * pinconsole logo mark — thumbtack (push pin) side view.
+ *
+ * 设计意图：
+ * - 圆头 + 锥尖 = 图钉（thumbtack），名字 "pin" 的直译
+ * - 单色 Teal（--pc-color-accent-default），可继承 currentColor
+ * - Calm Crafted：简洁几何，无渐变，无多余细节
+ * - 24x24 viewBox，对齐 Phosphor Icons 尺寸
+ */
+
+interface Props {
+  size?: number;
+  class?: string;
+}
+
+const { size = 28, class: className = '' } = Astro.props;
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  class={`pinconsole-logo ${className}`}
+  aria-hidden="true"
+>
+  <!-- Head: 圆盘（按压部分） -->
+  <circle cx="12" cy="6.5" r="4.5" fill="currentColor" />
+  <!-- Highlight: 上方高光（3D 暗示，柔影） -->
+  <circle cx="10.2" cy="5" r="1.4" fill="#FAF8F5" opacity="0.32" />
+  <!-- Shaft + tip: 锥形针 -->
+  <path d="M10 10.5 L14 10.5 L13 22 L11 22 Z" fill="currentColor" />
+</svg>
+
+<style>
+  .pinconsole-logo {
+    display: inline-block;
+    color: var(--pc-color-accent-default);
+    flex-shrink: 0;
+    transition: transform var(--pc-duration-base) var(--pc-easing);
+  }
+
+  a:hover .pinconsole-logo {
+    transform: rotate(-8deg);
+  }
+</style>

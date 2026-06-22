@@ -8,126 +8,246 @@ interface Props {
 
 const { content } = Astro.props;
 const f = content.features;
+const ordinal = (n: number) => (n + 1).toString().padStart(2, '0');
+
+// Split into hero features (first 3, large) + compact features (last 2, small)
+const heroFeatures = f.items.slice(0, 3);
+const compactFeatures = f.items.slice(3);
 ---
 
 <section id="features" class="section features-section">
   <div class="container">
-    <div class="section-header reveal">
-      <span class="eyebrow">{f.eyebrow}</span>
-      <h2 class="section-title">{f.title}</h2>
-      <p class="section-subtitle">{f.subtitle}</p>
-    </div>
+    <header class="section-header reveal">
+      <span class="section-number">02 — {f.eyebrow}</span>
+      <h2 class="headline">{f.title}</h2>
+      <p class="lead section-subtitle">{f.subtitle}</p>
+    </header>
 
-    <div class="features-list">
-      {f.items.map((item, i) => (
-        <article class="feature-row reveal" style={`--i:${i}`}>
+    <!-- 3 large hero features -->
+    <ol class="hero-features">
+      {heroFeatures.map((item, i) => (
+        <li class="hero-feature reveal" style={`--reveal-delay:${i % 2}`}>
           <div class="feature-copy">
-            <div class="feature-icon">
-              <PhosphorIcon name={item.icon} size={28} weight="regular" color="accent" />
+            <div class="feature-meta">
+              <span class="feature-numeral">{ordinal(i)}</span>
+              <span class="feature-divider" aria-hidden="true"></span>
+              <span class="feature-icon" aria-hidden="true">
+                <PhosphorIcon name={item.icon} size={18} weight="regular" />
+              </span>
             </div>
+
             <h3 class="feature-title">{item.title}</h3>
             <p class="feature-description">{item.description}</p>
+
             <ul class="feature-bullets">
               {item.bullets.map((b) => (
                 <li>
-                  <PhosphorIcon name="check-circle" size={16} weight="regular" color="success" />
+                  <PhosphorIcon name="check-circle" size={13} weight="bold" color="accent" />
                   <span>{b}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div class="feature-screenshot">
-            {item.screenshot ? (
-              <img
-                src={item.screenshot}
-                alt={`${item.title} — pinconsole admin`}
-                loading="lazy"
-                decoding="async"
-                width="800"
-                height="600"
-              />
-            ) : (
-              <div class="screenshot-placeholder">
-                <PhosphorIcon name="eye" size={32} weight="light" />
-                <span>screenshot</span>
+
+          <div class="feature-screenshot-col">
+            <button
+              class="feature-screenshot"
+              data-full-src={item.screenshot}
+              type="button"
+            >
+              <div class="screenshot-chrome">
+                <span class="chrome-dot" aria-hidden="true"></span>
+                <span class="chrome-title">{item.title}</span>
+                <span class="chrome-action">
+                  <PhosphorIcon name="arrows-out-cardinal" size={12} weight="bold" />
+                  <span>{content.locale === 'zh' ? '放大' : 'Enlarge'}</span>
+                </span>
               </div>
-            )}
+              {item.screenshot ? (
+                <img
+                  src={item.screenshot}
+                  alt={`${item.title} — pinconsole admin`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div class="screenshot-placeholder">
+                  <PhosphorIcon name="eye" size={28} weight="light" />
+                  <span>screenshot</span>
+                </div>
+              )}
+            </button>
           </div>
-        </article>
+        </li>
       ))}
-    </div>
+    </ol>
+
+    <!-- 2 compact features in a row -->
+    {compactFeatures.length > 0 && (
+      <ol class="compact-features">
+        {compactFeatures.map((item, i) => (
+          <li class="compact-feature reveal" style={`--reveal-delay:${i}`}>
+            <button
+              class="compact-screenshot"
+              data-full-src={item.screenshot}
+              type="button"
+            >
+              {item.screenshot ? (
+                <img
+                  src={item.screenshot}
+                  alt={`${item.title} — pinconsole admin`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div class="screenshot-placeholder">
+                  <PhosphorIcon name="eye" size={24} weight="light" />
+                </div>
+              )}
+            </button>
+            <div class="compact-copy">
+              <div class="compact-meta">
+                <span class="compact-icon" aria-hidden="true">
+                  <PhosphorIcon name={item.icon} size={14} weight="regular" />
+                </span>
+                <span class="compact-numeral">{ordinal(i + heroFeatures.length)}</span>
+              </div>
+              <h3 class="compact-title">{item.title}</h3>
+              <p class="compact-description">{item.description}</p>
+              <ul class="compact-bullets">
+                {item.bullets.map((b) => (
+                  <li key={b}>
+                    <PhosphorIcon name="check-circle" size={11} weight="bold" color="accent" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </li>
+        ))}
+      </ol>
+    )}
   </div>
 </section>
 
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="screenshot enlarged" hidden>
+  <button class="lightbox-close" type="button" aria-label="Close">
+    <PhosphorIcon name="x" size={20} weight="bold" />
+  </button>
+  <button class="lightbox-inner" type="button" aria-label="Close">
+    <img class="lightbox-img" alt="" src="" />
+  </button>
+</div>
+
 <style>
   .features-section {
-    background: var(--pc-color-bg-surface);
-    border-block: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
   }
 
   .section-header {
     max-width: 720px;
-    margin-bottom: 64px;
-  }
-
-  .features-list {
+    margin-bottom: 56px;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 20px;
   }
 
-  .feature-row {
+  /* ===== 3 large hero features ===== */
+  .hero-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-feature {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 5fr 6fr;
     gap: 48px;
     align-items: center;
     padding-block: 48px;
-    border-bottom: 1px solid var(--pc-color-border-default);
+    border-top: 1px solid var(--pc-color-border-default);
   }
 
-  .feature-row:last-child {
-    border-bottom: none;
+  .hero-feature:first-child {
+    border-top: none;
+    padding-top: 0;
   }
 
-  .feature-row:nth-child(even) {
-    direction: rtl;
+  .hero-feature:last-child {
+    padding-bottom: 56px;
   }
-  .feature-row:nth-child(even) > * {
-    direction: ltr;
+
+  .feature-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .feature-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .feature-numeral {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    letter-spacing: 0.06em;
+    color: var(--pc-color-text-muted);
+    font-weight: var(--pc-weight-medium);
+  }
+
+  .feature-divider {
+    width: 16px;
+    height: 1px;
+    background: var(--pc-color-border-strong);
   }
 
   .feature-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
+    width: 32px;
+    height: 32px;
     background: var(--pc-color-accent-subtle);
-    border-radius: var(--pc-radius-lg);
+    border: 1px solid color-mix(in srgb, var(--pc-color-accent-default) 30%, transparent);
+    border-radius: var(--pc-radius-sm);
     color: var(--pc-color-accent-default);
-    margin-bottom: 20px;
   }
 
   .feature-title {
-    font-size: var(--pc-text-section-h3);
-    font-weight: var(--pc-weight-semibold);
-    color: var(--pc-color-text-primary);
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-headline);
+    font-weight: 600;
+    line-height: var(--pc-line-headline);
     letter-spacing: -0.02em;
-    margin-bottom: 12px;
+    color: var(--pc-color-text-primary);
+    margin: 0;
+  }
+
+  :lang(zh) .feature-title,
+  :lang(zh-CN) .feature-title {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: 0;
   }
 
   .feature-description {
     color: var(--pc-color-text-secondary);
     font-size: var(--pc-text-body);
     line-height: var(--pc-line-relaxed);
-    margin-bottom: 20px;
+    margin: 0;
+    max-width: 48ch;
   }
 
   .feature-bullets {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+    margin-top: 8px;
   }
 
   .feature-bullets li {
@@ -136,51 +256,350 @@ const f = content.features;
     gap: 8px;
     font-size: var(--pc-text-body-sm);
     color: var(--pc-color-text-primary);
+    font-family: var(--pc-font-mono);
+  }
+
+  /* Large feature screenshot */
+  .feature-screenshot-col {
+    position: relative;
   }
 
   .feature-screenshot {
-    aspect-ratio: 4 / 3;
-    border-radius: var(--pc-radius-lg);
-    box-shadow: var(--pc-shadow-md);
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--pc-color-border-strong);
+    background: var(--pc-color-bg-surface);
     overflow: hidden;
-    border: 1px solid var(--pc-color-border-default);
-    background: var(--pc-color-bg-canvas);
-    transition: transform var(--pc-duration-slow) var(--pc-easing),
-                box-shadow var(--pc-duration-slow) var(--pc-easing);
+    cursor: zoom-in;
+    border-radius: var(--pc-radius-md);
+    transition: border-color var(--pc-duration-fast) var(--pc-easing);
   }
 
-  .feature-row:hover .feature-screenshot {
-    transform: translateY(-2px);
-    box-shadow: var(--pc-shadow-lg);
+  .feature-screenshot:hover {
+    border-color: var(--pc-color-accent-default);
+  }
+
+  .feature-screenshot:focus-visible {
+    outline: 2px solid var(--pc-color-accent-default);
+    outline-offset: 2px;
+  }
+
+  .screenshot-chrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--pc-color-border-default);
+    background: var(--pc-color-bg-elevated);
+  }
+
+  .chrome-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pc-color-accent-default);
+    box-shadow: 0 0 4px var(--pc-color-accent-default);
+  }
+
+  .chrome-title {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .chrome-action {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    color: var(--pc-color-text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .feature-screenshot:hover .chrome-action,
+  .feature-screenshot:focus-visible .chrome-action {
+    opacity: 1;
   }
 
   .feature-screenshot img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
+    height: auto;
     display: block;
   }
 
   .screenshot-placeholder {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 16 / 10;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     color: var(--pc-color-text-muted);
     font-size: var(--pc-text-caption);
     font-family: var(--pc-font-mono);
   }
 
-  @media (max-width: 960px) {
-    .feature-row,
-    .feature-row:nth-child(even) {
+  /* ===== 2 compact features ===== */
+  .compact-features {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding-top: 32px;
+    border-top: 1px solid var(--pc-color-border-strong);
+  }
+
+  .compact-feature {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    background: var(--pc-color-bg-surface);
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-md);
+    transition: border-color var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .compact-feature:hover {
+    border-color: var(--pc-color-border-strong);
+  }
+
+  .compact-screenshot {
+    display: block;
+    padding: 0;
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-sm);
+    overflow: hidden;
+    background: var(--pc-color-bg-elevated);
+    cursor: zoom-in;
+    transition: border-color var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .compact-screenshot:hover {
+    border-color: var(--pc-color-accent-default);
+  }
+
+  .compact-screenshot:focus-visible {
+    outline: 2px solid var(--pc-color-accent-default);
+    outline-offset: 2px;
+  }
+
+  .compact-screenshot img {
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  .compact-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .compact-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--pc-color-accent-subtle);
+    border-radius: var(--pc-radius-sm);
+    color: var(--pc-color-accent-default);
+  }
+
+  .compact-numeral {
+    font-family: var(--pc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--pc-color-text-muted);
+    font-weight: var(--pc-weight-medium);
+  }
+
+  .compact-title {
+    font-family: var(--pc-font-sans);
+    font-size: var(--pc-text-title);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--pc-color-text-primary);
+    margin: 0;
+  }
+
+  :lang(zh) .compact-title,
+  :lang(zh-CN) .compact-title {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: 0;
+  }
+
+  .compact-description {
+    color: var(--pc-color-text-secondary);
+    font-size: var(--pc-text-body-sm);
+    line-height: var(--pc-line-snug);
+    margin: 0;
+  }
+
+  .compact-bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .compact-bullets li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--pc-text-micro);
+    color: var(--pc-color-text-secondary);
+    font-family: var(--pc-font-mono);
+  }
+
+  /* ===== Lightbox ===== */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: var(--pc-z-modal);
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    cursor: zoom-out;
+  }
+
+  .lightbox[hidden] {
+    display: none;
+  }
+
+  .lightbox-inner {
+    display: block;
+    padding: 0;
+    background: transparent;
+    max-width: 95vw;
+    max-height: 90vh;
+    cursor: zoom-out;
+    overflow: hidden;
+    border: 1px solid var(--pc-color-border-strong);
+    border-radius: var(--pc-radius-md);
+  }
+
+  .lightbox-img {
+    display: block;
+    max-width: 95vw;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--pc-color-text-primary);
+    border: 1px solid var(--pc-color-border-strong);
+    border-radius: var(--pc-radius-sm);
+    cursor: pointer;
+    transition: background-color var(--pc-duration-fast) var(--pc-easing);
+  }
+
+  .lightbox-close:hover {
+    background: var(--pc-color-bg-elevated);
+  }
+
+  @media (max-width: 880px) {
+    .hero-feature {
       grid-template-columns: 1fr;
-      direction: ltr;
       gap: 24px;
+      padding-block: 36px;
+    }
+    .feature-screenshot-col {
+      order: -1;
+    }
+    .compact-features {
+      grid-template-columns: 1fr;
+    }
+    .lightbox {
+      padding: 16px;
+    }
+    .lightbox-close {
+      top: 16px;
+      right: 16px;
     }
   }
 </style>
+
+<script>
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = lightbox?.querySelector('.lightbox-img') as HTMLImageElement | null;
+  const triggers = document.querySelectorAll<HTMLElement>('[data-full-src]');
+
+  let lastFocused: HTMLElement | null = null;
+
+  function openLightbox(src: string, triggerEl: HTMLElement) {
+    if (!lightbox || !lightboxImg || !src) return;
+    lastFocused = triggerEl;
+    lightboxImg.src = src;
+    lightboxImg.alt = triggerEl.getAttribute('aria-label') || 'enlarged screenshot';
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+    lightbox.querySelector<HTMLButtonElement>('.lightbox-close')?.focus();
+  }
+
+  function closeLightbox() {
+    if (!lightbox || !lightboxImg) return;
+    lightbox.hidden = true;
+    lightboxImg.src = '';
+    document.body.style.overflow = '';
+    lastFocused?.focus();
+  }
+
+  triggers.forEach((el) => {
+    el.addEventListener('click', (e) => {
+      const src = el.dataset.fullSrc;
+      if (src) {
+        e.preventDefault();
+        openLightbox(src, el);
+      }
+    });
+  });
+
+  lightbox?.querySelector('.lightbox-close')?.addEventListener('click', closeLightbox);
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox || (e.target as HTMLElement).classList.contains('lightbox-inner')) {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox && !lightbox.hidden) {
+      closeLightbox();
+    }
+  });
+</script>

@@ -15,7 +15,6 @@ export const zh: PageContent = {
     links: [
       { label: '能力', href: '#features' },
       { label: '数据主权', href: '#data-sovereignty' },
-      { label: '自托管', href: '#self-host' },
       { label: '路线图', href: '#roadmap' },
       { label: 'FAQ', href: '#faq' },
     ],
@@ -26,44 +25,17 @@ export const zh: PageContent = {
     eyebrow: 'AGPL-3.0 · 自托管 · 数据主权',
     h1: '你的访客，\n你的数据。',
     h2:
-      '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。自托管，AGPL-3.0，数据从不出门。',
+      '年费 30-100 万的 SaaS 锁住你的数据、锁住你的功能、年年涨价。',
     cta: {
       primary: { label: '预约咨询', href: '#consult' },
-      secondary: { label: '5 分钟自部署', href: '#self-host' },
+      secondary: { label: '5 分钟自部署', href: '#data-sovereignty' },
       tertiary: { label: 'GitHub ★', href: 'https://github.com/iannil/pinconsole' },
     },
-    videoSrc: '/demo.mp4',
-    videoPoster: '/screenshots/dashboard.png',
-  },
-  problem: {
-    eyebrow: '为什么我们做了这个',
-    title: '商业客服营销 SaaS 的三个不舒服',
-    subtitle: '如果你正在用年费 30-100 万的 ToB 客服/营销平台，下面这些场景你应该都见过。',
-    items: [
-      {
-        icon: 'lock',
-        title: '数据在第三方手里',
-        description:
-          '客户行为、运营对话、录像会话——全部在 SaaS 厂商服务器。合规审查时你只能祈祷对方不泄露、不被攻破、不卖给上游。',
-      },
-      {
-        icon: 'lock-open',
-        title: '功能被锁定',
-        description:
-          '想加一个字段、改一个流程、对接一个内部系统——都要等厂商排期，加钱，加时间。你的产品节奏被别人卡住。',
-      },
-      {
-        icon: 'trending-up',
-        title: '年年涨价，迁移困难',
-        description:
-          '年费 30-100 万，每年续约涨 15%。想换？数据导不出来，团队重新培训，运营中断三个月。',
-      },
-    ],
   },
   features: {
-    eyebrow: 'v1 已交付',
-    title: '商业竞品能做的，v1 都能做',
-    subtitle: '90+ commits，65 e2e 测试全绿。下面五项是 v1 的核心能力，每一项都已经端到端验证。',
+    eyebrow: '现已交付',
+    title: '商业竞品能做的，这里都齐了',
+    subtitle: '90+ commits，65 e2e 测试全绿。下面五项核心能力，每一项都已经端到端验证，可以现在就跑在你的服务器上。',
     items: [
       {
         icon: 'eye',
@@ -123,7 +95,7 @@ export const zh: PageContent = {
     ],
   },
   dataSovereignty: {
-    eyebrow: '这是我们的全部立场',
+    eyebrow: '数据主权可验证',
     title: '为什么你的数据，真的在你手里',
     subtitle:
       '三个层面的设计决策，让"数据主权"从一句营销口号变成可验证的工程事实。',
@@ -167,13 +139,13 @@ make docker-up build-frontend build
   },
   roadmap: {
     eyebrow: '立场透明',
-    title: 'v1 完成。下一步去哪。',
+    title: '现已交付。下一步去哪。',
     subtitle:
       '我们公开承诺做什么、不做什么。立场不会因为商业压力改变——这是 OSS 替代品的意义。',
     columns: [
       {
         status: 'shipped',
-        title: '✅ 已交付 (v1)',
+        title: '现已交付',
         items: [
           '实时访客监控 (rrweb 全量)',
           '双向协同 (cursor/click/scroll/fill/navigate)',
@@ -189,7 +161,7 @@ make docker-up build-frontend build
       },
       {
         status: 'coming',
-        title: '🚧 计划中 (post-v1)',
+        title: '计划中',
         items: [
           '自定义域名 (DNS 验证 + ACME)',
           '页面编辑器 (低代码 / 拖拽)',
@@ -202,13 +174,13 @@ make docker-up build-frontend build
       },
       {
         status: 'out-of-scope',
-        title: '❌ 永远不做',
+        title: '明确不做',
         items: [
           '多租户 SaaS',
           '订阅计费',
           '注册流 / self-signup',
           '云托管服务',
-          '—— 立场不变',
+          '立场不变',
         ],
       },
     ],
@@ -239,40 +211,20 @@ make docker-up build-frontend build
           'v1 不做托管，长期立场也是不做。避免与 OSS 用户竞争。可推荐合作的部署伙伴（你自选），或协助你搭建自有部署。',
       },
       {
-        question: '怎么从 X 迁移？',
-        answer:
-          'v1 不提供自动化迁移工具——不同竞品的 Schema 差异太大。咨询可包含数据迁移评估，按场景报价。运营培训成本主要是 admin UI 学习，约 1-2 小时上手。',
-      },
-      {
         question: '500 并发不够怎么办？',
         answer:
           'v1 是单实例 hub（process-local map）。多实例需要 Redis Pub/Sub 总线，是 post-v1 切片。如果你的房间并发需求 > 500，建议咨询时说明，我们可以优先排期或定制。',
-      },
-      {
-        question: '能跑在 k8s / 内网 / 私有云吗？',
-        answer:
-          '能。docker-compose 是参考部署，k8s / 裸机 / 反代 / TLS / 备份 / 监控都由你掌控。OSS 项目不提供生产拓扑参考，但 release 单二进制 fail-secure，/healthz + /readyz 提供依赖健康检查。',
       },
       {
         question: '能不能过等保 / ISO27001？',
         answer:
           '产品层合规就绪（GDPR / bcrypt / 审计日志 / consent）。等保 / ISO27001 需结合你的部署环境评估。咨询可协助合规文档梳理、架构对照、第三方评估配合。',
       },
-      {
-        question: '支持移动端访客吗？',
-        answer:
-          '支持。rrweb 采集覆盖 mobile evergreen 浏览器。运营端 v1 仅桌面（移动运营端是 post-v1）。',
-      },
-      {
-        question: 'AGPL 和我们内部 GPL 不兼容代码怎么办？',
-        answer:
-          'case-by-case 评估。咨询可包含 license 兼容性分析。如果完全不能接受 AGPL，未来可能提供双 license 路径（目前未启用）。',
-      },
     ],
   },
   finalCTA: {
     eyebrow: '聊聊你的场景',
-    title: '让我们 48 小时内回复你',
+    title: '我们不卖订阅。我们讨论你的场景。',
     subtitle:
       '提交后数据存于 maintainer 自托管 Cloudflare D1（亚洲 region），不分享第三方。我们不会群发邮件，只在你的场景上下文回复。',
     form: {
@@ -307,7 +259,6 @@ make docker-up build-frontend build
         links: [
           { label: '能力', href: '#features' },
           { label: '数据主权', href: '#data-sovereignty' },
-          { label: '自托管', href: '#self-host' },
           { label: '路线图', href: '#roadmap' },
         ],
       },
