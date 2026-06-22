@@ -186,8 +186,19 @@ class MarketingMonitorSDK {
   /** 1l:启动 surveillance 采集器(rrweb + screenshot)。 */
   private async startCollectors(): Promise<void> {
     if (this.rrweb || this.screenshot) return; // 已启动
-    // rrweb 采集器：默认 mask 所有输入
-    this.rrweb = new RRWebCollector((e) => this.batch?.push(e));
+    // rrweb 采集器：默认 mask 所有输入(隐私基线)。
+    // 部署方显式开启 unmaskInputs 后,展示访客输入文本,但 password 始终脱敏。
+    const unmask = this.config.unmaskInputs === true;
+    this.rrweb = new RRWebCollector(
+      (e) => this.batch?.push(e),
+      unmask
+        ? {
+            maskAllInputs: false,
+            // 即使开启 unmask,password 仍强制脱敏(安全/合规底线)
+            maskInputOptions: { password: true },
+          }
+        : {},
+    );
     try {
       await this.rrweb.start();
     } catch (e) {

@@ -22,6 +22,17 @@ export interface VisitorConfig {
   showCoBrowseBanner?: boolean;
   /** 1l:consent banner 自定义文案(可覆盖默认中英文) */
   consentBannerText?: { title?: string; body?: string; accept?: string; reject?: string };
+  /**
+   * 是否在回放中展示访客输入的文本内容(默认 false = 全部脱敏为 ***)。
+   *
+   * 默认全部输入脱敏是隐私安全基线;部署方如需在运营端看到访客实际输入
+   * (监控/co-browse 场景的核心价值),可显式置 true 开启。
+   *
+   * **合规提示(GDPR/CCPA)**:开启后会采集访客在文本框中输入的内容,属于
+   * 敏感处理,部署方须确保已通过 consent 流程取得同意并在隐私政策中披露。
+   * 即使开启,password 类型输入仍始终脱敏(见 index.ts startCollectors)。
+   */
+  unmaskInputs?: boolean;
 }
 
 const DEFAULTS: VisitorConfig = {
@@ -29,6 +40,7 @@ const DEFAULTS: VisitorConfig = {
   debug: false,
   consentMode: 'opt-in',
   showCoBrowseBanner: true,
+  unmaskInputs: false,
 };
 
 // 从对象中剔除值为 undefined 的字段。
@@ -72,6 +84,7 @@ function readScriptData(): Partial<VisitorConfig> {
       ? consentMode
       : undefined,
     showCoBrowseBanner: parseBool(get('data-show-co-browse-banner')),
+    unmaskInputs: parseBool(get('data-unmask-inputs')),
   };
 }
 
