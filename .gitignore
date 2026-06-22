@@ -66,5 +66,5 @@ docker-compose.override.yml
 
 # Runtime artifacts
 .server.pid
-.server.pid
+.dev/
 server/cmd/server/embedded/

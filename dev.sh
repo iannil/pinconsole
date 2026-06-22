@@ -1,25 +1,37 @@
 #!/usr/bin/env bash
-# pinconsole 开发环境一键启动脚本。
+# pinconsole 开发环境管理脚本。
 #
 # 解决痛点:之前每次改前端代码都要 `make build-server` 重打包 embed + 重启 server。
 # 本脚本启动独立的 vite dev server(HMR),admin 通过 5173 端口开发,API/WS 代理到 8080,
 # SDK 通过 5174 端口开发并被 admin 代理。Go 改用 air 热重载,改 .go 文件自动重建。
 #
+# 服务在后台运行,PID 写入 .dev/*.pid,日志写入 .dev/*.log。
+#
 # 用法:
-#   ./dev.sh            启动全部(Go + admin + sdk)
-#   ./dev.sh --no-go    只起前端(admin + sdk),假设 Go server 已在 8080 跑
-#   ./dev.sh --no-build 跳过首次 server 二进制 build(已有 bin/pinconsole-server 时用)
+#   ./dev.sh start             启动全部(Go + admin + sdk)
+#   ./dev.sh stop              关闭全部
+#   ./dev.sh restart           重启全部
+#   ./dev.sh status            查看服务状态
+#   ./dev.sh logs [name]       跟踪日志(name: go|admin|sdk,省略则全部)
+#
+# 启动选项(仅 start / restart 有效):
+#   --no-go      只起前端(admin + sdk),假设 Go server 已在 8080 跑
+#   --no-build   跳过首次 server 二进制 build(已有 bin/pinconsole-server 时用)
 #
 # 访问:
 #   admin(开发,带 HMR):http://localhost:5173/admin/
 #   admin(8080 embed,生产模式):http://localhost:8080/admin/
 #   访客 demo:http://localhost:8080/
-#
-# Ctrl+C 一次性关闭所有子进程。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+RUN_DIR="$SCRIPT_DIR/.dev"
+mkdir -p "$RUN_DIR"
+
+# 服务定义:名称用于 pid/log 文件命名与状态展示。
+SERVICES=(go admin sdk)
 
 # ===== 颜色 =====
 if [[ -t 1 ]]; then
@@ -33,29 +45,39 @@ warn() { printf "${C_YELLOW}[warn]${C_RESET} %s\n" "$*" >&2; }
 err()  { printf "${C_RED}[err]${C_RESET} %s\n" "$*" >&2; }
 ok()   { printf "${C_GREEN}[ok]${C_RESET} %s\n" "$*"; }
 
-# ===== 参数解析 =====
-NO_GO=0
-NO_BUILD=0
-for arg in "$@"; do
-    case "$arg" in
-        --no-go)    NO_GO=1 ;;
-        --no-build) NO_BUILD=1 ;;
-        *) err "未知参数: $arg"; exit 2 ;;
-    esac
-done
+pid_file() { printf '%s/%s.pid' "$RUN_DIR" "$1"; }
+log_file() { printf '%s/%s.log' "$RUN_DIR" "$1"; }
+
+# 读取指定服务的 PID(进程存活才回显,否则清理过期 pid 文件)。
+running_pid() {
+    local name="$1" pf
+    pf="$(pid_file "$name")"
+    [[ -f "$pf" ]] || return 1
+    local pid
+    pid="$(cat "$pf" 2>/dev/null || true)"
+    [[ -n "$pid" ]] || { rm -f "$pf"; return 1; }
+    if kill -0 "$pid" 2>/dev/null; then
+        printf '%s' "$pid"
+        return 0
+    fi
+    rm -f "$pf"
+    return 1
+}
 
 # ===== 预检:.env =====
-if [[ ! -f .env ]]; then
-    err ".env 不存在,请先复制 .env.example 并按需修改"
-    exit 1
-fi
-# shellcheck disable=SC1091
-set -a; . ./.env; set +a
-: "${SERVER_PORT:?SERVER_PORT 未设置}"
-: "${PG_HOST:?PG_HOST 未设置}"
+load_env() {
+    if [[ ! -f .env ]]; then
+        err ".env 不存在,请先复制 .env.example 并按需修改"
+        exit 1
+    fi
+    # shellcheck disable=SC1091
+    set -a; . ./.env; set +a
+    : "${SERVER_PORT:?SERVER_PORT 未设置}"
+    : "${PG_HOST:?PG_HOST 未设置}"
+}
 
 # ===== 预检:docker 基础设施 =====
-if [[ "$NO_GO" -eq 0 ]] || [[ "$NO_BUILD" -eq 0 ]]; then
+ensure_docker() {
     log "检查 docker 基础设施..."
     if ! docker compose ps postgres redis minio 2>/dev/null | grep -q "Up"; then
         warn "PG/Redis/MinIO 未全部运行,启动中..."
@@ -63,54 +85,176 @@ if [[ "$NO_GO" -eq 0 ]] || [[ "$NO_BUILD" -eq 0 ]]; then
         sleep 2
     fi
     ok "docker 基础设施就绪"
-fi
-
-# ===== 子进程清理 =====
-CHILD_PIDS=()
-cleanup() {
-    printf "\n${C_YELLOW}[dev]${C_RESET} 收到中断,清理子进程...\n"
-    for pid in "${CHILD_PIDS[@]}"; do
-        if kill -0 "$pid" 2>/dev/null; then
-            kill "$pid" 2>/dev/null || true
-        fi
-    done
-    # 二次 SIGKILL 兜底
-    sleep 1
-    for pid in "${CHILD_PIDS[@]}"; do
-        kill -9 "$pid" 2>/dev/null || true
-    done
-    ok "已退出"
 }
-trap cleanup INT TERM EXIT
 
-# ===== 启动 Go server(air 热重载)=====
-if [[ "$NO_GO" -eq 0 ]]; then
-    AIR_BIN="$(go env GOPATH)/bin/air"
-    if [[ ! -x "$AIR_BIN" ]]; then
-        log "air 未安装,执行 go install github.com/air-verse/air@latest ..."
-        go install github.com/air-verse/air@latest
+# 后台启动一个服务并记录 PID。
+# 用法:spawn <name> <command...>
+spawn() {
+    local name="$1"; shift
+    if running_pid "$name" >/dev/null; then
+        warn "$name 已在运行(PID $(running_pid "$name")),跳过"
+        return 0
+    fi
+    local lf; lf="$(log_file "$name")"
+    # 开启 monitor 模式(job control),让 backgrounded job 成为独立进程组的组长,
+    # $! 即为 PGID,便于 cmd_stop 用 `kill -- -$pid` 整组 kill(air / vite 会派生子进程)。
+    # 用 monitor 模式替代 setsid:macOS 不自带 setsid。
+    set -m
+    # 注意:命令串自身已带 `cd ... && exec <bin>`,这里不能再前缀 exec
+    #(`exec cd` 非法,cd 是 builtin);让内层 bash 跑 cd 再 exec 真正的进程,PID 即被替换保留。
+    bash -c "$*" >"$lf" 2>&1 &
+    local pid=$!
+    set +m
+    echo "$pid" >"$(pid_file "$name")"
+    ok "$name 已启动(PID $pid,日志 ${lf#$SCRIPT_DIR/})"
+}
+
+# ===== start =====
+cmd_start() {
+    local no_go="$1" no_build="$2"
+
+    load_env
+    if [[ "$no_go" -eq 0 ]] || [[ "$no_build" -eq 0 ]]; then
+        ensure_docker
     fi
 
-    # air 默认产物是 bin/server-dev,首次跑前确保 cmd/server 能编译。
-    # 如果有 bin/pinconsole-server 旧产物,air 不影响它。
-    log "启动 Go server(air 热重载,http://localhost:${SERVER_PORT})..."
-    (
-        cd server
-        exec "$AIR_BIN"
-    ) &
-    CHILD_PIDS+=("$!")
-fi
+    if [[ "$no_go" -eq 0 ]]; then
+        local air_bin
+        air_bin="$(go env GOPATH)/bin/air"
+        if [[ ! -x "$air_bin" ]]; then
+            log "air 未安装,执行 go install github.com/air-verse/air@latest ..."
+            go install github.com/air-verse/air@latest
+        fi
+        log "启动 Go server(air 热重载,http://localhost:${SERVER_PORT})..."
+        spawn go "cd '$SCRIPT_DIR/server' && exec '$air_bin'"
+    else
+        warn "--no-go 已指定,跳过 Go server"
+    fi
 
-# ===== 启动 admin vite(HMR)=====
-log "启动 admin vite(HMR,http://localhost:5173/admin/)..."
-pnpm --filter @pinconsole/admin dev &
-CHILD_PIDS+=("$!")
+    log "启动 admin vite(HMR,http://localhost:5173/admin/)..."
+    spawn admin "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/admin dev"
 
-# ===== 启动 visitor-sdk vite(HMR)=====
-log "启动 visitor-sdk vite(HMR,http://localhost:5174/)..."
-pnpm --filter @pinconsole/visitor-sdk dev &
-CHILD_PIDS+=("$!")
+    log "启动 visitor-sdk vite(HMR,http://localhost:5174/)..."
+    spawn sdk "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/visitor-sdk dev"
 
-# ===== 等待子进程退出 =====
-ok "全部启动完毕。Ctrl+C 退出全部。"
-wait
+    echo
+    cmd_status
+    echo
+    ok "全部启动完毕。查看日志:./dev.sh logs   关闭:./dev.sh stop"
+}
+
+# ===== stop =====
+cmd_stop() {
+    local any=0
+    # 倒序关闭,先停依赖方。
+    for ((i=${#SERVICES[@]}-1; i>=0; i--)); do
+        local name="${SERVICES[i]}" pid
+        if pid="$(running_pid "$name")"; then
+            any=1
+            log "关闭 $name(PID $pid)..."
+            # 杀整个进程组(air / vite 会派生子进程)。
+            kill -TERM "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+        fi
+    done
+
+    if [[ "$any" -eq 0 ]]; then
+        warn "没有运行中的服务"
+        return 0
+    fi
+
+    # 等待最多 5s 优雅退出,否则 SIGKILL 兜底。
+    for _ in 1 2 3 4 5; do
+        local alive=0
+        for name in "${SERVICES[@]}"; do
+            running_pid "$name" >/dev/null && alive=1
+        done
+        [[ "$alive" -eq 0 ]] && break
+        sleep 1
+    done
+
+    for name in "${SERVICES[@]}"; do
+        local pid
+        if pid="$(running_pid "$name")"; then
+            warn "$name 未优雅退出,强制结束(PID $pid)"
+            kill -9 "-$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null || true
+        fi
+        rm -f "$(pid_file "$name")"
+    done
+    ok "已全部关闭"
+}
+
+# ===== status =====
+cmd_status() {
+    printf "${C_MAG}%-8s %-10s %-8s %s${C_RESET}\n" "服务" "状态" "PID" "日志"
+    for name in "${SERVICES[@]}"; do
+        local pid lf
+        lf="$(log_file "$name")"
+        lf="${lf#$SCRIPT_DIR/}"
+        if pid="$(running_pid "$name")"; then
+            printf "%-8s ${C_GREEN}%-10s${C_RESET} %-8s %s\n" "$name" "running" "$pid" "$lf"
+        else
+            printf "%-8s ${C_RED}%-10s${C_RESET} %-8s %s\n" "$name" "stopped" "-" "$lf"
+        fi
+    done
+}
+
+# ===== logs =====
+cmd_logs() {
+    local target="${1:-}"
+    if [[ -n "$target" ]]; then
+        local lf; lf="$(log_file "$target")"
+        [[ -f "$lf" ]] || { err "无日志文件: $lf"; exit 1; }
+        exec tail -f "$lf"
+    fi
+    # 全部:tail -f 多文件
+    local files=()
+    for name in "${SERVICES[@]}"; do
+        local lf; lf="$(log_file "$name")"
+        [[ -f "$lf" ]] && files+=("$lf")
+    done
+    [[ ${#files[@]} -gt 0 ]] || { err "暂无任何日志文件"; exit 1; }
+    exec tail -f "${files[@]}"
+}
+
+# ===== 参数解析 =====
+COMMAND="${1:-start}"
+[[ $# -gt 0 ]] && shift || true
+
+NO_GO=0
+NO_BUILD=0
+LOG_TARGET=""
+for arg in "$@"; do
+    case "$arg" in
+        --no-go)    NO_GO=1 ;;
+        --no-build) NO_BUILD=1 ;;
+        go|admin|sdk) LOG_TARGET="$arg" ;;
+        *) err "未知参数: $arg"; exit 2 ;;
+    esac
+done
+
+case "$COMMAND" in
+    start)
+        cmd_start "$NO_GO" "$NO_BUILD"
+        ;;
+    stop)
+        cmd_stop
+        ;;
+    restart)
+        cmd_stop
+        echo
+        cmd_start "$NO_GO" "$NO_BUILD"
+        ;;
+    status)
+        cmd_status
+        ;;
+    logs)
+        cmd_logs "$LOG_TARGET"
+        ;;
+    -h|--help|help)
+        sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+        ;;
+    *)
+        err "未知命令: $COMMAND(可用:start|stop|restart|status|logs)"
+        exit 2
+        ;;
+esac
