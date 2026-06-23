@@ -1,25 +1,24 @@
-name = "pinconsole-marketing"
+name = "pinconsole"
 compatibility_date = "2026-06-01"
 pages_build_output_dir = "dist"
 
 # D1 binding for leads storage.
-# Create with: wrangler d1 create pinconsole-leads
-# Then replace database_id below with the returned ID.
 [[d1_databases]]
 binding = "DB"
 database_name = "pinconsole-leads"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "17891dd6-8966-40e4-b715-d108d630a511"
 
-# Environment vars (set via dashboard or wrangler secret).
-# - LEAD_NOTIFY_EMAIL: inbox to forward submissions to
-# - LEAD_NOTIFY_WEBHOOK: optional enterprise-wechat/slack webhook
-# - TURNSTILE_SECRET: optional Cloudflare Turnstile secret for anti-spam
+# Public site vars (safe to commit).
+[vars]
+SITE_URL = "https://pinconsole.com"
+CONTACT_EMAIL = "contact@pinconsole.com"
+TURNSTILE_SITE_KEY = "0x4AAAAAADpMi0AZU7xEXtzr"
+CF_WEB_ANALYTICS_TOKEN = ""
 
-[env.production]
-name = "pinconsole-marketing"
-routes = [
-  # { pattern = "your-domain.com/*", custom_domain = true }  # bind after domain ready
-]
+# Secrets — set via `wrangler pages secret put <NAME>` (NEVER commit):
+#   RESEND_API_KEY     — Resend.com API key for outbound email
+#   LEAD_NOTIFY_EMAIL  — inbox to receive new-lead notifications
+#   TURNSTILE_SECRET   — server-side Turnstile secret (paired with TURNSTILE_SITE_KEY)
 
-[env.preview]
-name = "pinconsole-marketing-preview"
+# Custom domain `pinconsole.com` is bound via Cloudflare Pages dashboard
+# (Pages projects don't use wrangler `routes` — use dashboard → Custom domains).

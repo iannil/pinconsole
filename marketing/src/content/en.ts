@@ -4,19 +4,21 @@ export const en: PageContent = {
   locale: 'en',
   htmlLang: 'en-US',
   meta: {
-    title: 'pinconsole — Your visitors, your data.',
+    title: 'PinConsole — Your visitors, your data.',
     description:
       'Open source ToB real-time visitor monitoring + operator interaction + session replay. AGPL-3.0, self-hosted, data never leaves your infrastructure.',
-    ogTitle: 'pinconsole — Your visitors, your data.',
+    ogTitle: 'PinConsole — Your visitors, your data.',
     ogDescription:
       'Open source ToB real-time visitor monitoring + operator interaction + session replay. Self-hosted, AGPL-3.0, data never leaves.',
   },
   nav: {
     links: [
-      { label: 'Features', href: '#features' },
+      { label: 'Home', href: '#top' },
       { label: 'Data Sovereignty', href: '#data-sovereignty' },
+      { label: 'Features', href: '#features' },
       { label: 'Roadmap', href: '#roadmap' },
       { label: 'FAQ', href: '#faq' },
+      { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
     ],
     cta: 'Request consultation',
     localeSwitch: { label: '中', href: '/' },
@@ -110,7 +112,7 @@ export const en: PageContent = {
         icon: 'scale',
         title: 'AGPL-3.0 strong copyleft',
         description:
-          'Any modification to pinconsole must be open-sourced. Cloud vendors cannot turn it into SaaS — this is license-level hard protection. You get real open source, not "source available".',
+          'Any modification to PinConsole must be open-sourced. Cloud vendors cannot turn it into SaaS — this is license-level hard protection. You get real open source, not "source available".',
       },
       {
         icon: 'stack',
@@ -126,7 +128,7 @@ export const en: PageContent = {
       },
     ],
     architectureAlt:
-      'pinconsole architecture: visitor SDK → pinconsole-server → PostgreSQL/Redis/MinIO, all inside your infrastructure',
+      'PinConsole architecture: visitor SDK → pinconsole-server → PostgreSQL/Redis/MinIO, all inside your infrastructure',
   },
   selfHost: {
     eyebrow: 'Running in 5 minutes',
@@ -200,7 +202,7 @@ make docker-up build-frontend build
       {
         question: 'Is AGPL-3.0 safe for our commercial use?',
         answer:
-          'AGPL requires open-sourcing modifications when you offer the service externally. Internal company use (not exposing the service to the public) does not trigger this. Running pinconsole to serve your own visitors, without selling pinconsole itself, has zero compliance risk. Only cloud vendors trying to SaaS-ify it must open-source — that\'s exactly the license\'s protection.',
+          'AGPL requires open-sourcing modifications when you offer the service externally. Internal company use (not exposing the service to the public) does not trigger this. Running PinConsole to serve your own visitors, without selling PinConsole itself, has zero compliance risk. Only cloud vendors trying to SaaS-ify it must open-source — that\'s exactly the license\'s protection.',
       },
       {
         question: 'Solo maintainer — how long can this last?',
@@ -255,7 +257,7 @@ make docker-up build-frontend build
       privacyNote:
         'By submitting you agree we use your message for consultation reply. Data stored in maintainer self-hosted Cloudflare D1, not shared with third parties, deletable by email request.',
       successMessage: 'Received. We\'ll reply to your contact within 48 hours.',
-      errorMessage: 'Submission failed — please try again later or email contact@pinconsole.example.com.',
+      errorMessage: 'Submission failed — please try again later or email contact@pinconsole.com.',
     },
   },
   footer: {
@@ -287,6 +289,6 @@ make docker-up build-frontend build
       },
     ],
     license: 'AGPL-3.0-or-later',
-    sourceNote: '© 2026 pinconsole. Built with Calm Crafted design system.',
+    sourceNote: '© 2026 PinConsole. Built with Calm Crafted design system.',
   },
 };

@@ -4,19 +4,21 @@ export const zh: PageContent = {
   locale: 'zh',
   htmlLang: 'zh-CN',
   meta: {
-    title: 'pinconsole — 你的访客，你的数据。',
+    title: 'PinConsole — 你的访客，你的数据。',
     description:
       '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。AGPL-3.0，自托管，数据从不出门。竞品 SaaS 的开源替代。',
-    ogTitle: 'pinconsole — 你的访客，你的数据。',
+    ogTitle: 'PinConsole — 你的访客，你的数据。',
     ogDescription:
       '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。自托管，AGPL-3.0，数据从不出门。',
   },
   nav: {
     links: [
-      { label: '能力', href: '#features' },
+      { label: '首页', href: '#top' },
       { label: '数据主权', href: '#data-sovereignty' },
+      { label: '能力', href: '#features' },
       { label: '路线图', href: '#roadmap' },
       { label: 'FAQ', href: '#faq' },
+      { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
     ],
     cta: '预约咨询',
     localeSwitch: { label: 'EN', href: '/en' },
@@ -104,7 +106,7 @@ export const zh: PageContent = {
         icon: 'scale',
         title: 'AGPL-3.0 强 copyleft',
         description:
-          '任何对 pinconsole 的修改必须开源。云厂商不能拿去做 SaaS——这是 license 层的硬保护。你用的是真正的开源，不是"source available"。',
+          '任何对 PinConsole 的修改必须开源。云厂商不能拿去做 SaaS——这是 license 层的硬保护。你用的是真正的开源，不是"source available"。',
       },
       {
         icon: 'stack',
@@ -119,7 +121,7 @@ export const zh: PageContent = {
           'GDPR consent opt-in + 被遗忘权 + IP 截断；HttpOnly cookie + bcrypt；命令授权 + popup URL 白名单；WS trace_id 端到端可观测。',
       },
     ],
-    architectureAlt: 'pinconsole 架构图：访客 SDK → pinconsole-server → PostgreSQL/Redis/MinIO，全部在你的基础设施内',
+    architectureAlt: 'PinConsole 架构图：访客 SDK → pinconsole-server → PostgreSQL/Redis/MinIO，全部在你的基础设施内',
   },
   selfHost: {
     eyebrow: '5 分钟跑起来',
@@ -193,7 +195,7 @@ make docker-up build-frontend build
       {
         question: 'AGPL-3.0 我们公司商用合规吗？',
         answer:
-          'AGPL 要求"对外提供服务"时必须开源修改。公司内部使用（不对外服务）不触发。你用 pinconsole 服务你自己的访客，不对外销售 pinconsole，没有任何合规问题。云厂商拿去做 SaaS 才需要开源——这正是 license 的保护机制。',
+          'AGPL 要求"对外提供服务"时必须开源修改。公司内部使用（不对外服务）不触发。你用 PinConsole 服务你自己的访客，不对外销售 PinConsole，没有任何合规问题。云厂商拿去做 SaaS 才需要开源——这正是 license 的保护机制。',
       },
       {
         question: '单人开发，能撑多久？',
@@ -248,7 +250,7 @@ make docker-up build-frontend build
       privacyNote:
         '提交即同意我们将留言用于咨询回复。数据存于 maintainer 自托管 Cloudflare D1，不分享第三方，可邮件申请删除。',
       successMessage: '已收到。我们 48 小时内回复到你留下的联系方式。',
-      errorMessage: '提交失败，请稍后再试或直接邮件 contact@pinconsole.example.com。',
+      errorMessage: '提交失败，请稍后再试或直接邮件 contact@pinconsole.com。',
     },
   },
   footer: {
@@ -280,6 +282,6 @@ make docker-up build-frontend build
       },
     ],
     license: 'AGPL-3.0-or-later',
-    sourceNote: '© 2026 pinconsole. Built with Calm Crafted design system.',
+    sourceNote: '© 2026 PinConsole. Built with Calm Crafted design system.',
   },
 };

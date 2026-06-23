@@ -89,11 +89,7 @@ const codeLines = s.code.split('\n');
           <span class="code-window-meta">bash · 5 min</span>
         </header>
         <pre class="code-window-body"><code>{codeLines.map((line) => (
-          <span class="code-line">
-            {line.startsWith('#') || line.startsWith('//')
-              ? <span class="code-comment">{line}</span>
-              : <span class="code-text">{line || ' '}</span>}
-          </span>
+          <span class="code-line">{line.startsWith('#') || line.startsWith('//') ? <span class="code-comment">{line}</span> : <span class="code-text">{line || ' '}</span>}</span>
         ))}</code></pre>
         <footer class="code-window-footer">
           <a href={s.docsLink.href} class="docs-link" target="_blank" rel="noopener">

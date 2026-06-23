@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import type { PageContent } from '../content/types';
 
 interface Props {
@@ -19,12 +19,53 @@ const form = reactive({
 });
 
 const status = ref<'idle' | 'submitting' | 'success' | 'error'>('idle');
+const turnstileToken = ref<string>('');
+const turnstileReady = ref(false);
+const turnstileWidgetId = ref<string | null>(null);
+
+// Turnstile site key — public, browser-visible, safe to commit.
+// Replace with your own from Cloudflare dashboard → Turnstile.
+const TURNSTILE_SITE_KEY = '0x4AAAAAADpMi0AZU7xEXtzr';
 
 const isEmailOrPhone = (s: string): boolean => {
   const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phone = /^[+\d][\d\s\-()]{6,}$/;
   return email.test(s) || phone.test(s);
 };
+
+const renderTurnstile = () => {
+  if (!TURNSTILE_SITE_KEY) {
+    // No site key configured (local dev or unset) — bypass widget
+    turnstileReady.value = true;
+    return;
+  }
+  const turnstile = (window as any).turnstile;
+  if (!turnstile) return;
+  if (turnstileWidgetId.value !== null) return;
+  turnstileWidgetId.value = turnstile.render('#turnstile-container', {
+    sitekey: TURNSTILE_SITE_KEY,
+    theme: 'dark',
+    size: 'normal',
+    callback: (token: string) => { turnstileToken.value = token; },
+    'expired-callback': () => { turnstileToken.value = ''; },
+    'error-callback': () => { turnstileToken.value = ''; },
+  });
+};
+
+onMounted(() => {
+  // Wait for turnstile script to load (FinalCTA injects it via head slot)
+  if ((window as any).turnstile) {
+    renderTurnstile();
+  } else {
+    const interval = setInterval(() => {
+      if ((window as any).turnstile) {
+        clearInterval(interval);
+        renderTurnstile();
+      }
+    }, 200);
+    setTimeout(() => clearInterval(interval), 5000);
+  }
+});
 
 const onSubmit = async () => {
   if (status.value === 'submitting') return;
@@ -45,6 +86,11 @@ const onSubmit = async () => {
     return;
   }
 
+  if (TURNSTILE_SITE_KEY && !turnstileToken.value) {
+    status.value = 'error';
+    return;
+  }
+
   status.value = 'submitting';
 
   try {
@@ -58,6 +104,7 @@ const onSubmit = async () => {
         purpose: form.purpose,
         message: form.message.trim() || null,
         locale: props.locale,
+        turnstileToken: turnstileToken.value || null,
       }),
     });
 
@@ -69,6 +116,10 @@ const onSubmit = async () => {
     form.contact = '';
     form.purpose = '';
     form.message = '';
+    turnstileToken.value = '';
+    if (turnstileWidgetId.value !== null && (window as any).turnstile) {
+      (window as any).turnstile.reset(turnstileWidgetId.value);
+    }
   } catch (err) {
     console.error('lead form submit failed', err);
     status.value = 'error';
@@ -165,6 +216,9 @@ const onSubmit = async () => {
         tabindex="-1"
       />
     </div>
+
+    <!-- Cloudflare Turnstile (only renders if TURNSTILE_SITE_KEY is set) -->
+    <div id="turnstile-container" class="lead-form-turnstile" />
 
     <button
       type="submit"

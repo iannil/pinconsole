@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="spotlight" cx="50%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.08" />
+      <stop offset="60%" stop-color="#10B981" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#08090A" />
+      <stop offset="100%" stop-color="#050607" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#spotlight)" />
+
+  <!-- Top strip -->
+  <g transform="translate(80, 56)">
+    <!-- PinConsole thumbtack logo -->
+    <g transform="translate(0, 0)">
+      <circle cx="11" cy="11" r="8" fill="#10B981" />
+      <path d="M9 18 L13 18 L12.5 38 L9.5 38 Z" fill="#10B981" />
+    </g>
+    <text x="32" y="16" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="500" fill="#F7F8F8">PinConsole</text>
+    <text x="1040" y="16" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8B929A" letter-spacing="1.5">AGPL-3.0 · SELF-HOSTED · GDPR-READY</text>
+  </g>
+  <line x1="80" y1="90" x2="1120" y2="90" stroke="#1A1D1F" stroke-width="1" />
+
+  <!-- Headline -->
+  <text x="80" y="280" font-family="IBM Plex Sans, sans-serif" font-size="92" font-weight="600" fill="#F7F8F8" letter-spacing="-3">
+    <tspan x="80" y="280">Your visitors.</tspan>
+    <tspan x="80" y="380" fill="#10B981">Your data.</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="80" y="460" font-family="IBM Plex Sans, sans-serif" font-size="22" font-weight="400" fill="#B6BDC3">
+    Open source ToB visitor monitoring + co-browsing + session replay.
+  </text>
+  <text x="80" y="492" font-family="IBM Plex Sans, sans-serif" font-size="22" font-weight="400" fill="#B6BDC3">
+    Self-hosted. AGPL-3.0. Data never leaves.
+  </text>
+
+  <!-- Bottom URL -->
+  <line x1="80" y1="556" x2="1120" y2="556" stroke="#1A1D1F" stroke-width="1" />
+  <text x="80" y="586" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="500" fill="#8B929A" letter-spacing="2">PINCONSOLE.COM</text>
+  <circle cx="1098" cy="582" r="4" fill="#10B981" />
+  <text x="1018" y="586" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="500" fill="#8B929A" letter-spacing="2">V1 SHIPPED</text>
+</svg>

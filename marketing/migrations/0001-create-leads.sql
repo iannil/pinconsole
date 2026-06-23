@@ -1,9 +1,8 @@
 -- pinconsole marketing — D1 schema for leads storage
 -- D1 is SQLite-based; types follow SQLite conventions.
+-- Idempotent: safe to re-run on existing prod DB (no DROP, no data loss).
 
-DROP TABLE IF EXISTS leads;
-
-CREATE TABLE leads (
+CREATE TABLE IF NOT EXISTS leads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   company TEXT NOT NULL,
@@ -18,8 +17,8 @@ CREATE TABLE leads (
   status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'closed', 'spam'))
 );
 
-CREATE INDEX idx_leads_status ON leads(status);
-CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
 
 -- Read access patterns:
 --   SELECT * FROM leads WHERE status = 'new' ORDER BY created_at DESC;

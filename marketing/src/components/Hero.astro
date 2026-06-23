@@ -31,7 +31,7 @@ const codeLines: Array<{ kind: 'prompt' | 'comment' | 'output'; text: string }> 
     ];
 ---
 
-<section class="hero">
+<section id="top" class="hero">
   <div class="container hero-grid">
     <div class="hero-copy">
       <p class="hero-eyebrow">{hero.eyebrow}</p>
@@ -71,10 +71,7 @@ const codeLines: Array<{ kind: 'prompt' | 'comment' | 'output'; text: string }> 
           <span class="code-window-meta">bash · 5 min</span>
         </header>
         <pre class="code-window-body"><code>{codeLines.map((line) => (
-          <span class={`code-line code-${line.kind}`}>
-            {line.kind === 'prompt' && <span class="code-prompt">{prompt}</span>}
-            <span class="code-text">{line.text}</span>
-          </span>
+          <span class={`code-line code-${line.kind}`}>{line.kind === 'prompt' && <span class="code-prompt">{prompt}</span>}<span class="code-text">{line.text}</span></span>
         ))}</code></pre>
       </div>
     </div>

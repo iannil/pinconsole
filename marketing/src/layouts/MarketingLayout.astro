@@ -10,6 +10,31 @@ interface Props {
 
 const { content } = Astro.props;
 const locale = content.locale;
+const siteUrl = 'https://pinconsole.com';
+const canonicalPath = locale === 'zh' ? '/' : '/en/';
+const canonicalUrl = `${siteUrl}${canonicalPath}`;
+const ogImageUrl = `${siteUrl}/og-image.png`;
+const cfAnalyticsToken = 'PASTE_CF_WEB_ANALYTICS_TOKEN'; // overridden by env in production
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: 'PinConsole',
+      url: siteUrl,
+      logo: `${siteUrl}/favicon.svg`,
+      description: content.meta.description,
+    },
+    {
+      '@type': 'WebSite',
+      name: 'PinConsole',
+      url: siteUrl,
+      inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+      description: content.meta.description,
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -19,15 +44,38 @@ const locale = content.locale;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{content.meta.title}</title>
     <meta name="description" content={content.meta.description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
     <meta property="og:title" content={content.meta.ogTitle} />
     <meta property="og:description" content={content.meta.ogDescription} />
-    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content={locale === 'zh' ? 'zh_CN' : 'en_US'} />
+    <meta property="og:site_name" content="PinConsole" />
+
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={content.meta.ogTitle} />
+    <meta name="twitter:description" content={content.meta.ogDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
     <link rel="alternate" hreflang="zh-CN" href="/" />
     <link rel="alternate" hreflang="en-US" href="/en" />
     <link rel="alternate" hreflang="x-default" href="/" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Cloudflare Turnstile widget script (loaded on all pages; rendered only on form mount) -->
+    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" async />
+
     <slot name="head" />
   </head>
   <body>
@@ -37,6 +85,16 @@ const locale = content.locale;
       <slot />
     </main>
     <Footer content={content} />
+
+    <!-- Cloudflare Web Analytics — privacy-friendly, no cookies -->
+    {cfAnalyticsToken && cfAnalyticsToken !== 'PASTE_CF_WEB_ANALYTICS_TOKEN' && (
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${cfAnalyticsToken}"`}
+      />
+    )}
+
     <script>
       // Reveal on scroll — staggered manifesto entrance with --reveal-delay
       const reveals = document.querySelectorAll('.reveal');

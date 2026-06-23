@@ -1,6 +1,7 @@
 ---
 import type { PageContent } from '../content/types';
 import Logo from './Logo.astro';
+import PhosphorIcon from './PhosphorIcon.astro';
 
 interface Props {
   content: PageContent;
@@ -11,13 +12,13 @@ const { content } = Astro.props;
 
 <header class="site-header">
   <div class="container header-inner">
-    <a href="/" class="brand" aria-label="pinconsole">
+    <a href="/" class="brand" aria-label="PinConsole">
       <Logo size={20} />
-      <span class="brand-word">pinconsole</span>
+      <span class="brand-word">PinConsole</span>
     </a>
 
     <nav class="nav-links" aria-label="primary">
-      {content.nav.links.map((link) => (
+      {content.nav.links.filter((link) => !link.href.startsWith('http')).map((link) => (
         <a href={link.href} class="nav-item">
           <span class="nav-label">{link.label}</span>
         </a>
@@ -25,7 +26,16 @@ const { content } = Astro.props;
     </nav>
 
     <div class="nav-actions">
-      <a href={content.nav.localeSwitch.href} class="locale-switch">
+      <a
+        href="https://github.com/iannil/pinconsole"
+        class="util-chip"
+        target="_blank"
+        rel="noopener"
+        aria-label="GitHub"
+      >
+        <PhosphorIcon name="github" size={16} weight="regular" />
+      </a>
+      <a href={content.nav.localeSwitch.href} class="util-chip locale-chip" aria-label="switch language">
         {content.nav.localeSwitch.label}
       </a>
       <a href="#consult" class="btn btn-primary header-cta">{content.nav.cta}</a>
@@ -37,22 +47,18 @@ const { content } = Astro.props;
       <span class="cred-item">
         <span class="cred-dot" aria-hidden="true"></span>
         <span class="cred-value">AGPL-3.0</span>
-        <span class="cred-label">{content.locale === 'zh' ? '开源' : 'open source'}</span>
       </span>
-      <span class="cred-sep" aria-hidden="true"></span>
       <span class="cred-item">
+        <span class="cred-dot" aria-hidden="true"></span>
         <span class="cred-value">{content.locale === 'zh' ? '自托管' : 'self-hosted'}</span>
-        <span class="cred-label">{content.locale === 'zh' ? '你的基础设施' : 'your infra'}</span>
       </span>
-      <span class="cred-sep" aria-hidden="true"></span>
       <span class="cred-item">
-        <span class="cred-value">{content.locale === 'zh' ? 'GDPR-ready' : 'GDPR-ready'}</span>
-        <span class="cred-label">{content.locale === 'zh' ? '合规' : 'compliance'}</span>
+        <span class="cred-dot" aria-hidden="true"></span>
+        <span class="cred-value">GDPR-ready</span>
       </span>
-      <span class="cred-sep" aria-hidden="true"></span>
       <span class="cred-item">
-        <span class="cred-value">48h</span>
-        <span class="cred-label">{content.locale === 'zh' ? '人回复' : 'human reply'}</span>
+        <span class="cred-dot" aria-hidden="true"></span>
+        <span class="cred-value">{content.locale === 'zh' ? '48h 人回复' : '48h human reply'}</span>
       </span>
     </div>
   </div>
@@ -107,7 +113,7 @@ const { content } = Astro.props;
     align-items: center;
     gap: 28px;
     flex: 1;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .nav-item {
@@ -134,24 +140,38 @@ const { content } = Astro.props;
   .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
-  .locale-switch {
-    font-family: var(--pc-font-mono);
-    font-size: var(--pc-text-caption);
-    font-weight: var(--pc-weight-medium);
-    letter-spacing: 0.04em;
-    color: var(--pc-color-text-muted);
-    padding: 6px 10px;
+  /* Shared utility chip — used for GitHub icon + locale switch */
+  .util-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--pc-color-border-default);
     border-radius: var(--pc-radius-sm);
+    color: var(--pc-color-text-secondary);
+    background: transparent;
     transition: color var(--pc-duration-fast) var(--pc-easing),
+                border-color var(--pc-duration-fast) var(--pc-easing),
                 background-color var(--pc-duration-fast) var(--pc-easing);
   }
 
-  .locale-switch:hover {
+  .util-chip:hover {
     color: var(--pc-color-text-primary);
+    border-color: var(--pc-color-border-strong);
     background: var(--pc-color-bg-elevated);
+  }
+
+  .locale-chip {
+    font-family: var(--pc-font-mono);
+    font-size: var(--pc-text-caption);
+    font-weight: var(--pc-weight-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   .header-cta {
@@ -168,7 +188,8 @@ const { content } = Astro.props;
   .credibility-inner {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: flex-start;
+    gap: 28px;
     height: 36px;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -181,38 +202,30 @@ const { content } = Astro.props;
 
   .cred-item {
     display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
+    align-items: center;
+    gap: 8px;
     font-family: var(--pc-font-mono);
     font-size: var(--pc-text-micro);
-    color: var(--pc-color-text-muted);
+    color: var(--pc-color-text-primary);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
+    font-weight: var(--pc-weight-medium);
   }
 
-  .cred-value {
-    color: var(--pc-color-text-primary);
-    font-weight: var(--pc-weight-semibold);
-  }
-
-  .cred-label {
-    color: var(--pc-color-text-muted);
+  :lang(zh) .cred-item,
+  :lang(zh-CN) .cred-item {
+    font-family: var(--pc-font-sans-zh);
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .cred-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--pc-color-accent-default);
-    box-shadow: 0 0 8px var(--pc-color-accent-default);
-    align-self: center;
-  }
-
-  .cred-sep {
-    width: 1px;
-    height: 12px;
-    background: var(--pc-color-border-default);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--pc-color-accent-default) 60%, transparent);
     flex-shrink: 0;
   }
 
@@ -223,11 +236,14 @@ const { content } = Astro.props;
   }
 
   @media (max-width: 600px) {
-    .locale-switch {
+    .locale-chip {
       display: none;
     }
     .credibility-inner {
-      gap: 14px;
+      gap: 16px;
+    }
+    .cred-item {
+      font-size: 10px;
     }
   }
 </style>
