@@ -37,10 +37,14 @@ COPY --from=frontend-builder /app/admin/dist ./server/cmd/server/embedded/admin
 COPY --from=frontend-builder /app/visitor-sdk/dist ./server/cmd/server/embedded/sdk
 COPY landing/ ./server/cmd/server/embedded/landing
 
-# 构建 release 二进制
+# 复制 VERSION 文件（ldflags 注入用；版本号单一事实源在仓库根 VERSION）
+COPY VERSION ./VERSION
+
+# 构建 release 二进制（version 从 VERSION 文件读取）
 RUN cd server && \
+    VERSION_VAL=$(cat /app/VERSION | tr -d '[:space:]') && \
     CGO_ENABLED=0 GOOS=linux go build \
-      -ldflags="-s -w -X main.version=docker -X main.commit=${GIT_COMMIT:-unknown}" \
+      -ldflags="-s -w -X main.version=${VERSION_VAL} -X main.commit=${GIT_COMMIT:-unknown}" \
       -tags release \
       -o /out/server \
       ./cmd/server

@@ -7,6 +7,13 @@
 # 默认目标
 .DEFAULT_GOAL := help
 
+# 版本号（仓库根 VERSION 文件是单一事实源；CI/Make/Dockerfile 三处一致读取）
+VERSION     := $(shell cat VERSION 2>/dev/null | tr -d '[:space:]')
+ifeq ($(strip $(VERSION)),)
+  VERSION   := dev
+endif
+COMMIT      := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+
 # 路径变量
 SERVER_DIR  := server
 SERVER_BIN  := $(SERVER_DIR)/bin/pinconsole-server
@@ -66,8 +73,10 @@ build-frontend: ## 构建前端（admin + sdk）
 
 build-server: ## 构建 Go 单二进制（含前端 embed）
 	pnpm build:admin && pnpm build:sdk
-	cd $(SERVER_DIR) && CGO_ENABLED=0 $(GO) build -o bin/pinconsole-server -tags release ./cmd/server
-	@echo "$(C_GREEN)✓$(C_RESET) 二进制产出: $(SERVER_BIN)"
+	cd $(SERVER_DIR) && CGO_ENABLED=0 $(GO) build \
+	  -ldflags="-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)" \
+	  -o bin/pinconsole-server -tags release ./cmd/server
+	@echo "$(C_GREEN)✓$(C_RESET) 二进制产出: $(SERVER_BIN) (version=$(VERSION) commit=$(COMMIT))"
 
 build-server-dev: ## 构建 Go dev 二进制（不含前端 embed，仅 API）
 	cd $(SERVER_DIR) && $(GO) build -o bin/pinconsole-server-dev -tags dev ./cmd/server

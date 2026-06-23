@@ -1,157 +1,124 @@
 # · pinconsole
 
-> **你的访客，你的数据。** / *Your visitors, your data.*
+> **Your visitors, your data.** · [中文](./README.zh.md)
 
-开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。AGPL-3.0，自托管，数据从不出门——竞品 SaaS 的开源替代。
+Open-source ToB real-time visitor monitoring + co-browsing + session replay. AGPL-3.0, self-hosted, data never leaves your infra — the open-source alternative to SaaS visitor-engagement platforms.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-0F766E.svg)](./LICENSE)
-[![e2e: 65 passed](https://img.shields.io/badge/e2e-65%20passed%20%2F%200%20failed-15803D.svg)](./docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)
+[![e2e: 70 passed](https://img.shields.io/badge/e2e-70%20passed%20%2F%200%20failed-15803D.svg)](./docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)
 [![v1: shipped](https://img.shields.io/badge/v1-shipped-0F766E.svg)](./docs/project-status.md)
 [![i18n: zh/en](https://img.shields.io/badge/i18n-zh%20%2F%20en-0E7490.svg)](#)
 
----
+Design decision:
 
-## 这是什么
+- **Data sovereignty** — every visitor action, operator chat, and session recording lives in **your** PostgreSQL / Redis / MinIO. No third-party calls, no external dependencies.
+- **AGPL-3.0 strong copyleft** — every modification must be open-sourced. Cloud vendors cannot take this and re-sell it as SaaS. License-level hard protection.
+- **Standard stack, no lock-in** — Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO. Industry-standard at every layer. The schema is yours.
 
-**pinconsole** 是 ToB 实时访客互动平台的 AGPL-3.0 开源替代品。三个不可妥协的设计决策：
-
-- **数据主权**：所有访客行为、运营对话、录像会话存在**你自己的** PostgreSQL / Redis / MinIO。无第三方调用、无外部依赖。
-- **AGPL-3.0 强 copyleft**：任何修改必须开源，**云厂商无法拿去做 SaaS**——license 层的硬保护。
-- **标准栈，无锁定**：Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO。每一层都是行业标准，Schema 在你手里。
-
-**v1 已交付**：实时监控（rrweb 全量）+ 双向协同（cursor/click/scroll/fill/navigate）+ 录像回放 + 弹窗聊天 + 多运营 claim 锁 + 反爬虫 + GDPR + 中英双语 + Docker 一键部署。90+ commits，65 e2e 测试全绿。
-
-> **决策者？** 看官网 → [pinconsole.example.com](https://pinconsole.example.com)（占位——部署后替换为真实域名）。
-> **咨询**（评估替代 / 自托管 / 定制 / 合规）→ [官网表单](https://pinconsole.example.com#consult) 或 [GitHub Issues](https://github.com/iannil/pinconsole/issues)。
-> **工程师？** 下面是快速开始。
+**Decision-maker?** → [pinconsole.com](https://pinconsole.com)　·　**Engineer?** → [Self-host](#self-host)
 
 ---
 
-## 项目状态
+## See it
 
-**v1 主干完全收口 + 测试信心补全**(2026-06-20):1a-1z 全切片 + 1k-1z 安全/GDPR/可观测加固 + 1aa-1ai-h 测试深化与接口化重构 + e2e acceptance(65 测试全绿)+ 5 个 followup fix + admin flagged UI/prod-mode CI + marketing-monitor → pinconsole 全量重命名,共 90+ commits 交付。深度分布与下一步详见 [`docs/project-status.md`](./docs/project-status.md)。
+![Dashboard — real-time visitor monitoring](./marketing/public/screenshots/dashboard.png)
 
-| 能力 | 状态 |
-|---|---|
-| 实时访客监控(rrweb 全量采集) | ✅ |
-| 运营 Web admin(Vue3 + Element Plus + LoginView + Vue Router 守卫) | ✅ |
-| co-browsing 双向控制(cursor/click/scroll/fill/navigate) | ✅ |
-| 录像归档 + 历史回放(MinIO + rrweb-player) | ✅ |
-| 弹窗推送 + 双向即时聊天 | ✅ |
-| 认证 + 多运营 claim/release 锁(后端 claim SET NX + Lua release) | ✅ |
-| 反爬虫(rate limit + UA 黑名单 + 行为分析 + fingerprint) | ✅ |
-| 中英双语 i18n | ✅ |
-| Docker Compose 一键部署(prod profile fail-secure 凭证) | ✅ |
-| GitHub Actions CI/CD | ✅ |
-| **安全栈**(silent default fail-secure + 命令授权 + popup URL 白名单) | ✅(1k) |
-| **GDPR 合规**(consent opt-in + 被遗忘权 + IP 截断 + co-browse 横幅) | ✅(1l) |
-| **可观测性**(LifecycleTracker + event_type + WS trace_id) | ✅(1m) |
-| **测试深化与接口化重构**(api/storage handler 接口化 + happy path 覆盖) | ✅(1ai-c~1ai-h) |
+![Co-browsing + live chat](./marketing/public/screenshots/cobrowse-active.png)
 
-## 快速开始
+---
+
+## Why this exists
+
+SaaS visitor-engagement tools extract every visitor's behavior, every operator chat, every session recording into their cloud. You pay them to ship your data to their infra — they use it to train their models, lock you in, and price-up next year.
+
+pinconsole exists because that data is yours. Run it on your own infra. Audit the code yourself. Leave when you want — your data, schema, and binaries are already in your hands.
+
+---
+
+## Features
+
+- **Real-time visitor monitoring** — full rrweb capture (DOM mutations, mouse, scroll, input)
+- **Co-browsing** — bidirectional (cursor / click / scroll / form-fill / navigate); rrweb node IDs, no fragile CSS/XPath selectors
+- **Session replay** — MinIO archive + rrweb-player; selective screenshots (canvas / WebGL / cross-origin iframe only, 1 fps WebP q70) to keep size sane
+- **Live chat + popup** — operator-initiated popups + bidirectional instant chat
+- **Multi-operator claim lock** — 1:1 visitor-operator locking (Redis `SET NX` + Lua release)
+- **Anti-bot stack** — rate limit + UA blacklist + behavioral analysis + fingerprint (defense in depth)
+- **GDPR-compliant** — consent opt-in + right-to-be-forgotten + IP truncation + co-browse consent banner
+- **Bilingual i18n** — zh/en from day 1, no hard-coded strings
+
+---
+
+## Self-host
 
 ```bash
 git clone https://github.com/iannil/pinconsole
 cd pinconsole
-
-# 1. 复制环境配置
 cp .env.example .env
 
-# 2. 启动基础设施（用 Make 一键启动 + 等 PG ready）
-make docker-up
-# 或手动:docker compose up -d postgres redis minio
+# start infra + build the single release binary
+make docker-up && make build
 
-# 3. 安装前端依赖 + 构建嵌入
-make build-frontend
-# 或手动:pnpm install && pnpm --filter @pinconsole/admin build && ...
-
-# 4. 构建 + 启动 release 单二进制(server 启动时自动应用 migrations)
-make build
 ./server/bin/pinconsole-server
-# 或手动:cd server && go build -tags release -o bin/pinconsole-server ./cmd/server
-
-# 5. 访问
-# 访客落地页：http://localhost:8080/
-# 运营后台：http://localhost:8080/admin
 ```
 
-**Make 命令清单**(详见 `Makefile`):`make help` / `make docker-up` / `make test-go` / `make coverage-go` / `make check`(lint + 单测) / `make verify`(含 e2e)。
+- Visitor landing page: http://localhost:8080/
+- Admin console: http://localhost:8080/admin — default `admin@pinconsole.local` (password set via `ADMIN_PASSWORD` env var)
 
-### 老开发者迁移(2026-06-20 rename 重构遗漏修复)
-
-如果本地 PG volume 已有 `marketing_monitor` 数据库(rename 重构前的旧名),改 `.env` 后 docker compose up **不会**自动迁移。两种迁移方式:
-
-```bash
-# 方式 A:清空 volume 重来(数据丢失,仅开发环境)
-make docker-down-v
-make docker-up
-make migrate
-
-# 方式 B:保留数据,手动迁移
-docker compose exec -T postgres psql -U mm -d postgres -c "CREATE DATABASE pinconsole OWNER mm;"
-make migrate
-# 然后可选:导出 marketing_monitor 数据 → 导入 pinconsole → DROP DATABASE marketing_monitor
-```
-
-详见 [`docs/reports/completed/2026-06-20-slice-0-env-rename-fix-implementation.md`](./docs/reports/completed/2026-06-20-slice-0-env-rename-fix-implementation.md)。
-
-## 生产部署
+**Production deploy:**
 
 ```bash
-# docker compose 完整堆栈（含 server 容器）
 docker compose --profile prod up -d --build
 ```
 
-默认 admin 凭据（env var 可配）：
-- Email: `admin@pinconsole.local`
-- Password: 部署时由 `ADMIN_PASSWORD` 强制要求(prod 模式拒绝 `changeme123`)
+For full Make command list (`make help`), architecture deep-dive, and ops playbook: see [`docs/project-status.md`](./docs/project-status.md) and [`Makefile`](./Makefile).
 
-## v1 已知限制(部署前必读)
+---
 
-v1 是端到端最小可演示切片,以下限制在生产部署前需自行评估:
+## Known limits (read before production)
 
-1. **单实例 hub(不支持横向扩展)**
-   WebSocket 路由基于进程内 `map`(`server/internal/hub/hub.go`)。
-   多实例部署(2+ server behind LB)会导致 visitor 和 operator 连到不同实例后互不可见,
-   系统不会报错(静默表现坏)。如需多实例,需引入 Redis Pub/Sub 或 NATS 作为消息总线。
+1. **Single-instance hub (no horizontal scaling)**
+   WebSocket routing uses an in-process map (`server/internal/hub/hub.go`).
+   Multi-instance deployment (2+ servers behind a load balancer) silently breaks —
+   visitors and operators on different instances can't see each other. The system
+   does not error; it just appears broken. To scale horizontally, introduce Redis
+   Pub/Sub or NATS as the message bus.
 
-2. **500 WS/房间并发未压测**
-   PLAN.md 把"500 WS/房间"作为设计目标驱动单租户/hub-and-spoke/1:1 锁定决策,
-   但 v1 **未做实际压测**。默认 `PG_MAX_CONNS=25` / `REDIS_POOL_SIZE=50`
-   是经验值,实际容量需部署方自行压测验证。
+2. **500 WS/room concurrency target is not load-tested**
+   PLAN.md drives single-tenant / hub-and-spoke / 1:1 locking decisions off the
+   "500 WS/room" target, but v1 has not been load-tested. Defaults
+   (`PG_MAX_CONNS=25` / `REDIS_POOL_SIZE=50`) are empirical. Capacity for your
+   workload must be verified by the deployer.
 
-3. **OSS 项目不提供生产拓扑**
-   docker-compose `prod` profile 仅作为参考,实际生产部署(VM / k8s / 反代 / TLS /
-   备份 / 监控 / 日志聚合 / 资源限制)由部署方自行决定。本仓库只保证:
-   - dev/CI 路径可重复运行
-   - release 二进制 fail-secure(默认拒绝弱配置,详见 [`docs/audits/`](./docs/audits/))
-   - `/healthz` + `/readyz` 提供依赖健康检查
+3. **OSS project ships no production topology**
+   docker-compose `prod` profile is reference only. Real production topology
+   (VM / k8s / reverse proxy / TLS / backup / monitoring / log aggregation /
+   resource limits) is the deployer's call. This repo guarantees only:
+   - Repeatable dev / CI paths
+   - Release binary is fail-secure (rejects weak configs by default — see [`docs/audits/`](./docs/audits/))
+   - `/healthz` + `/readyz` dependency health checks
 
-4. **Trace_id 端到端传播(1z 已补全)**
-   operator browser → server → visitor SDK → server → operator 形成完整 trace_id 闭环:
-   - admin SPA 每次 REST 调用注入 `X-Trace-Id` 头(`admin/src/api/client.ts`)
-   - visitor SDK 收到 operator command 时缓存 trace_id,后续 10 个事件或 5 秒内继承(`visitor-sdk/src/transport/ws.ts`)
-   - server 端 TraceMiddleware + WS handler 还原 ctx trace_id
+4. **Trace_id end-to-end propagation (closed in slice 1z)**
+   operator browser → server → visitor SDK → server → operator forms a complete
+   trace_id loop:
+   - admin SPA injects `X-Trace-Id` on every REST call (`admin/src/api/client.ts`)
+   - visitor SDK caches trace_id on operator command, inherits across the next 10 events or 5s (`visitor-sdk/src/transport/ws.ts`)
+   - server `TraceMiddleware` + WS handler restore ctx trace_id
 
-   详见 [`docs/reports/completed/2026-06-18-slice-1z-prod-readiness-gaps.md`](./docs/reports/completed/2026-06-18-slice-1z-prod-readiness-gaps.md)。
+---
 
-## 文档导航
+## Roadmap
 
-| 文档 | 用途 |
-|---|---|
-| [`docs/project-status.md`](./docs/project-status.md) | **LLM 入口** — 当前状态、架构决策、下一步、协作提示 |
-| [`docs/README.md`](./docs/README.md) | docs/ 目录与切片报告索引 |
-| [`CLAUDE.md`](./CLAUDE.md) | Claude 工作指南 + 锁定决策 |
-| [`PLAN.md`](./PLAN.md) | v1 产品定位 + 架构 + 切片拆分（事实来源） |
+v1 is shipped. Post-v1, prioritized (see [`PLAN.md`](./PLAN.md) §8 for full backlog):
 
-## 技术栈
+1. **Custom domain** — DNS verification + Let's Encrypt ACME + Host-header routing
+2. **Tauri desktop client** — Win + Mac, reuses admin SPA
+3. **Low-code page editor** — drag-drop / JSON schema → Go template render
+4. **SSO / SAML / OIDC** — enterprise auth
 
-- **后端**：Go 1.22+ / Gin / coder/websocket / pgx / Redis / MinIO
-- **前端**：Vue 3 / TypeScript / Vite / Pinia / Element Plus / Vue I18n / rrweb
-- **SDK**：TypeScript / rrweb / MessagePack
-- **存储**：PostgreSQL 16 / Redis 7 / MinIO
-- **部署**：Docker / docker-compose / GitHub Actions
+---
 
 ## License
 
-AGPL-3.0 — 详见 [`LICENSE`](./LICENSE)
+AGPL-3.0 — see [`LICENSE`](./LICENSE).
+
+*Built with Go 1.22 · Vue 3 · PostgreSQL · Redis · MinIO · rrweb.*

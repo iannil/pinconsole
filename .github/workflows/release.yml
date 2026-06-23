@@ -1,22 +1,48 @@
 name: Release
 
-# 触发条件：推送 v*.*.* 格式的 tag
-# 注意：不使用任何不可信输入（issue/PR 内容等），所有变量来自 git ref
+# 触发：推送 v* 格式的 tag（如 v0.1、v0.1.0）
+# 版本号本身从仓库根的 VERSION 文件读取（单一事实源），
+# CI 会校验 tag 与 VERSION 是否一致——不一致直接 fail。
+#
+# 不消费任何不可信输入（issue/PR 内容等），所有变量来自 git ref + VERSION 文件。
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  build-and-release:
-    name: Build artifacts + Docker + GitHub Release
+  release:
+    name: Build + Release + Docker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # ===== 版本号一致性校验 =====
+      # VERSION 是单一事实源；tag 仅作触发器。
+      # tag 必须形如 `v<VERSION>`（如 VERSION=0.1 → tag=v0.1），否则 fail。
+      - name: Verify tag matches VERSION file
+        id: ver
+        run: |
+          set -euo pipefail
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          TAG=${GITHUB_REF#refs/tags/}
+          TAG_VERSION=${TAG#v}
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::VERSION file is empty"
+            exit 1
+          fi
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::VERSION file ('$VERSION') does not match git tag ('$TAG_VERSION). Expected tag: v$VERSION"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
 
       # ===== Go 跨平台构建 =====
       - uses: actions/setup-go@v5
@@ -51,11 +77,6 @@ jobs:
           cp -r visitor-sdk/dist/. server/cmd/server/embedded/sdk/
           cp -r landing/. server/cmd/server/embedded/landing/
 
-      - name: Extract version from tag
-        id: version
-        # GITHUB_REF 是 git ref，非不可信内容（由仓库维护者推送）
-        run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-
       - name: Build Linux amd64
         working-directory: server
         env:
@@ -64,7 +85,7 @@ jobs:
           GOARCH: amd64
         run: |
           go build \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -ldflags="-s -w -X main.version=${{ steps.ver.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
             -o ../dist/pinconsole-linux-amd64 \
             ./cmd/server
@@ -77,7 +98,7 @@ jobs:
           GOARCH: arm64
         run: |
           go build \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -ldflags="-s -w -X main.version=${{ steps.ver.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
             -o ../dist/pinconsole-linux-arm64 \
             ./cmd/server
@@ -90,12 +111,12 @@ jobs:
           GOARCH: arm64
         run: |
           go build \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X main.commit=${{ github.sha }}" \
+            -ldflags="-s -w -X main.version=${{ steps.ver.outputs.version }} -X main.commit=${{ github.sha }}" \
             -tags release \
             -o ../dist/pinconsole-darwin-arm64 \
             ./cmd/server
 
-      # ===== 压缩二进制 =====
+      # ===== 压缩 + 校验和 =====
       - name: Archive binaries
         run: |
           cd dist
@@ -109,6 +130,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.ver.outputs.version }}
           files: |
             dist/pinconsole-linux-amd64
             dist/pinconsole-linux-amd64.tar.gz
@@ -122,7 +144,7 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
 
-      # ===== Docker 镜像 =====
+      # ===== Docker 镜像（仅版本号 tag，无 latest / sha） =====
       - uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
@@ -132,24 +154,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix=sha-
+      - name: Derive image name (lowercase)
+        id: img
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "name=ghcr.io/${REPO_LOWER}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: server/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.img.outputs.name }}:${{ steps.ver.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
