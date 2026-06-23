@@ -10,12 +10,14 @@ RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY admin/package.json ./admin/
 COPY visitor-sdk/package.json ./visitor-sdk/
+COPY packages/proto/package.json ./packages/proto/
 
 RUN pnpm install --frozen-lockfile
 
-# 复制源码并构建
+# 复制源码并构建（必须包含 packages/proto — admin/visitor-sdk 都依赖 workspace:*)
 COPY admin/ ./admin/
 COPY visitor-sdk/ ./visitor-sdk/
+COPY packages/ ./packages/
 RUN pnpm --filter @pinconsole/admin build && \
     pnpm --filter @pinconsole/visitor-sdk build
 
