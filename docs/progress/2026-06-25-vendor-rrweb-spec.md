@@ -3,7 +3,7 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55), fork-2 ✅ (2026-06-26 T00:00), fork-3a ✅ (2026-06-26 T00:05)
+**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅, fork-1 ✅, fork-2 ✅ (2026-06-26 T00:00), fork-3a ✅ (T00:05), fork-4 ✅ (T00:15)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context
@@ -248,3 +248,40 @@
 **修复**：parity 测试文件的 rrweb bundle 路径更新（visitor-sdk/node_modules → .pnpm store）
 
 **下一步**：fork-3b — 上游测试转 Playwright（5 组，2-3d）+ fork-3c snapshot 写 data-rr-node-id
+
+### 2026-06-26 00:15 — fork-4 ✅ nodeID 跨端寻址完成
+
+**核心变更**（提交 `ecae238`）：
+
+1. **snapshot 写 data-rr-node-id**（`snapshot/snapshot.ts`）
+   - 在 `serializeNodeWithId` 中，ID 分配后对每个 Element 节点调用 `n.setAttribute('data-rr-node-id', String(id))`
+   - Full snapshot + incremental mutation 均覆盖
+   - 跳过 IGNORED_NODE（slimDOM 排除的节点）
+
+2. **CoBrowseOverlay nodeID 查询**（`admin/src/components/CoBrowseOverlay.vue`）
+   - `requestNodeIdAt()` 从硬编码 `return 0` 改为真实查询：
+     1. 找 replay iframe
+     2. page→iframe 坐标换算
+     3. `elementFromPoint` + 向上遍历 parentElement 找 `data-rr-node-id`
+     4. fallback 返回 0（优雅 no-op）
+
+3. **nodeMap.ts 保留**
+   - 之前是死代码（`data-rr-node-id` 不存在于 DOM）
+   - 现在 snapshot 写 attribute → NodeMap 可正常扫描到节点
+   - 访客端命令处理（`CommandHandler.click/fill_input`）走 NodeMap.get(nodeID)
+
+**nodeID 寻址全链路**：
+```
+Record: snapshot.assignID → setAttribute('data-rr-node-id')
+Visitor DOM: element has data-rr-node-id="123"
+SDK NodeMap: scans DOM → map.set(123, element)
+Admin CoBrowse: elementFromPoint → data-rr-node-id="123" → nodeID=123
+Server: forwards click {node_id: 123, x, y}
+SDK Handler: NodeMap.get(123) → element.click()
+```
+
+**验证**：
+- TSC clean，3 builds pass
+- 360 unit tests pass
+
+**下一步**：fork-3b — 上游测试转 Playwright（5 组，2-3d）
