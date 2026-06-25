@@ -4,10 +4,10 @@
 import type { EventPayload, RRWebEvent } from '@pinconsole/proto';
 import { sdkLogger } from '../logging';
 
-// rrweb v2 alpha 的 record 模块动态 import（与 PLAN.md "动态 import" 一致，
+// @pinconsole/replay-core 的 record 模块动态 import（与 PLAN.md "动态 import" 一致，
 // 同时减小 SDK 首次加载体积）。SSR 安全（typeof window 检查）。
 //
-// 注意 rrweb 2.0.0-alpha.20 起把 takeFullSnapshot 从 top-level export 改为
+// 注意 replay-core(基于 rrweb 2.0.0-alpha.20) 把 takeFullSnapshot 从 top-level export 改为
 // record.takeFullSnapshot(附加属性)。SDK 必须走 record.takeFullSnapshot,
 // 否则 alpha.20+ 下静默返回 → 周期性 full snapshot 永远不发 → snapshot cache
 // 过期(TTL 5min)→ admin subscribe 时只拿到 meta → events < 2 → player 不创建。
@@ -135,7 +135,7 @@ export class RRWebCollector {
     if (this.pack) return;
     try {
       // 动态 import：让 rrweb 体积仅在使用时计入
-      const mod = (await import('rrweb')) as unknown as RRWebPack;
+      const mod = (await import('@pinconsole/replay-core')) as unknown as RRWebPack;
       this.pack = mod;
     } catch (e) {
       sdkLogger.error('rrweb_load_failed', { error: String(e) });

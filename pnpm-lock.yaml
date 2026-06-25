@@ -215,12 +215,9 @@ importers:
       '@pinconsole/proto':
         specifier: workspace:*
         version: link:../packages/proto
-      rrweb:
-        specifier: 2.0.0-alpha.20
-        version: 2.0.0-alpha.20
-      rrweb-snapshot:
-        specifier: 2.0.0-alpha.20
-        version: 2.0.0-alpha.20
+      '@pinconsole/replay-core':
+        specifier: workspace:*
+        version: link:../packages/replay-core
     devDependencies:
       '@types/node':
         specifier: ^22.7.5
