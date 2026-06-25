@@ -194,6 +194,9 @@ importers:
       '@types/css-font-loading-module':
         specifier: ^0.0.14
         version: 0.0.14
+      rrweb:
+        specifier: 2.0.0-alpha.20
+        version: 2.0.0-alpha.20
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
