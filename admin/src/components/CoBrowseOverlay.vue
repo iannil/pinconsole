@@ -98,9 +98,32 @@ function onClick(e: MouseEvent) {
  * 1f MVP 用坐标 fallback（nodeID=0）+ 服务端按坐标点击。
  * 后续可通过 monkey-patch rrweb-player 添加 message listener 实现。
  */
-async function requestNodeIdAt(_x: number, _y: number): Promise<number> {
-  // 1f MVP：保持坐标 fallback
-  return 0;
+/**
+ * Lookup nodeID at screen coordinates from the replay iframe.
+ * Walks up from elementFromPoint to find the nearest element with data-rr-node-id.
+ */
+async function requestNodeIdAt(clientX: number, clientY: number): Promise<number> {
+  // Find the replay iframe in the DOM
+  const iframe = document.querySelector('.player-container iframe') as HTMLIFrameElement | null;
+  if (!iframe?.contentDocument) return 0;
+
+  // Convert page-relative coordinates to iframe-relative
+  const rect = iframe.getBoundingClientRect();
+  const iframeX = clientX - rect.left;
+  const iframeY = clientY - rect.top;
+
+  // Look up element under cursor in the replay iframe
+  let el = iframe.contentDocument.elementFromPoint(iframeX, iframeY);
+  while (el) {
+    const nodeIdStr = el.getAttribute('data-rr-node-id');
+    if (nodeIdStr !== null) {
+      const id = parseInt(nodeIdStr, 10);
+      if (!Number.isNaN(id)) return id;
+    }
+    el = el.parentElement;
+  }
+
+  return 0; // fallback
 }
 
 async function sendClick(nodeID: number, x: number, y: number) {

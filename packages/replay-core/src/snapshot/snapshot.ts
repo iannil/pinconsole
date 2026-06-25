@@ -1037,6 +1037,13 @@ export function serializeNodeWithId(
   // add IGNORED_NODE to mirror to track nextSiblings
   mirror.add(n, serializedNode);
 
+  // fork-4: write data-rr-node-id to DOM so NodeMap can look up nodes by ID.
+  // This enables precise element targeting in co-browse (click/fill_input)
+  // without relying on coordinate fallback.
+  if (n instanceof Element && id !== undefined && id !== IGNORED_NODE) {
+    n.setAttribute('data-rr-node-id', String(id));
+  }
+
   if (id === IGNORED_NODE) {
     return null; // slimDOM
   }
