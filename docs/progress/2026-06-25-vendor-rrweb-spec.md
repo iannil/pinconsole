@@ -3,7 +3,7 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25)
+**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context
@@ -165,3 +165,24 @@
 - 添加 rrweb 作为 devDependency（仅供测试对照）
 
 **下一步**：fork-1 — SDK record 切到 replay-core（1d 估时）
+
+### 2026-06-25 23:55 — fork-1 ✅ 完成
+
+**SDK record 切换**（提交 `4ef8c60`）：
+- `visitor-sdk/src/collectors/rrweb.ts`：`import('rrweb')` → `import('@pinconsole/replay-core')`
+- 注释更新（rrweb v2 alpha → replay-core）
+- `visitor-sdk/package.json`：`rrweb` + `rrweb-snapshot` → `@pinconsole/replay-core: workspace:*`
+
+**验证**：
+- SDK build ✅ 147 modules → 282KB（replay-core 源码内联）
+- 214 单元测试 ✅ 全绿
+- tsc --noEmit ✅ zero errors
+- 服务端日志确认 SDK 连接正常、录制逻辑正常
+- 1l E2E ✅ 4 passed, 2 skipped
+- 1c E2E ⚠️ 预存 admin UI 失败（"订阅实时"按钮找不到），与本次改动无关
+
+**依赖状态**：
+- visitor-sdk 不再依赖 `rrweb` 和 `rrweb-snapshot`
+- admin 仍依赖 `rrweb-player`（待 fork-2 删除）
+
+**下一步**：fork-2 — admin 钻穿，删 rrweb-player/Svelte（2-3d）
