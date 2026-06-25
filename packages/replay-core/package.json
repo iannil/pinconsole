@@ -1,0 +1,30 @@
+{
+  "name": "@pinconsole/replay-core",
+  "version": "0.0.1",
+  "description": "Forked rrweb replay-core (snapshot/record/replay) — pruned and enhanced for pinconsole",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@xstate/fsm": "^1.4.0",
+    "base64-arraybuffer": "^1.0.1",
+    "mitt": "^3.0.0",
+    "postcss": "^8.5.15"
+  },
+  "devDependencies": {
+    "@types/css-font-loading-module": "^0.0.14",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1",
+    "vitest": "^2.1.0"
+  }
+}

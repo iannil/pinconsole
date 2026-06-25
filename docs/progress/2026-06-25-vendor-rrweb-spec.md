@@ -34,20 +34,28 @@
 
 | 切片 | 内容 | 完成门（e2e/测试） | 仍依赖 rrweb? |
 |---|---|---|---|
-| **fork-0** | clone alpha.20 源码 → 拷入 `packages/replay-core`（snapshot/record/replay/types）→ 能编译 + parity diff 夹具就位。**纯新增文件,不动 SDK/admin**。核实 `data-rr-node-id` 假设 | parity diff 夹具绿 | 是（并存对照） |
+| **fork-0** | clone alpha.20 源码 → 拷入 `packages/replay-core`（snapshot/record/replay/types/utils/rrdom）→ import 重写 + TS/Vite 配置 → 能编译 + **双 parity 夹具**(replay + record)就位。**纯新增文件,不动 SDK/admin**。fork-0 前先 15min 核实 `data-rr-node-id` DOM attribute 假设 | **双 parity 夹具绿**（record-parity 保证录制等价,replay-parity 保证回放等价） | 是（并存对照） |
 | **fork-1** | SDK record 切到 replay-core | 1c + 1l 绿 | admin 侧仍依赖 |
-| **fork-2** | admin 回放切 replay-core + 原生 Vue 重写 player + **删 rrweb/rrweb-snapshot/rrweb-player 三依赖 + Svelte** | 1c + 1d 绿 | **否（依赖全删）** |
-| **fork-3** | 精简：砍 canvas/console/packer/plugin 管线 + 移植上游保留功能 jest 测试 | 移植 jest 全绿 + 1c/1d/1l 不回归 | 否 |
-| **fork-4** | 新能力：nodeID 跨端寻址 + 删 nodeMap + 删坐标 fallback + ②元素操作原语 | 1e/1f + 新增正负向 e2e 绿 | 否 |
+| **fork-2** | admin 回放切 replay-core + **钻穿方案**（Vue 组件直接持有 Replayer 实例,不重写 Replayer 核心）+ **删 rrweb-player + Svelte**。消解 5/7 项 hack。保留 rrweb-snapshot(admin 暂不直接依赖,但 record 用的 snapshot 包已在 replay-core 内) | 1c + 1d 绿; replay-parity 绿 | 否（rrweb-player 删;rrweb/rrweb-snapshot 作为 visitor-sdk 依赖可删但留到 fork-1 完成后一并操作） |
+| **fork-3** | 精简：文件级裁剪(砍 canvas/console/packer/plugin 目录) + 上游保留功能测试转 **Playwright**（snapshot/replayer/observer/shadow DOM/iframe/mask 共 5 组）| 转译 Playwright 测试全绿 + 1c/1d/1l 不回归 | 否 |
+| **fork-4** | 新能力：nodeID 跨端寻址 + 删 nodeMap + 删坐标 fallback + 元素操作原语 | 1e/1f + 新增正负向 e2e 绿（正向=精确点选命中,负向=陈旧 nodeID → no-op） | 否 |
 
-**顺序理由**：fork-0 纯新增零风险；fork-1/2 等价替换、每步有 e2e 兜底可回滚；**删三依赖卡在 fork-2 末**（录制+回放都切完才删，留对照到最后）；精简与新能力放在 replay-core 独占之后，雕刻空间最大。
+**顺序理由**：fork-0 纯新增零风险(但双夹具确保形态等价)；fork-1/2 等价替换、每步有双 e2e 兜底可回滚；fork-3b 写 data-rr-node-id 是 fork-4 前置但改动在 snapshot 同目录,内嵌于 fork-3 阶段可减少上下文切换。
+
+**新增切片**：
+| 切片 | 内容 | 完成门（e2e/测试） | 仍依赖 rrweb? |
+|---|---|---|---|
+| **fork-3b** | snapshot 写 `data-rr-node-id` attribute（fork-4 前置,内嵌于 fork-3 阶段,后置 fork-3 完成但 fork-4 可先于此开始） | snapshot 正负向测试 + fork-3 Playwright 不回归 | 否 |
 
 ## Acceptance（总纲级，可验证）
 
-- [ ] `packages/replay-core` 编译通过，`main` 指向 `src/index.ts`，`type: module`，含 `NOTICE`（fork 自 rrweb-io/rrweb @ alpha.20 + commit hash）+ 保留 MIT 文件头
-- [ ] fork-2 完成后 `rg "rrweb" visitor-sdk/package.json admin/package.json` 无命中（三依赖删净）；admin 无 Svelte 运行时
+- [ ] fork-0 前 15min 实验验证：在线上 demo 页面执行 `document.querySelectorAll('[data-rr-node-id]')`，确认是否存在 DOM attribute
+- [ ] fork-0 完成时双 parity（replay + record）同时绿
+- [ ] fork-1 完成时除 record-parity 绿外,另加**真浏览器三方验证**：同一页面同时触发新旧两路 record,用旧 admin 回放新数据,截图对比无视觉差异
+- [ ] fork-2 完成后 `rg "rrweb" admin/package.json` 无命中（rrweb-player 删净）；admin 无 Svelte 运行时
 - [ ] 全程既有 e2e（1c/1d/1e/1f/1l）保持绿，无回归
-- [ ] fork-3 后移植的上游 jest（snapshot/replayer/observer/shadow DOM/iframe/mask）全绿
+- [ ] fork-3 后移植的上游 Playwright 测试（snapshot/replayer/observer/shadow DOM/iframe/mask）全绿
+- [ ] fork-3b 后 snapshot 写 `data-rr-node-id` 正负向测试绿
 - [ ] fork-4 后 `nodeMap.ts` 与坐标 fallback 删除；新增正向（按 nodeID 精确点选/代填命中）+ 负向（陈旧/不存在 nodeID → 优雅 no-op 不崩）e2e 绿
 
 ## 深度目标
@@ -55,21 +63,25 @@
 按 [verification-depth.md](../standards/verification-depth.md) R2 rubric：
 
 - 🟢 verified-deep：fork-1/2/4 均要求既有或新增 Playwright e2e 覆盖真浏览器交互；fork-4 作为 cobrowse 边界类切片**必须含负向测试**（陈旧 nodeID → no-op）
-- 🟡 verified-shallow：fork-3 精简以移植 jest 单测保真为主，e2e 仅验"不回归"，不新增正向 e2e
+- 🟡 verified-shallow：fork-3 精简以移植 Playwright 测试保真为主，e2e 仅验"不回归"，不新增正向 e2e
 - 🔴 不接受：任何切片不得以 `if (!x.length) return;` 静默 pass
 
-## 验证四防线
+## 验证五防线
 
-1. **既有 e2e 当验收门**：1c/1d/1e/1f/1l 真浏览器跑录制→回放→点选→脱敏。
-2. **parity diff 夹具锁阶段一等价**：同一事件流喂旧 Replayer vs 新 replay-core Replayer，diff iframe 最终 outerHTML，删旧依赖前做、删完即弃。
-3. **移植上游 jest 锁精简保真**：覆盖简单访客页打不到的 shadow DOM/iframe/CSS/adopted stylesheet edge case。
-4. **新 nodeID 配正负向 e2e**。
+1. **双 parity 夹具锁形态等价**：
+   - *replay-parity*：同一 events 数组 → 旧 rrweb-player vs 新 replay-core Replayer → diff iframe 最终 outerHTML
+   - *record-parity*：同一 DOM 环境 → 旧 rrweb.record() vs 新 replay-core.record() → diff events 数组
+   - 删旧依赖前全量跑,删完即弃（只保留 replay-core 侧）
+2. **真浏览器三方截图对比（fork-1 专用）**：新旧 record 同时运行,旧 admin 回放新数据,截图确保视觉无差异
+3. **既有 e2e 当验收门**：1c/1d/1e/1f/1l 真浏览器跑录制→回放→点选→脱敏。
+4. **移植上游 Playwright 测试锁精简保真**：覆盖简单访客页打不到的 shadow DOM/iframe/CSS/adopted stylesheet edge case。
+5. **新 nodeID 配正负向 e2e**。
 
 ## 范围边界
 
 **本工作流做**：
-- 硬分叉 rrweb（snapshot/record/replay）TS 源码进 `packages/replay-core`
-- admin 原生 Vue 重写 player，删除 rrweb-player/Svelte
+- 硬分叉 rrweb（snapshot/record/replay/types/utils/rrdom）TS 源码进 `packages/replay-core`，单包分目录
+- admin 钻穿直持 Replayer 实例，删除 rrweb-player/Svelte（**不重写 Replayer 核心**）
 - 精简：砍 canvas/console/packer/plugin
 - 新能力：nodeID 跨端寻址 + 元素操作原语
 
@@ -81,11 +93,16 @@
 
 ## 估时（粗）
 
-- fork-0：1-2 天（拷源码 + 编译打通 + parity 夹具）
+> **以下估时为 2026-06-25 `/grill-with-docs` 修订后版本**。对比原 spec 估时：fork-0 +1.5〜2d（识别到 6 包隐式依赖+import 重写）,fork-3 +2d（测试转 Playwright）,新增 fork-3b。
+
+- fork-0：3-4 天（6 内部包源+import 重写+TS/Vite 配置+双 parity 夹具）
 - fork-1：1 天
-- fork-2：2-3 天（Vue 重写 player 是重头）
-- fork-3：2-3 天（精简 + 移植 jest）
+- fork-2：2-3 天（钻穿,不重写 Replayer 核心）
+- fork-3：4-5 天（文件级裁剪 + 5 组上游测试转 Playwright）
+- fork-3b：1-2 天（snapshot 写 data-rr-node-id,内嵌 fork-3 阶段）
 - fork-4：2-3 天（nodeID 链路 + 正负向 e2e）
+
+**累计估时：~16 天**（原 ~10 天,差异来自上游源码移植复杂度 + 测试转译 + fork-3b 独立）
 
 ## 关联
 
@@ -98,3 +115,23 @@
 - **被否决方案**：薄抽取(B)——会在 record/replay mirror 边界反复踩 id 不一致；包装层(C)——现状已证明是债务黑洞。
 - **fork-0 第一待核实项**：`nodeMap.ts` 假设 DOM 上有 `data-rr-node-id`，但 rrweb mirror 默认把 nodeID 存 JS Map 不写 DOM。高度怀疑现状点选一直走坐标 fallback、`data-rr-node-id` 路径从未命中。拷进 snapshot 源码后**第一件事核实**，这正是 fork-4 要根治的根因。
 - **架构主张核心**：fork 的正收益 = 同时拥有两端 mirror，让 nodeID 成为跨端精确指针（rrweb 回放能工作的前提就是两端共享同一 id 空间）；负债清理 = 持有 Replayer 实例后 sandbox/sizing/live/mount 四类 hack 全部消解。
+
+## Grill 访谈决策记录（2026-06-25 `/grill-with-docs`）
+
+见 [`memory/daily/2026-06-25.md`](../../memory/daily/2026-06-25.md) §vendor-rrweb grill 完整转录。
+
+| # | 决策点 | 推荐 | 选择 | 影响 |
+|---|---|---|---|---|
+| D1 | fork-2 scope | 钻穿（Vue 壳删 Svelte,不重写 Replayer 核心） | ✅ 同意 | 估时保持 2-3d |
+| D2 | 上游测试框架 | 转 Playwright（统一测试栈） | ✅ 同意 | fork-3 +2d |
+| D3 | fork-1 验证标准 | 功能等价 + 三方截图对比 | ✅ 同意 | fork-1 门提高 |
+| D4 | fork-3b 归属 | 内嵌 fork-3 阶段（非 fork-4 后） | ✅ 同意 | 新增 1-2d 切片 |
+| D5 | fork-0 基线 | 钉 alpha.20 | ✅（已定） | 不升级 |
+| D6 | parity 验证 | 双夹具（record + replay） | ✅ 同意 | fork-0 +0.5d |
+| D7 | fork-0 估时 | 从 1-2d 调整到 3-4d | ✅ 同意 | 6 包隐式依赖 + import 重写 |
+| D8 | fork-3 估时 | 从 2-3d 调整到 4-5d | ✅ 同意 | 测试转 Playwright |
+
+**风险**：
+- **R1**：`data-rr-node-id` 假设在 fork-0 启动前需 15min 实验验证。若假设成立（id 已存在），nodeMap 路径有效，fork-4 范围可缩；若不成立，fork-4 的根治方案确认正确。
+- **R2**：fork-0 源码移植含 6 内部包（snapshot/record/replay/types/utils/rrdom）+ import 重写，估时 3-4d 含余量。
+- **R3**：fork-1 的"功能等价 + 三方截图"标准高于原 spec 的"parity diff 夹具绿"，若 fork-1 遭遇格式不兼容会揭示录制端差异，届时需追加修复切片。
