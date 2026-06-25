@@ -3,7 +3,7 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55), fork-2 ✅ (2026-06-26 T00:00)
+**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55), fork-2 ✅ (2026-06-26 T00:00), fork-3a ✅ (2026-06-26 T00:05)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context
@@ -223,3 +223,28 @@
 - 全仓仅 `admin/node_modules/rrweb-player` 残留（可手动清理）
 
 **下一步**：fork-3 — 精简：文件级裁剪 + 上游测试转 Playwright（4-5d）
+
+### 2026-06-26 00:05 — fork-3a ✅ 文件级裁剪完成
+
+**删除文件**（提交 `ad3d18b`）：
+- `record/observers/canvas/{2d,canvas,canvas-manager,serialize-args,webgl}.ts` — canvas 录制观察器（5 文件）
+- `replay/canvas/{2d,webgl}.ts` — canvas 回放渲染（2 文件之外）
+- `record/workers/image-bitmap-data-url-worker.ts` — canvas-only worker（1 文件）
+
+**Stub 文件**（保持 API 兼容，不做实际工作）：
+- `replay/canvas/index.ts` → `export default function canvasMutation(): void { /* no-op */ }`
+- `replay/canvas/deserialize-args.ts` → `export function deserializeArg(): null { return null; }`
+- `record/observers/canvas/canvas-manager.ts` → noop class（freeze/unfreeze/lock/unlock/reset 全空）
+
+**理由**：pinconsole 使用独立 ScreenshotCollector（非 rrweb canvas 管线），canvas 录制/回放是死代码。
+
+**效果**：
+- ESM bundle: 423KB → 396KB (-27KB)
+- IIFE bundle: 450KB → 421KB (-28KB)
+- SDK build: 282KB → 269KB (-13KB)
+- Admin replay-core chunk: -5KB
+- 360 单元测试 + 2 parity 测试全绿
+
+**修复**：parity 测试文件的 rrweb bundle 路径更新（visitor-sdk/node_modules → .pnpm store）
+
+**下一步**：fork-3b — 上游测试转 Playwright（5 组，2-3d）+ fork-3c snapshot 写 data-rr-node-id
