@@ -3,7 +3,7 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：approved
+**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context
@@ -135,3 +135,33 @@
 - **R1**：`data-rr-node-id` 假设在 fork-0 启动前需 15min 实验验证。若假设成立（id 已存在），nodeMap 路径有效，fork-4 范围可缩；若不成立，fork-4 的根治方案确认正确。
 - **R2**：fork-0 源码移植含 6 内部包（snapshot/record/replay/types/utils/rrdom）+ import 重写，估时 3-4d 含余量。
 - **R3**：fork-1 的"功能等价 + 三方截图"标准高于原 spec 的"parity diff 夹具绿"，若 fork-1 遭遇格式不兼容会揭示录制端差异，届时需追加修复切片。
+
+---
+
+## 进展日志
+
+### 2026-06-25 23:25 — fork-0-parity ✅ 完成
+
+**fork-0 源码移植**（提交 `235aa37`）：
+- 从 rrweb alpha.20 clone 41 个 TS 源文件（snapshot / record / replay / types / utils / rrdom）到 `packages/replay-core/src/`
+- 重写所有 import 路径（npm 包名 → 相对路径）
+- 创建 package.json / tsconfig.json / vite.config.ts
+- TypeScript 编译通过（0 errors）,Vite build 成功（42 modules → 305KB ESM）
+- 包含 NOTICE (MIT attribution) 和 README
+
+**fork-0-parity 双夹具**（提交 `44bc9a5`）：
+- `e2e/tests/fork-0-replay-parity.spec.ts` ✅ 1 passed —— 同 events → 同 iframe outerHTML
+- `e2e/tests/fork-0-record-parity.spec.ts` ✅ 1 passed —— 同 DOM + 同交互 → 同 events 数组
+- 双夹具独立可跑（`SKIP_MM_WEBSERVER=1 npx playwright test fork-0-`）
+
+**R1 验证**：
+- `document.querySelectorAll('[data-rr-node-id]')` 长度 = 0 —— **rrweb Mirror 不写 DOM attribute**
+- `nodeMap.ts` 确认为死代码，co-browse 点选全量走坐标回退
+- 根治方案（snapshot 主动写 `data-rr-node-id`）是 fork-4 的正确方向
+
+**构建变更**：
+- replay-core 改为全量内联构建（无外部 import，ESM + IIFE 双格式）
+- 添加 vitest + jsdom 配置（stub，后续可升级）
+- 添加 rrweb 作为 devDependency（仅供测试对照）
+
+**下一步**：fork-1 — SDK record 切到 replay-core（1d 估时）
