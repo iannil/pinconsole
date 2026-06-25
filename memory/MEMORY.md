@@ -105,6 +105,13 @@
 - 域名：v1 仅平台域名
 - 反爬虫：rate limit + UA + 行为 + fingerprint（中等深度）
 
+### rrweb 硬分叉自维护（post-v1，2026-06-25 grill-me 共识）
+
+- **决策**：放弃 rrweb npm 依赖（alpha.20），拷上游 TS 源码进 `packages/replay-core`（单包，分 snapshot/record/replay/types）硬分叉自维护。**彻底删 Svelte 版 rrweb-player，admin 原生 Vue 重写 player** 直接持有 Replayer。
+- **理由**：回放端 90% 是和 rrweb-player 内部搏斗的 hack；同时拥有两端 mirror 后 nodeID 成跨端精确指针（根治 1f 坐标 fallback + 删 `nodeMap.ts`）；上游活跃度降、稳定版难产，放弃上游补丁代价小。
+- **节奏**：先复刻（求行为 == alpha.20）后雕刻；5 切片 fork-0~4 在 `feat/vendor-rrweb` 分支顺序推进，删三依赖卡 fork-2 末。精简砍 canvas/console/packer/plugin，保留 Shadow DOM/同源 iframe/隐私体系；packer 压缩下沉存储层 gzip。
+- **总纲 spec**：[`docs/progress/2026-06-25-vendor-rrweb-spec.md`](../docs/progress/2026-06-25-vendor-rrweb-spec.md)（11 决策 + 5 切片 + 四验证防线）。状态：spec 已批，**尚未开分支/动代码**。
+
 ### Maintainer 营销层（2026-06-22 17 轮 grill-me 共识）
 
 详见 [`docs/progress/2026-06-22-landing-readme-design.md`](../docs/progress/2026-06-22-landing-readme-design.md)。索引：
