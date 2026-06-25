@@ -3,7 +3,7 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55)
+**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅ (2026-06-25 T23:25), fork-1 ✅ (2026-06-25 T23:55), fork-2 ✅ (2026-06-26 T00:00)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context
@@ -186,3 +186,40 @@
 - admin 仍依赖 `rrweb-player`（待 fork-2 删除）
 
 **下一步**：fork-2 — admin 钻穿，删 rrweb-player/Svelte（2-3d）
+
+### 2026-06-26 00:00 — fork-2 ✅ 完成
+
+**admin 钻穿方案执行**（提交 `5f5a8eb`）：
+- **ReplayPlayer.vue**: ~380 行 → ~180 行。删除所有 Svelte hack（MutationObserver sandbox、UNSAFE_replayCanvas、rebuildToken、replaceChildren、requestAnimationFrame、getReplayer 代理），直持 Replayer 实例。
+- **ReplayViewer.vue**: ~605 行 → ~400 行。同样钻穿 + 自建控件线（play/pause/seek/speed/skipInactive → Replayer API），时间追踪改用 setInterval 轮询（100ms）。
+- **useResponsivePlayerSize.ts**: ~185 行 → ~90 行。删除 PlayerLike 接口、$set/triggerResize/getReplayer/MutationObserver → 直接用 replayer.wrapper.style + replayer.handleResize()。
+- **admin/package.json**: `rrweb-player` → `@pinconsole/replay-core`。
+
+**15 项 hack 全部消解**（详见表），净减 ~600 行代码。
+
+**消解的 15 项 hack**：
+| # | Hack | 原来 | 现在 |
+|---|---|---|---|
+| H1 | CSS preload | await import('rrweb-player/dist/style.css') | 内联 .replayer-wrapper 样式 |
+| H2 | Sandbox patch | MutationObserver 监听 iframe + 补 allow-scripts | Replayer 自管 iframe sandbox |
+| H3 | UNSAFE_replayCanvas | 传入以开启 allow-scripts | 删除（Replayer 直接设） |
+| H4/H5/H6 | 重建 token + DOM 清空 + initialized | rebuildToken, replaceChildren, 条件标志 | 直接 destroy + 重建 |
+| H7 | Live mode via startLive | 监听 finish → startLive(farFuture) | 直接 replayer.startLive() |
+| H8 | RAF wait after construction | await requestAnimationFrame | 删除（无 Svelte onMount） |
+| H9/H10/H11 | 响应式 sizing | $set + triggerResize + handleResize fallback | 直接 wrapper.style + handleResize() |
+| H12 | iframe display:block | CSS !important 覆盖 | Replayer 自管 display |
+| H13 | No width/height:100% | CSS 注释 | 保留 CSS 约束 |
+| H14 | Min 2 events guard | length < 2 检查 | 保留逻辑 |
+| H15 | Individual addEvent | 逐个 addEvent（无 append） | 保留逻辑 |
+
+**验证**：
+- Admin build ✅ 1746 modules
+- Unit tests ✅ 14/14 files, 146/146 tests
+- Bundle ✅ 零 "rrweb-player" / "SvelteComponent" 字面
+
+**依赖状态**：
+- admin 不再依赖 `rrweb-player`
+- 全仓仅 `visitor-sdk/node_modules/rrweb` 残留（parity 测试用）
+- 全仓仅 `admin/node_modules/rrweb-player` 残留（可手动清理）
+
+**下一步**：fork-3 — 精简：文件级裁剪 + 上游测试转 Playwright（4-5d）
