@@ -41,12 +41,12 @@ importers:
       '@pinconsole/proto':
         specifier: workspace:*
         version: link:../packages/proto
+      '@pinconsole/replay-core':
+        specifier: workspace:*
+        version: link:../packages/replay-core
       pinia:
         specifier: ^2.2.4
         version: 2.3.1(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3))
-      rrweb-player:
-        specifier: 2.0.0-alpha.20
-        version: 2.0.0-alpha.20
       vue:
         specifier: ^3.5.12
         version: 3.5.38(typescript@5.9.3)
@@ -2008,12 +2008,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@rrweb/packer@2.0.1':
-    resolution: {integrity: sha512-2U8RkVe+ZK3gTtmKjJKjoh6QL1Q6wIlt3sBTJeCPERLr9e0JIimNrZ1+bog1L30CTVP3ULuDf5Ba7RZO+QNcHg==}
-
-  '@rrweb/replay@2.0.1':
-    resolution: {integrity: sha512-UrZONirb8o4t0urg1aJ8aMSWhNHvJ3a2usuVbPJIm/edyFbwTvvY9sg/rrXccyXOntFhhp73R5nCretODRZcCw==}
-
   '@rrweb/types@2.0.1':
     resolution: {integrity: sha512-x8cNaKFxdvS0/5IfKOj1xG8Htnw1fUwqoPqgP61bOaWqZL6t9UtRPpO9ZlMB2z+FiTxg9zlFFL+Da4ZpFuhoiA==}
 
@@ -2054,9 +2048,6 @@ packages:
 
   '@speed-highlight/core@1.2.17':
     resolution: {integrity: sha512-Z92FwKpCtfaW1V0jTU/fh3QzYEZN8wDwrzRIBoADCJfn4mJCNcJN/XegifX7BDrQ8/h9Xh/JnbyMchL0FqXrkg==}
-
-  '@tsconfig/svelte@1.0.13':
-    resolution: {integrity: sha512-5lYJP45Xllo4yE/RUBccBT32eBlRDbqN8r1/MIvQbKxW3aFqaYPCNgm8D5V20X4ShHcwvYWNlKg3liDh1MlBoA==}
 
   '@types/conventional-commits-parser@5.0.2':
     resolution: {integrity: sha512-BgT2szDXnVypgpNxOK8aL5SGjUdaQbC++WZNjF1Qge3Og2+zhHj+RWhmehLhYyvQwqAmvezruVfOf8+3m74W+g==}
@@ -2984,9 +2975,6 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
-
-  fflate@0.4.8:
-    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
 
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
@@ -4139,9 +4127,6 @@ packages:
   rrweb-cssom@0.8.0:
     resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
 
-  rrweb-player@2.0.0-alpha.20:
-    resolution: {integrity: sha512-3ZCv1ksUxuIOn3Vn/eWrwWs9Xy+4KVjISD+q26ZLfisZ3hZ0CPgYG3iC22pmmycIeMS2svOfvf7gPh7jExwpUA==}
-
   rrweb-snapshot@2.0.0-alpha.20:
     resolution: {integrity: sha512-YTNf9YVeaGRo/jxY3FKBge2c/Ojd/KTHmuWloUSB+oyPXuY73ZeeG873qMMmhIpqEn7hn7aBF1eWEQmP7wjf8A==}
 
@@ -4150,9 +4135,6 @@ packages:
 
   rrweb@2.0.0-alpha.20:
     resolution: {integrity: sha512-CZKDlm+j1VA50Ko3gnMbpvguCAleljsTNXPnVk9aeNP8o6T6kolRbISHyDZpqZ4G+bdDLlQOignPP3jEsXs8Gg==}
-
-  rrweb@2.0.1:
-    resolution: {integrity: sha512-MQYzOtI7aZft9ffDMT6rmRSAj6hO4W6T7iA4eB9Mtcuiv3M7DbnnxDMrcPW0sQXepgYN46YhfSKe75d/mlUHrQ==}
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -6434,16 +6416,6 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.62.0':
     optional: true
 
-  '@rrweb/packer@2.0.1':
-    dependencies:
-      '@rrweb/types': 2.0.1
-      fflate: 0.4.8
-
-  '@rrweb/replay@2.0.1':
-    dependencies:
-      '@rrweb/types': 2.0.1
-      rrweb: 2.0.1
-
   '@rrweb/types@2.0.1': {}
 
   '@rrweb/utils@2.0.1': {}
@@ -6488,8 +6460,6 @@ snapshots:
   '@sindresorhus/merge-streams@4.0.0': {}
 
   '@speed-highlight/core@1.2.17': {}
-
-  '@tsconfig/svelte@1.0.13': {}
 
   '@types/conventional-commits-parser@5.0.2':
     dependencies:
@@ -7753,8 +7723,6 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
-
-  fflate@0.4.8: {}
 
   figures@6.1.0:
     dependencies:
@@ -9172,12 +9140,6 @@ snapshots:
 
   rrweb-cssom@0.8.0: {}
 
-  rrweb-player@2.0.0-alpha.20:
-    dependencies:
-      '@rrweb/packer': 2.0.1
-      '@rrweb/replay': 2.0.1
-      '@tsconfig/svelte': 1.0.13
-
   rrweb-snapshot@2.0.0-alpha.20:
     dependencies:
       postcss: 8.5.15
@@ -9196,17 +9158,6 @@ snapshots:
       mitt: 3.0.1
       rrdom: 2.0.1
       rrweb-snapshot: 2.0.0-alpha.20
-
-  rrweb@2.0.1:
-    dependencies:
-      '@rrweb/types': 2.0.1
-      '@rrweb/utils': 2.0.1
-      '@types/css-font-loading-module': 0.0.7
-      '@xstate/fsm': 1.6.5
-      base64-arraybuffer: 1.0.2
-      mitt: 3.0.1
-      rrdom: 2.0.1
-      rrweb-snapshot: 2.0.1
 
   run-applescript@7.1.0: {}
 
