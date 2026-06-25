@@ -379,12 +379,28 @@ describe('ReplayViewer.vue', () => {
     w.unmount();
   });
 
-  it('loadInitial 返回 events 触发 player 初始化(mock rrweb-player)', async () => {
-    vi.doMock('rrweb-player', () => ({
-      default: class {
-        constructor(opts: any) {
-          (opts.target as HTMLElement).appendChild(document.createElement('div'));
+  it('loadInitial 返回 events 触发 player 初始化(mock replay-core)', async () => {
+    vi.doMock('@pinconsole/replay-core', () => ({
+      Replayer: class {
+        wrapper = document.createElement('div');
+        iframe = document.createElement('iframe');
+        config = {};
+        constructor(events: any[], config: any) {
+          this.config = config;
+          (config.root as HTMLElement).appendChild(this.wrapper);
+          this.wrapper.appendChild(this.iframe);
         }
+        on = vi.fn();
+        destroy = vi.fn();
+        getMetaData = () => ({ totalTime: 10000, startTime: 0, endTime: 10000 });
+        getCurrentTime = () => 0;
+        play = vi.fn();
+        pause = vi.fn();
+        goto = vi.fn();
+        setConfig = vi.fn();
+        handleResize = vi.fn();
+        startLive = vi.fn();
+        addEvent = vi.fn();
       },
     }));
 
