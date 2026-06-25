@@ -21,7 +21,7 @@ const __dirname = dirname(__filename);
 // 加载 bundle 内容
 // ============================================================
 const rrwebBundle = readFileSync(
-  resolve(__dirname, '../../visitor-sdk/node_modules/rrweb/dist/rrweb.js'),
+  resolve(__dirname, '../../node_modules/.pnpm/rrweb@2.0.0-alpha.20/node_modules/rrweb/dist/rrweb.js'),
   'utf-8',
 );
 

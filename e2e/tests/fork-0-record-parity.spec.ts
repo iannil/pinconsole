@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const rrwebBundle = readFileSync(
-  resolve(__dirname, '../../visitor-sdk/node_modules/rrweb/dist/rrweb.js'),
+  resolve(__dirname, '../../node_modules/.pnpm/rrweb@2.0.0-alpha.20/node_modules/rrweb/dist/rrweb.js'),
   'utf-8',
 );
 const replayCoreBundle = readFileSync(
