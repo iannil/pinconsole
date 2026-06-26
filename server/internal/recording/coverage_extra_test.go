@@ -136,6 +136,73 @@ func TestSnapshotCache_Get_NonExistingReturnsNil(t *testing.T) {
 	}
 }
 
+// TestMetaKey_Format 验证 MetaKey 的 key 格式。
+func TestMetaKey_Format(t *testing.T) {
+	id := uuid.New()
+	got := MetaKey(id)
+	want := "meta:session:" + id.String()
+	if got != want {
+		t.Errorf("MetaKey: got %q, want %q", got, want)
+	}
+}
+
+// TestSnapshotCache_SetMetaGetMetaDeleteMeta 验证 Meta Set→Get→Delete round-trip(需 Redis)。
+func TestSnapshotCache_SetMetaGetMetaDeleteMeta(t *testing.T) {
+	rdb := helperRedisStore(t)
+	defer rdb.Close()
+
+	cache := NewSnapshotCache(rdb)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	sessionID := uuid.New()
+	defer cache.DeleteMeta(ctx, sessionID)
+
+	data := []byte(`{"type":4,"timestamp":1000,"data":{"width":1024,"height":768}}`)
+	if err := cache.SetMeta(ctx, sessionID, data); err != nil {
+		t.Fatalf("SetMeta: %v", err)
+	}
+
+	got, err := cache.GetMeta(ctx, sessionID)
+	if err != nil {
+		t.Fatalf("GetMeta: %v", err)
+	}
+	if string(got) != string(data) {
+		t.Errorf("GetMeta: got %q, want %q", got, data)
+	}
+
+	if err := cache.DeleteMeta(ctx, sessionID); err != nil {
+		t.Fatalf("DeleteMeta: %v", err)
+	}
+
+	// GetMeta after DeleteMeta 应返回 nil
+	gotNil, err := cache.GetMeta(ctx, sessionID)
+	if err != nil {
+		t.Errorf("GetMeta after DeleteMeta: %v", err)
+	}
+	if gotNil != nil {
+		t.Errorf("GetMeta after DeleteMeta: got %v, want nil", gotNil)
+	}
+}
+
+// TestSnapshotCache_GetMeta_NonExistingReturnsNil 验证不存在 meta 返回 nil(无 error)。
+func TestSnapshotCache_GetMeta_NonExistingReturnsNil(t *testing.T) {
+	rdb := helperRedisStore(t)
+	defer rdb.Close()
+
+	cache := NewSnapshotCache(rdb)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	got, err := cache.GetMeta(ctx, uuid.New())
+	if err != nil {
+		t.Errorf("GetMeta non-existing: %v", err)
+	}
+	if got != nil {
+		t.Errorf("GetMeta non-existing: got %v, want nil", got)
+	}
+}
+
 // TestNewSnapshotCache 验证 NewSnapshotCache 返回非 nil。
 func TestNewSnapshotCache(t *testing.T) {
 	cache := NewSnapshotCache(&storage.Redis{})
