@@ -242,6 +242,39 @@ func TestWS_OperatorWS_WiresAuthentication(t *testing.T) {
 	}
 }
 
+// TestWS_AuthenticateOperatorWS_InvalidUserID_Returns401 —
+// Redis session 中存储了非 UUID 值 → 401 invalid_user_id。
+func TestWS_AuthenticateOperatorWS_InvalidUserID_Returns401(t *testing.T) {
+	rdb := helperRedisIfAvailable(t)
+	defer rdb.Close()
+
+	ctx := context.Background()
+	sessionID := "test-ws-auth-bad-uid"
+	defer func() { _, _ = rdb.Del(ctx, sessionRedisKey(sessionID)).Result() }()
+	// 用 go-redis Set 存非 UUID 字符串（不经过 storage.Redis.Set 包装）
+	if err := rdb.Set(ctx, sessionRedisKey(sessionID), "not-a-uuid", 5*time.Minute).Err(); err != nil {
+		t.Fatalf("seed bad session: %v", err)
+	}
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/ws/operator", nil)
+	c.Request.AddCookie(&http.Cookie{Name: sessionCookieName, Value: sessionID})
+
+	stores := &storage.Redis{Client: rdb}
+	_, ok := authenticateOperatorWS(c, stores, false)
+	if ok {
+		t.Errorf("ok=true want false (invalid user_id should reject)")
+	}
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status=%d want 401 (invalid_user_id)", w.Code)
+	}
+	if !contains(w.Body.String(), "invalid_user_id") {
+		t.Errorf("body should contain invalid_user_id, got: %s", w.Body.String())
+	}
+}
+
 // TestOperatorWS_NoCookie_Returns401_Behavioral — 1ae 升级 T0-1h-2 行为级:
 // 真调 operatorWS handler(不是 authenticateOperatorWS 函数本身),
 // 断言无 cookie 时整个 handler 返回 401 + 不进入 websocket.Accept。

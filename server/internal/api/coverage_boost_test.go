@@ -30,6 +30,30 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// TestTruncate_Bounds 验证 truncate 的正常/截断/边界 3 路径。
+func TestTruncate_Bounds(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		max      int
+		want     string
+	}{
+		{"under max returns full", "hello", 10, "hello"},
+		{"exact max returns full", "hello", 5, "hello"},
+		{"over max truncates", "hello world", 5, "hello"},
+		{"empty string", "", 5, ""},
+		{"unicode truncation", "你好世界", 2, "你好"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncate(tt.input, tt.max)
+			if got != tt.want {
+				t.Errorf("truncate(%q, %d) = %q, want %q", tt.input, tt.max, got, tt.want)
+			}
+		})
+	}
+}
+
 // === 静态资源 handler ===
 
 // TestNewStaticHandler_DevMode 验证 dev 模式 newStaticHandler 不读 embedded。
