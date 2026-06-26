@@ -295,6 +295,26 @@ describe('visitors store', () => {
       expect(evs[0]!.data).toEqual({ i: 0 });
       expect(evs[499]!.data).toEqual({ i: 499 });
     });
+
+    it('trims events beyond cap (cap=5000, 5002 pushed, first 2 trimmed)', () => {
+      const store = useVisitorsStore();
+      store.applyPresence(basePresence({ sessionId: 's1' }));
+
+      // 推 5002 个事件
+      for (let i = 0; i < 5002; i++) {
+        store.appendEvent(
+          's1',
+          envelope(i, { type: 2, timestamp: i, data: { i } }),
+        );
+      }
+
+      const evs = store.events.get('s1')!;
+      expect(evs).toHaveLength(5000);
+      // 最早的事件(i=0,1)被裁切
+      expect(evs[0]!.data).toEqual({ i: 2 });
+      // 最晚的事件保留
+      expect(evs[4999]!.data).toEqual({ i: 5001 });
+    });
   });
 
   describe('clear', () => {

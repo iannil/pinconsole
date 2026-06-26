@@ -8,6 +8,7 @@
 // - 退出按钮用 text-link 风(代替红色,降威胁感)
 // - 保留 __mm_cobrowse_banner__ ID + onExit callback
 import { t } from './i18n';
+import { getCachedWidgetConfig } from '../widget-config';
 
 const BANNER_ID = '__mm_cobrowse_banner__';
 
@@ -22,8 +23,13 @@ const EYE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" 
 export function showCoBrowseBanner(opts: CoBrowseBannerOptions): void {
   removeCoBrowseBanner();
 
-  const operatorLabel = opts.operatorName ?? t('cobrowse_operator_label');
-  const hintText = t('cobrowse_assist_hint').replace('{name}', operatorLabel);
+  // 读取 widgetConfig 文案,fallback 到 i18n 硬编码
+  const cached = getCachedWidgetConfig();
+  const cfg = cached.cobrowse_banner;
+  const operatorLabel = opts.operatorName ?? cfg?.operator_label ?? t('cobrowse_operator_label');
+  const hintText = cfg?.assist_hint ?? t('cobrowse_assist_hint');
+  const hintWithName = hintText.replace('{name}', operatorLabel);
+  const exitLabel = cfg?.exit_label ?? t('cobrowse_exit');
 
   const banner = document.createElement('div');
   banner.id = BANNER_ID;
@@ -60,7 +66,7 @@ export function showCoBrowseBanner(opts: CoBrowseBannerOptions): void {
   iconWrap.innerHTML = EYE_SVG;
 
   const text = document.createElement('span');
-  text.textContent = hintText;
+  text.textContent = hintWithName;
 
   label.appendChild(iconWrap);
   label.appendChild(text);
@@ -68,7 +74,7 @@ export function showCoBrowseBanner(opts: CoBrowseBannerOptions): void {
 
   // === 右侧退出按钮(text-link 风,非红色) ===
   const exitBtn = document.createElement('button');
-  exitBtn.textContent = t('cobrowse_exit');
+  exitBtn.textContent = exitLabel;
   exitBtn.setAttribute('data-pinconsole', 'cobrowse-exit');
   exitBtn.style.cssText = [
     'padding: 4px 12px',

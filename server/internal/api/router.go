@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/iannil/pinconsole/internal/antiscrape"
 	"github.com/iannil/pinconsole/internal/hub"
 	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/pages"
 	"github.com/iannil/pinconsole/internal/recording"
 	"github.com/iannil/pinconsole/internal/storage"
 )
@@ -47,6 +49,8 @@ type Options struct {
 	BannedUAs       []string
 	// 1o P1-5:TrustedProxies 列表(nil/empty = 不信任任何反代)
 	TrustedProxies []string
+	// pe-1: 页面编辑器 SSR 渲染器
+	PagesRenderer *pages.Renderer
 }
 
 // NewRouterWithOpts 注册全部路由并返回 gin.Engine。
@@ -108,6 +112,13 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	widgetCfgH := NewWidgetConfigHandler(opts.Stores, opts.Logger)
 	widgetCfgH.RegisterPublic(r)
 
+	// pe-1：Page 编辑器（公开 SSR + form 提交）
+	var pageH *PageHandler
+	if opts.PagesRenderer != nil {
+		pageH = NewPageHandler(opts.Stores, opts.PagesRenderer, opts.Logger)
+		pageH.RegisterPublic(r)
+	}
+
 	// 1l：隐私合规 consent 端点(公开,SDK 用)
 	privacyH := NewPrivacyHandler(opts.Stores, opts.Logger)
 	privacyH.RegisterPublic(r)
@@ -155,6 +166,11 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 
 		// pe-1:Widget 配置编辑(admin only)
 		widgetCfgH.RegisterProtected(protected)
+
+		// pe-1:Page 编辑器 CRUD(admin only)
+		if opts.PagesRenderer != nil {
+			pageH.RegisterProtected(protected)
+		}
 	}
 
 	// 静态资源（landing / sdk / admin）
@@ -228,7 +244,7 @@ func newStaticHandler(embedded fs.FS, release bool) *staticHandler {
 func (h *staticHandler) Register(r *gin.Engine) {
 	if !h.release {
 		r.GET("/", h.devHint("/", "访客落地页（dev 由 Vite playground 提供）"))
-		r.GET("/sdk.js", h.devHint("/sdk.js", "http://localhost:5174/sdk.js"))
+		r.GET("/sdk.js", h.devSDK)
 		return
 	}
 
@@ -309,4 +325,23 @@ func (h *staticHandler) devHint(path, msg string) gin.HandlerFunc {
 			"trace_id": logging.TraceID(c.Request.Context()),
 		})
 	}
+}
+
+// devSDK 为 dev 模式提供 SDK 脚本（从构建产物读取）。
+func (h *staticHandler) devSDK(c *gin.Context) {
+	wd, _ := os.Getwd()
+	slog.Warn("devSDK: trying to read sdk.js", "wd", wd, "path", "../visitor-sdk/dist/sdk.js")
+	sdkBytes, err := os.ReadFile("../visitor-sdk/dist/sdk.js")
+	if err != nil {
+		slog.Warn("devSDK: first attempt failed", "err", err)
+		sdkBytes, err = os.ReadFile("../../visitor-sdk/dist/sdk.js")
+		if err != nil {
+			slog.Warn("devSDK: second attempt failed", "err", err)
+			h.devHint("/sdk.js", "请先运行 pnpm build:sdk")(c)
+			return
+		}
+	}
+	slog.Warn("devSDK: success", "size", len(sdkBytes))
+	c.Header("Cache-Control", "public, max-age=60")
+	c.Data(http.StatusOK, "application/javascript; charset=utf-8", sdkBytes)
 }

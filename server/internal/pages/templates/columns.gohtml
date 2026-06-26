@@ -1,0 +1,13 @@
+{{define "columns"}}
+<section class="section section-columns" style="background:{{.Props.background}}">
+  <div class="container">
+    <div class="row" style="gap:{{.Props.gap}}px">
+      {{range .Props.columns}}
+      <div class="col" style="flex:{{.width}}">
+        {{.rendered}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+</section>
+{{end}}

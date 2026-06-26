@@ -1,0 +1,9 @@
+{{define "hero"}}
+<section class="section section-hero" style="background:{{.Props.background}};color:{{.Props.text_color}}">
+  <div class="container">
+    <h1>{{.Props.title}}</h1>
+    {{if .Props.subtitle}}<p>{{.Props.subtitle}}</p>{{end}}
+    {{if and .Props.cta_label .Props.cta_url}}<a href="{{.Props.cta_url}}" class="btn btn-primary">{{.Props.cta_label}}</a>{{end}}
+  </div>
+</section>
+{{end}}

@@ -3,7 +3,7 @@
 // 来源:docs/design-system.md §3 (App Shell)
 // active 态:RouterLink router-link-active 类 + accent 下划线
 import { useI18n } from 'vue-i18n';
-import { PhMonitor, PhPlayCircle, PhShieldCheck, PhPencilSimple } from '@phosphor-icons/vue';
+import { PhMonitor, PhPlayCircle, PhShieldCheck, PhPencilSimple, PhFile } from '@phosphor-icons/vue';
 
 const { t } = useI18n();
 
@@ -20,6 +20,7 @@ const items: NavItem[] = [
   { to: '/replay', labelKey: 'nav.replay', Icon: PhPlayCircle },
   { to: '/privacy', labelKey: 'nav.privacy', Icon: PhShieldCheck },
   { to: '/widgets', labelKey: 'nav.widgets', Icon: PhPencilSimple },
+  { to: '/pages', labelKey: 'nav.pages', Icon: PhFile },
 ];
 </script>
 

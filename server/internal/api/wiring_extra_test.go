@@ -9,6 +9,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -94,7 +95,7 @@ func Test1o_Behavioral_PerSubCancelPattern(t *testing.T) {
 
 	subs := make([]context.CancelFunc, N)
 	var wg sync.WaitGroup
-	goroutineDone := make([]bool, N)
+	goroutineDone := make([]atomic.Bool, N)
 
 	for i := 0; i < N; i++ {
 		subCtx, subCancel := context.WithCancel(parentCtx)
@@ -103,7 +104,7 @@ func Test1o_Behavioral_PerSubCancelPattern(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			<-subCtx.Done()
-			goroutineDone[idx] = true
+			goroutineDone[idx].Store(true)
 		}(i)
 	}
 
@@ -115,14 +116,14 @@ func Test1o_Behavioral_PerSubCancelPattern(t *testing.T) {
 
 	// 等一下,验证只有 goroutine 2 退出
 	time.Sleep(20 * time.Millisecond)
-	if !goroutineDone[2] {
+	if !goroutineDone[2].Load() {
 		t.Errorf("subCtx[2] cancel 后 goroutine 2 应退出 — per-sub cancel 失效")
 	}
-	for i, done := range goroutineDone {
+		for i := range goroutineDone {
 		if i == 2 {
 			continue
 		}
-		if done {
+		if goroutineDone[i].Load() {
 			t.Errorf("goroutine %d 不应被 cancel 影响 — per-sub cancel 误伤其他 sub", i)
 		}
 	}
@@ -130,8 +131,8 @@ func Test1o_Behavioral_PerSubCancelPattern(t *testing.T) {
 	// parent cancel 应让剩余 goroutine 退出
 	parentCancel()
 	wg.Wait()
-	for i, done := range goroutineDone {
-		if !done {
+	for i := range goroutineDone {
+		if !goroutineDone[i].Load() {
 			t.Errorf("parent cancel 后 goroutine %d 应退出 — parent 没传播到 child", i)
 		}
 	}

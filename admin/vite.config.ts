@@ -30,7 +30,8 @@ export default defineConfig({
       '/api': 'http://localhost:7080',
       '/healthz': 'http://localhost:7080',
       '/readyz': 'http://localhost:7080',
-      '/sdk.js': 'http://localhost:7074',
+      '/sdk.js': 'http://localhost:7080',
+      '/p': 'http://localhost:7080',
       // /ws/* 必须 enable ws 代理,否则 admin 用 location.host 推断 WS endpoint
       // 会去连 ws://localhost:7073/ws/operator(vite dev server),连接失败一直
       // 卡在 CONNECTING 状态,Dashboard 看不到实时事件。
@@ -66,10 +67,10 @@ export default defineConfig({
         'src/env.d.ts',
       ],
       thresholds: {
-        lines: 60,
-        functions: 50,
-        branches: 50,
-        statements: 60,
+        lines: 75,
+        functions: 70,
+        branches: 70,
+        statements: 75,
       },
     },
   },

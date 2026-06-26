@@ -126,8 +126,10 @@ function initPlayer() {
 
     // 状态变化跟踪
     replayer.on('state-change', (e: unknown) => {
-      const payload = (e as { payload?: string })?.payload;
-      isPlaying.value = payload === 'playing';
+      const evt = e as { player?: { value: string } };
+      if (evt.player) {
+        isPlaying.value = evt.player.value === 'playing';
+      }
     });
 
     // 时间轮询（Replayer 不推送连续时间事件）
@@ -169,7 +171,8 @@ function onScrub(e: Event) {
   const target = e.target as HTMLInputElement;
   const newTime = Number(target.value);
   currentTimeMs.value = newTime;
-  replayer.goto(newTime);
+  replayer.play(newTime);
+  replayer.pause();
 }
 
 function setSpeed(s: number) {

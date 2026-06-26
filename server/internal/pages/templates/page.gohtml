@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Schema.Meta.Title}}</title>
+{{if .Schema.Meta.Description}}<meta name="description" content="{{.Schema.Meta.Description}}">{{end}}
+{{if .Schema.Meta.OgImage}}<meta property="og:image" content="{{.Schema.Meta.OgImage}}">{{end}}
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:{{.FontFamily}};color:{{.Schema.Style.PrimaryColor}};background:{{.Schema.Style.Background}};line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+.section{padding:48px 0}
+.section-hero{padding:96px 0;text-align:{{.HeroAlign}}}
+.section-hero h1{font-size:2.5rem;font-weight:700;margin-bottom:16px}
+.section-hero p{font-size:1.125rem;opacity:.85;margin-bottom:24px}
+.btn{display:inline-flex;align-items:center;padding:10px 24px;border-radius:8px;font-weight:600;text-decoration:none;cursor:pointer;transition:background .12s;border:none;font-family:inherit;font-size:inherit}
+.btn-primary{background:{{.Schema.Style.PrimaryColor}};color:#fff}
+.btn-primary:hover{opacity:.9}
+.section-text p{font-size:1rem;margin-bottom:16px}
+.section-image img{max-width:100%;height:auto;border-radius:8px;display:block}
+.section-features .grid{display:grid;gap:24px}
+.section-features .grid-2{grid-template-columns:1fr 1fr}
+.section-features .grid-3{grid-template-columns:1fr 1fr 1fr}
+.section-features .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.feature-card{padding:24px;border-radius:12px;border:1px solid rgba(0,0,0,.08)}
+.feature-card h3{font-size:1.125rem;margin-bottom:8px}
+.feature-card p{font-size:.875rem;opacity:.75}
+.section-form input,.section-form textarea{width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-family:inherit;font-size:.875rem;margin-bottom:12px}
+.section-form input:focus,.section-form textarea:focus{outline:none;border-color:{{.Schema.Style.PrimaryColor}}}
+.section-form label{font-size:.875rem;font-weight:500;display:block;margin-bottom:4px}
+.section-form .btn{font-size:.875rem}
+.section-divider hr{border:none;border-top:1px solid rgba(0,0,0,.08)}
+.section-columns .row{display:flex;gap:24px}
+.section-columns .col{flex:1;min-width:0}
+@media(max-width:768px){
+  .section-hero{padding:48px 0}
+  .section-hero h1{font-size:1.75rem}
+  .section-features .grid-2,.section-features .grid-3,.section-features .grid-4{grid-template-columns:1fr}
+  .section-columns .row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+{{range .SectionsRendered}}
+  {{.}}
+{{end}}
+{{if .SDKScript}}<script src="{{.SDKScript}}"></script>{{end}}
+</body>
+</html>

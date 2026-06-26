@@ -87,7 +87,24 @@ build-server-dev: ## 构建 Go dev 二进制（不含前端 embed，仅 API）
 
 test: test-go test-js ## 运行全部单元测试（Go + JS）
 
-test-go: ## Go 单元测试
+test-go: ## Go 单元测试（自动启动 infra 依赖 + 应用 migrations）
+	@echo "$(C_CYAN)infra: 确保 PG + Redis + MinIO 已启动...$(C_RESET)"
+	@$(COMPOSE) up -d postgres redis minio 2>/dev/null
+	@echo "$(C_CYAN)infra: 等待 PostgreSQL 就绪...$(C_RESET)"
+	@for i in `seq 1 30`; do \
+		if docker exec pinconsole-postgres-1 pg_isready -U $${PG_USER:-mm} -q 2>/dev/null; then \
+			echo "$(C_GREEN)✓$(C_RESET) PostgreSQL 就绪"; \
+			break; \
+		fi; \
+		if [ $$i -eq 30 ]; then \
+			echo "$(C_YELLOW)⚠️$(C_RESET) PostgreSQL 未就绪，跳过 infra 依赖测试"; \
+		fi; \
+		sleep 1; \
+	done
+	@echo "$(C_CYAN)infra: 应用 migrations...$(C_RESET)"
+	@for f in `ls $(SERVER_DIR)/migrations/*.up.sql | sort`; do \
+		docker exec -i pinconsole-postgres-1 psql -U $${PG_USER:-mm} -d $${PG_DB:-pinconsole} < "$$f" 2>/dev/null || true; \
+	done
 	cd $(SERVER_DIR) && $(GO) test -race -cover ./...
 
 test-js: ## JS 单元测试（Vitest）

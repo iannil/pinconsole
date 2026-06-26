@@ -166,3 +166,24 @@ func scanUser(row scanner) (*User, error) {
 	}
 	return &u, nil
 }
+
+// Page 是落地页的 DB 模型（page-editor pe-1）。
+type Page struct {
+	ID        int64     `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	Slug      string    `json:"slug"`
+	Title     string    `json:"title"`
+	Status    string    `json:"status"`
+	Schema    []byte    `json:"schema"` // JSONB
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// PageLead 是落地页表单提交的 DB 模型（page-editor pe-1）。
+type PageLead struct {
+	ID        int64     `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	PageSlug  string    `json:"page_slug"`
+	Fields    []byte    `json:"fields"` // JSONB
+	CreatedAt time.Time `json:"created_at"`
+}

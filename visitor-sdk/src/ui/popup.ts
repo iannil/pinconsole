@@ -9,6 +9,7 @@
 // - 保留 __mm_popup__ ID + URL scheme 白名单 + dismissible 逻辑
 import type { CommandPopup } from '@pinconsole/proto';
 import { t } from './i18n';
+import { getCachedWidgetConfig } from '../widget-config';
 
 const POPUP_ID = '__mm_popup__';
 
@@ -45,6 +46,18 @@ function isURLSchemeAllowed(rawURL: string): boolean {
 
 export function showPopup(p: CommandPopup): void {
   removePopup();
+
+  // 合并 widgetConfig 默认值:WS 命令字段优先,widgetConfig 为默认值
+  const cached = getCachedWidgetConfig();
+  const defaults = cached.popup;
+  const merged: CommandPopup = {
+    title: p.title || defaults?.title || '',
+    body: p.body || defaults?.body || '',
+    action_label: p.action_label ?? defaults?.action_label,
+    action_url: p.action_url ?? defaults?.action_url,
+    dismissible: p.dismissible ?? defaults?.dismissible ?? true,
+  };
+
   const overlay = document.createElement('div');
   overlay.id = POPUP_ID;
   overlay.setAttribute('data-pinconsole', 'popup-overlay');
@@ -79,7 +92,7 @@ export function showPopup(p: CommandPopup): void {
   ].join(';');
 
   // close button(右上角 X) —— 仅 dismissible 时显示
-  if (p.dismissible) {
+  if (merged.dismissible) {
     const closeBtn = document.createElement('button');
     closeBtn.setAttribute('data-pinconsole', 'popup-close');
     closeBtn.setAttribute('aria-label', t('popup_dismiss'));
@@ -114,26 +127,26 @@ export function showPopup(p: CommandPopup): void {
   }
 
   // title(用 textContent 防 XSS)
-  if (p.title) {
+  if (merged.title) {
     const h = document.createElement('h3');
-    h.textContent = p.title;
+    h.textContent = merged.title;
     h.style.cssText = 'margin: 0;padding-right: 32px;font-size: 17px;font-weight: 600;color: var(--pinconsole-color-text-primary, #1c1917)';
     card.appendChild(h);
   }
   // body
-  if (p.body) {
+  if (merged.body) {
     const body = document.createElement('p');
-    body.textContent = p.body;
+    body.textContent = merged.body;
     body.style.cssText = 'margin: 0;font-size: 14px;line-height: 1.55;color: var(--pinconsole-color-text-secondary, #57534e)';
     card.appendChild(body);
   }
   // action button(1k P0-8:URL scheme 白名单)
   const actionRow = document.createElement('div');
   actionRow.style.cssText = 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px';
-  if (p.action_label && p.action_url && isURLSchemeAllowed(p.action_url)) {
+  if (merged.action_label && merged.action_url && isURLSchemeAllowed(merged.action_url)) {
     const btn = document.createElement('a');
-    btn.textContent = p.action_label;
-    btn.href = p.action_url;
+    btn.textContent = merged.action_label;
+    btn.href = merged.action_url;
     btn.setAttribute('data-pinconsole', 'popup-action');
     btn.style.cssText = [
       'display: inline-flex',
@@ -159,7 +172,7 @@ export function showPopup(p: CommandPopup): void {
     actionRow.appendChild(btn);
   }
   // dismiss button(text-link 风,与 X 关闭互为补充)
-  if (p.dismissible) {
+  if (merged.dismissible) {
     const dismiss = document.createElement('button');
     dismiss.textContent = t('popup_dismiss');
     dismiss.style.cssText = [
@@ -190,7 +203,7 @@ export function showPopup(p: CommandPopup): void {
 
   overlay.appendChild(card);
   // 点击遮罩关闭(仅 dismissible 时)
-  if (p.dismissible) {
+  if (merged.dismissible) {
     overlay.onclick = (e) => { if (e.target === overlay) removePopup(); };
   }
   document.body.appendChild(overlay);

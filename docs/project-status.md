@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-26(page-editor 全部 3 切片完成 + fork-3b 测试债补全 + Go 后端三包 90%+)
+**最后更新**:2026-06-27(page-editor 全部 3 切片完成 + fork-3b 测试债补全 + Go 后端三包 90%+ + docs 全量归档整理)
 
 ---
 
@@ -37,6 +37,7 @@
 - ✅ **ReplayPlayer 实时事件修复 + cover sizing**（2026-06-26, 11 文件未提交改动）: 创建 Replayer 后立即 `startLive(farFuture)` 而非等待 `finish` 事件；sizing 从 contain 改为 cover 模式；store cap 500→5000；iframe sandbox `allow-scripts` 全开。详见 [`progress/2026-06-26-replay-live-mode-and-sizing-fix.md`](./progress/2026-06-26-replay-live-mode-and-sizing-fix.md)
 - ✅ **全量 T2/T3 组件测试补全**（2026-06-26, `{daily}/2026-06-26.md`）: 新增 11 个测试文件 / +70 测试用例。admin 24 files / 203 passed（原 14 files / 146）；visitor-sdk 14 files / 219 passed（原 13 files / 206）
 - ✅ **docs 全量整理归档**（2026-06-26）: vendor-rrweb spec+impl 归档、live-input-render 归档、replay-sizing 标记 superseded、project-status/daily/MEMORY 全量更新
+- ✅ **docs 二次归档整理**（2026-06-27）: page-editor 全部 5 份切片文档从 progress/ 归档至 reports/completed/、superseded replay-sizing 文件归档、4 份营销/GTM 文档移入独立 docs/marketing/ 目录、docs/README.md 目录结构表全量更新
 
 前序进展(2026-06-18~19):
 

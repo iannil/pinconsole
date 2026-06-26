@@ -53,6 +53,23 @@ const routes: RouteRecordRaw[] = [
         name: 'widgets',
         component: () => import('../views/WidgetsView.vue'),
       },
+      {
+        path: 'pages',
+        name: 'pages',
+        component: () => import('../views/PagesView.vue'),
+      },
+      {
+        path: 'pages/:slug/edit',
+        name: 'page-editor',
+        component: () => import('../views/PageEditorView.vue'),
+        props: true,
+      },
+      {
+        path: 'pages/:slug/leads',
+        name: 'page-leads',
+        component: () => import('../views/PageLeadsView.vue'),
+        props: true,
+      },
     ],
   },
 ];

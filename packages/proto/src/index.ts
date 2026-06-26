@@ -7,3 +7,4 @@ export * from './envelope';
 export * from './events';
 export * from './command';
 export * from './widget-config';
+export * from './page-schema';

@@ -1,0 +1,24 @@
+{{define "form"}}
+<section class="section section-form" style="background:{{.Props.background}}">
+  <div class="container">
+    {{$action := index .Props "action"}}
+    <form action="{{$action}}" method="POST">
+      <!-- honeypot -->
+      <div style="position:absolute;left:-9999px" aria-hidden="true">
+        <input name="_pin" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      {{range .Props.fields}}
+      <div>
+        <label for="f-{{.name}}">{{.label}}{{if .required}} <span style="color:red">*</span>{{end}}</label>
+        {{if eq .type "textarea"}}
+        <textarea id="f-{{.name}}" name="{{.name}}" placeholder="{{.placeholder}}" {{if .required}}required{{end}}></textarea>
+        {{else}}
+        <input id="f-{{.name}}" name="{{.name}}" type="{{.type}}" placeholder="{{.placeholder}}" {{if .required}}required{{end}}>
+        {{end}}
+      </div>
+      {{end}}
+      <button type="submit" class="btn btn-primary">{{.Props.submit_label}}</button>
+    </form>
+  </div>
+</section>
+{{end}}

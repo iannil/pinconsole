@@ -1,0 +1,15 @@
+{{define "features"}}
+<section class="section section-features" style="background:{{.Props.background}}">
+  <div class="container">
+    <div class="grid grid-{{.Props.columns}}">
+      {{range .Props.items}}
+      <div class="feature-card">
+        {{if .icon}}<div style="font-size:2rem;margin-bottom:8px">{{.icon}}</div>{{end}}
+        <h3>{{.title}}</h3>
+        <p>{{.description}}</p>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</section>
+{{end}}

@@ -20,6 +20,7 @@ import (
 	"github.com/iannil/pinconsole/internal/config"
 	"github.com/iannil/pinconsole/internal/hub"
 	"github.com/iannil/pinconsole/internal/logging"
+	"github.com/iannil/pinconsole/internal/pages"
 	"github.com/iannil/pinconsole/internal/recording"
 	"github.com/iannil/pinconsole/internal/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -81,6 +82,13 @@ func main() {
 	gc.Start(rootCtx)
 	defer gc.Stop()
 
+	// pe-1：初始化页面编辑器 SSR 渲染器
+	pageRenderer, err := pages.NewRenderer()
+	if err != nil {
+		logger.Error("页面渲染器初始化失败", "error", err)
+		os.Exit(1)
+	}
+
 	// 路由
 	// 1i:解析 BannedUAs
 	bannedUAs := []string{}
@@ -114,6 +122,7 @@ func main() {
 		RateLimitPerMin:        cfg.RateLimitPerMin,
 		BannedUAs:              bannedUAs,
 		TrustedProxies:         trustedProxies,
+		PagesRenderer:          pageRenderer,
 	})
 
 	// 1o P1-6:WriteTimeout=0(coder/websocket 文档明确要求,否则所有 WS 每 30s 被踢)

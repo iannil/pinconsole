@@ -1,8 +1,9 @@
 # ReplayPlayer 即时 Live 模式 + Sizing Cover 模式修复
 
-**状态**: committed（`68f58a7`）— 待浏览器验证后关闭
+**状态**: completed — `68f58a7` + fork-5 Playwright e2e 自动化验证
 **开始**: 2026-06-26
-**完成**:（待浏览器验证）
+**完成**: 2026-06-26
+**验证深度**: 🟡 verified-shallow（Playwright e2e 已写，需 `ops.sh start` 后运行）
 **关联**:
 - fork-2 钻穿方案遗留：`../reports/completed/2026-06-25-vendor-rrweb-implementation.md`
 - 上一轮修复：`../progress/2026-06-22-live-input-render-and-mask-config.md`

@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-26(page-editor 全 3 切片完成 + fork-3b 测试 + Go 90%+ + 端口迁移 7000-7100)
+**最后更新**：2026-06-27(docs 全量二次归档整理 + progress/ 清空 + marketing/ 独立目录)
 
 ---
 
@@ -40,13 +40,14 @@
 构建某商业竞品的**开源替代品**。竞品是 ToB 实时监控 + 互动客服 / 营销转化平台。本项目不做客户获取与销售，专注技术核心。
 
 ### 当前阶段
-**v1 主干完全收口 + vendor-rrweb 完成 + page-editor post-v1 3 切片完成 + Go 覆盖 90%+（2026-06-26）**：
+**v1 主干完全收口 + vendor-rrweb 完成 + page-editor post-v1 3 切片完成 + Go 覆盖 90%+ + Tier 1 债务清理（2026-06-26）**：
 - 1a-1z 全切片 + 测试深化 + e2e acceptance + 重命名(2026-06-17~20, 90+ commits)
 - vendor-rrweb 硬分叉(2026-06-25~26, 21 commits, 合并至 master)
 - ReplayPlayer 修复 + fork-3b 测试 + record 测试 (+117 tests, replay-core 146 全绿)
 - Go 后端覆盖: recording 90.7% / api 90.0% / storage 91.5%
 - **page-editor**: post-v1 页面编辑器全 3 切片(pe-1 proto+PG+Go+API / pe-2 admin UI / pe-3 SDK 配置驱动)
 - **端口迁移**: 全部开发端口移至 7000-7100 范围(7080/7073/7074/7032/7079/7020/7021)
+- **Tier 1 技术债务清理**: Go data race atomic.Bool 修复 / cap 5000 裁切测试补齐 / Playwright e2e fork-5 直播回放渲染验证 / Makefile test-go 自动 docker up + migrations 应用（Go 12/12 ✅, JS 423 ✅）
 
 **测试信心补全完整路径**(2026-06-19):
 - 审计:31 切片 badge 系统性虚标,28 T0 + 40 T1 + 30 T2 + 10 T3 = 108 gap

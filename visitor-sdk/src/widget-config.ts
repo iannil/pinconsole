@@ -3,6 +3,8 @@
 
 import type { WidgetConfigMap } from '@pinconsole/proto';
 
+export type { WidgetConfigMap };
+
 const WIDGET_CONFIG_CACHE_KEY = '__pc_widget_config';
 
 /** 从服务端拉取 widget 配置,优先走缓存。 */

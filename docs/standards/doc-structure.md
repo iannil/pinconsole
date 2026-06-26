@@ -12,6 +12,7 @@ docs/
 ├── reports/
 │   └── completed/           # 已完成的修改报告
 ├── audits/                  # 审计发现（冗余/过期/错误梳理）
+├── marketing/               # maintainer 对外推广策略（独立于 OSS 产品）
 ├── standards/               # 规范（命名、结构、流程）
 └── templates/               # 各类文档模板
 ```
@@ -23,6 +24,7 @@ docs/
 | `progress/` | 记录"进行中"的修改 | 开始一项非平凡修改时立即创建；每次有进展追加 |
 | `reports/completed/` | 标记"已交付"的修改 + 验收证据 | 修改完成且通过验收后；与对应 progress 文件同名 |
 | `audits/` | 审计发现的冗余/过期/错误清单 + 处理方案 | 周期性审计、重大重构前、用户要求时 |
+| `marketing/` | maintainer 对外推广策略文档（独立于 OSS 产品代码） | 用户启动商业化讨论时创建 |
 | `standards/` | 落地 CLAUDE.md 约定的可执行规范 | 约定稳定后；约定变化时更新 |
 | `templates/` | 各类文档的标准模板 | 引入新文档类型时 |
 
