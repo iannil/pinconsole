@@ -35,7 +35,7 @@ func helperRedisIfAvailable(t *testing.T) *redis.Client {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079"})
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {

@@ -60,9 +60,9 @@ WORKDIR /app
 COPY --from=go-builder /out/server /app/server
 
 USER app
-EXPOSE 8080
+EXPOSE 7080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=2s --retries=3 \
-    CMD wget -qO- http://localhost:8080/healthz || exit 1
+    CMD wget -qO- http://localhost:7080/healthz || exit 1
 
 ENTRYPOINT ["/app/server"]

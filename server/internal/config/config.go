@@ -49,7 +49,7 @@ func isLocalEndpoint(endpoint string) bool {
 
 // Config 是 server 的全部配置。
 type Config struct {
-	ServerPort string `env:"SERVER_PORT" envDefault:"8080"`
+	ServerPort string `env:"SERVER_PORT" envDefault:"7080"`
 	Env        string `env:"SERVER_ENV" envDefault:"prod"`
 	LogLevel   string `env:"LOG_LEVEL" envDefault:"info"`
 	// 1f：navigate 命令允许的额外域名（逗号分隔）
@@ -77,7 +77,7 @@ type Config struct {
 // PostgresConfig 是 PostgreSQL 连接配置。
 type PostgresConfig struct {
 	Host     string `env:"PG_HOST" envDefault:"localhost"`
-	Port     string `env:"PG_PORT" envDefault:"5432"`
+	Port     string `env:"PG_PORT" envDefault:"7032"`
 	User     string `env:"PG_USER" envDefault:"mm"`
 	Password string `env:"PG_PASSWORD" envDefault:""`
 	Database string `env:"PG_DB" envDefault:"pinconsole"`
@@ -97,7 +97,7 @@ func (p PostgresConfig) DSN() string {
 
 // RedisConfig 是 Redis 连接配置。
 type RedisConfig struct {
-	Addr     string `env:"REDIS_ADDR" envDefault:"localhost:6379"`
+	Addr     string `env:"REDIS_ADDR" envDefault:"localhost:7079"`
 	Password string `env:"REDIS_PASSWORD" envDefault:""`
 	// 1z:连接池上限。go-redis 默认 10*NumCPU 对 4 核机器仅 40 条,
 	// rate limit + claim + stream append + presence 等多 key 类操作很快耗尽。默认 50。
@@ -106,7 +106,7 @@ type RedisConfig struct {
 
 // MinIOConfig 是 MinIO 连接配置。
 type MinIOConfig struct {
-	Endpoint  string `env:"MINIO_ENDPOINT" envDefault:"localhost:9000"`
+	Endpoint  string `env:"MINIO_ENDPOINT" envDefault:"localhost:7000"`
 	AccessKey string `env:"MINIO_ACCESS_KEY" envDefault:""`
 	SecretKey string `env:"MINIO_SECRET_KEY" envDefault:""`
 	Bucket    string `env:"MINIO_BUCKET" envDefault:"pinconsole"`

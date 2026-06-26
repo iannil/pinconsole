@@ -218,12 +218,12 @@ func helperStoresForAPITest(t *testing.T) *storage.Stores {
 func helperAPIConfig(t *testing.T) *config.Config {
 	return &config.Config{
 		Postgres: config.PostgresConfig{
-			Host: "localhost", Port: "5432", User: "mm", Password: "mm_dev",
+			Host: "localhost", Port: "7032", User: "mm", Password: "mm_dev",
 			Database: "pinconsole", SSLMode: "disable", MaxConns: 5,
 		},
-		Redis: config.RedisConfig{Addr: "localhost:6379", PoolSize: 5},
+		Redis: config.RedisConfig{Addr: "localhost:7079", PoolSize: 5},
 		MinIO: config.MinIOConfig{
-			Endpoint: "localhost:9000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
+			Endpoint: "localhost:7000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
 			Bucket: "test-api-" + uuid.New().String()[:8], UseSSL: false,
 		},
 	}

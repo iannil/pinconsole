@@ -2,8 +2,8 @@
 # pinconsole 开发环境管理脚本。
 #
 # 解决痛点:之前每次改前端代码都要 `make build-server` 重打包 embed + 重启 server。
-# 本脚本启动独立的 vite dev server(HMR),admin 通过 5173 端口开发,API/WS 代理到 8080,
-# SDK 通过 5174 端口开发并被 admin 代理。Go 改用 air 热重载,改 .go 文件自动重建。
+# 本脚本启动独立的 vite dev server(HMR),admin 通过 7073 端口开发,API/WS 代理到 7080,
+# SDK 通过 7074 端口开发并被 admin 代理。Go 改用 air 热重载,改 .go 文件自动重建。
 #
 # 服务在后台运行,PID 写入 .dev/*.pid,日志写入 .dev/*.log。
 #
@@ -15,13 +15,13 @@
 #   ./dev.sh logs [name]       跟踪日志(name: go|admin|sdk,省略则全部)
 #
 # 启动选项(仅 start / restart 有效):
-#   --no-go      只起前端(admin + sdk),假设 Go server 已在 8080 跑
+#   --no-go      只起前端(admin + sdk),假设 Go server 已在 7080 跑
 #   --no-build   跳过首次 server 二进制 build(已有 bin/pinconsole-server 时用)
 #
 # 访问:
-#   admin(开发,带 HMR):http://localhost:5173/admin/
-#   admin(8080 embed,生产模式):http://localhost:8080/admin/
-#   访客 demo:http://localhost:8080/
+#   admin(开发,带 HMR):http://localhost:7073/admin/
+#   admin(7080 embed,生产模式):http://localhost:7080/admin/
+#   访客 demo:http://localhost:7080/
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -131,10 +131,10 @@ cmd_start() {
         warn "--no-go 已指定,跳过 Go server"
     fi
 
-    log "启动 admin vite(HMR,http://localhost:5173/admin/)..."
+    log "启动 admin vite(HMR,http://localhost:7073/admin/)..."
     spawn admin "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/admin dev"
 
-    log "启动 visitor-sdk vite(HMR,http://localhost:5174/)..."
+    log "启动 visitor-sdk vite(HMR,http://localhost:7074/)..."
     spawn sdk "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/visitor-sdk dev"
 
     echo

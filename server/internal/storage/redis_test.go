@@ -24,7 +24,7 @@ func TestRedisConfig_PoolSizeAppliedToOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.RedisConfig{
-				Addr:     "localhost:6379",
+				Addr:     "localhost:7079",
 				Password: "",
 				PoolSize: tt.poolSize,
 			}
@@ -46,7 +46,7 @@ func TestRedisConfig_PoolSizeAppliedToOptions(t *testing.T) {
 // TestRedisConfig_DefaultPoolSize 验证业务默认值 50(env 未设时 caarlos0/env 填 envDefault)。
 func TestRedisConfig_DefaultPoolSize(t *testing.T) {
 	cfg := config.RedisConfig{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7079",
 		Password: "",
 		PoolSize: 50, // 显式默认(模拟 envDefault)
 	}
@@ -63,7 +63,7 @@ func TestRedisConfig_DefaultPoolSize(t *testing.T) {
 // 不覆盖 opts.PoolSize(go-redis 默认 10*NumCPU)。
 func TestRedisConfig_ZeroPoolSizeFallsBackToLibraryDefault(t *testing.T) {
 	cfg := config.RedisConfig{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7079",
 		Password: "",
 		PoolSize: 0, // 未设
 	}

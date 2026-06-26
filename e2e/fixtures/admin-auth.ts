@@ -105,7 +105,7 @@ export const test = base.extend<AdminAuthFixtures>({
   },
   adminRequest: async ({ playwright }, use) => {
     const ctx = await playwright.request.newContext({
-      baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8080',
+      baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:7080',
       userAgent: CLEAN_CHROME_UA,
     });
     const resp = await ctx.post('/api/auth/login', {

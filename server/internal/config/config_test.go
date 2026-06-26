@@ -176,7 +176,7 @@ func TestLoad_DevModeAllowsWeakCreds(t *testing.T) {
 
 func TestPostgresConfig_DSN_IncludesSSLMode(t *testing.T) {
 	cfg := PostgresConfig{
-		Host: "localhost", Port: "5432",
+		Host: "localhost", Port: "7032",
 		User: "mm", Password: "secret", Database: "test",
 		SSLMode: "require",
 	}
@@ -294,7 +294,7 @@ func TestLoad_ProdModeAllowsLocalPGSSLDisable(t *testing.T) {
 	t.Setenv("PG_PASSWORD", "prod-pg-secret")
 	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
 	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
-	t.Setenv("MINIO_ENDPOINT", "localhost:9000")
+	t.Setenv("MINIO_ENDPOINT", "localhost:7000")
 
 	_, err := Load()
 	if err != nil {

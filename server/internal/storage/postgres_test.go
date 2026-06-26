@@ -19,24 +19,24 @@ func TestPostgresConfig_DSN(t *testing.T) {
 		{
 			name: "default",
 			cfg: config.PostgresConfig{
-				Host: "localhost", Port: "5432",
+				Host: "localhost", Port: "7032",
 				User: "mm", Password: "secret",
 				Database: "test", SSLMode: "prefer",
 			},
 			want: []string{
-				"postgres://mm:secret@localhost:5432/test",
+				"postgres://mm:secret@localhost:7032/test",
 				"sslmode=prefer",
 			},
 		},
 		{
 			name: "sslmode require",
 			cfg: config.PostgresConfig{
-				Host: "db.example.com", Port: "5432",
+				Host: "db.example.com", Port: "7032",
 				User: "app", Password: "p@ssw0rd",
 				Database: "prod", SSLMode: "require",
 			},
 			want: []string{
-				"postgres://app:p@ssw0rd@db.example.com:5432/prod",
+				"postgres://app:p@ssw0rd@db.example.com:7032/prod",
 				"sslmode=require",
 			},
 		},
@@ -90,7 +90,7 @@ func TestPostgresConfig_MaxConnsAppliedToPoolConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.PostgresConfig{
-				Host: "localhost", Port: "5432",
+				Host: "localhost", Port: "7032",
 				User: "mm", Password: "secret",
 				Database: "test", SSLMode: "prefer",
 				MaxConns: tt.maxConns,
@@ -113,7 +113,7 @@ func TestPostgresConfig_MaxConnsAppliedToPoolConfig(t *testing.T) {
 // pgxpool.ParseConfig 默认填 max(4, NumCPU)(本机 18),ConnectPostgres 不应改成 0。
 func TestPostgresConfig_ZeroMaxConnsLeavesPgxDefault(t *testing.T) {
 	cfg := config.PostgresConfig{
-		Host: "localhost", Port: "5432",
+		Host: "localhost", Port: "7032",
 		User: "mm", Password: "secret",
 		Database: "test", SSLMode: "prefer",
 		MaxConns: 0,
@@ -142,7 +142,7 @@ func TestPostgresConfig_DefaultMaxConns(t *testing.T) {
 	// 此处直接断言 envDefault 常量值,因 caarlos0/env/v11 在 env 未设时填 envDefault
 	// (本测试不依赖 caarlos0/env,只验证 maxConns 字段被业务代码正确消费)
 	cfg := config.PostgresConfig{
-		Host: "localhost", Port: "5432",
+		Host: "localhost", Port: "7032",
 		User: "mm", Password: "secret",
 		Database: "test", SSLMode: "prefer",
 		MaxConns: 25, // 显式默认

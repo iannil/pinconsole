@@ -17,7 +17,7 @@ import (
 // skipIfNoRedis 跳过测试如果本地 Redis 不可用(允许 CI 在无 infra 时跳过)。
 func skipIfNoRedis(t *testing.T) *redis.Client {
 	t.Helper()
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", DialTimeout: 500 * time.Millisecond})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079", DialTimeout: 500 * time.Millisecond})
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {

@@ -19,7 +19,7 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:7080',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -34,7 +34,7 @@ export default defineConfig({
     : {
         command: './ops.sh start',
         cwd: projectRoot,
-        url: 'http://localhost:8080/healthz',
+        url: 'http://localhost:7080/healthz',
         reuseExistingServer: true,
         timeout: 120_000, // 首次 build 可能要 60s+
         stdout: 'pipe',

@@ -41,7 +41,7 @@ func TestLoginThrottle_LockAfter5Failures(t *testing.T) {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079"})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func TestLoginThrottle_DelOnSuccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079"})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -131,7 +131,7 @@ func TestLoginThrottle_IsolationByIpAndEmail(t *testing.T) {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079"})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

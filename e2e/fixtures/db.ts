@@ -40,10 +40,10 @@ function loadEnv(): DBConfig {
     pgUser: 'mm',
     pgPassword: 'mm_dev',
     pgHost: 'localhost',
-    pgPort: 5432,
+    pgPort: 7032,
     pgDatabase: 'pinconsole',
     redisHost: 'localhost',
-    redisPort: 6379,
+    redisPort: 7079,
   };
   try {
     const raw = readFileSync(envPath, 'utf-8');

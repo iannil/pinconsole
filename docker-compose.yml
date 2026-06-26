@@ -75,11 +75,11 @@ services:
       dockerfile: server/Dockerfile
     restart: unless-stopped
     environment:
-      SERVER_PORT: "8080"
+      SERVER_PORT: "7080"
       SERVER_ENV: "prod"
       LOG_LEVEL: "info"
       PG_HOST: postgres
-      PG_PORT: "5432"
+      PG_PORT: "7032"
       PG_USER: ${PG_USER:-mm}
       # 1k P0-7:依赖 Go config.Load() 的 validate() 在 server 启动时 fail-fast
       # (不用 ${VAR:?required} 语法,因 docker compose 在 parse 阶段就校验,
@@ -98,7 +98,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       BCRYPT_COST: ${BCRYPT_COST:-12}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_PORT:-7080}:7080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,7 +107,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:7080/healthz"]
       interval: 10s
       timeout: 3s
       retries: 5

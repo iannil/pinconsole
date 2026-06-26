@@ -24,17 +24,17 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 7073,
     strictPort: true,
     proxy: {
-      '/api': 'http://localhost:8080',
-      '/healthz': 'http://localhost:8080',
-      '/readyz': 'http://localhost:8080',
-      '/sdk.js': 'http://localhost:5174',
+      '/api': 'http://localhost:7080',
+      '/healthz': 'http://localhost:7080',
+      '/readyz': 'http://localhost:7080',
+      '/sdk.js': 'http://localhost:7074',
       // /ws/* 必须 enable ws 代理,否则 admin 用 location.host 推断 WS endpoint
-      // 会去连 ws://localhost:5173/ws/operator(vite dev server),连接失败一直
+      // 会去连 ws://localhost:7073/ws/operator(vite dev server),连接失败一直
       // 卡在 CONNECTING 状态,Dashboard 看不到实时事件。
-      '/ws': { target: 'http://localhost:8080', ws: true },
+      '/ws': { target: 'http://localhost:7080', ws: true },
     },
   },
   build: {

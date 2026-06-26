@@ -33,7 +33,7 @@ func helperMinioIfAvailable(t *testing.T) (*minio.Client, string) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client, err := minio.New("localhost:9000", &minio.Options{
+	client, err := minio.New("localhost:7000", &minio.Options{
 		Creds:  credentials.NewStaticV4("mm_dev", "mm_dev_secret", ""),
 		Secure: false,
 	})
@@ -58,7 +58,7 @@ func helperRedisClient(t *testing.T) *redis.Client {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", DialTimeout: 500 * time.Millisecond})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079", DialTimeout: 500 * time.Millisecond})
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
@@ -120,7 +120,7 @@ func TestPrivacyDeleteVisitor_MinioCascade(t *testing.T) {
 		PG:    &storage.Postgres{Pool: pool},
 		MinIO: &storage.MinIO{Client: mclient, Bucket: bucket},
 		// Redis 也需要,因 deleteVisitor 最后会 Del claim keys
-		Redis: &storage.Redis{Client: redis.NewClient(&redis.Options{Addr: "localhost:6379"})},
+		Redis: &storage.Redis{Client: redis.NewClient(&redis.Options{Addr: "localhost:7079"})},
 	}
 	defer stores.Redis.Close()
 	h := &PrivacyHandler{stores: stores, logger: testLogger()}

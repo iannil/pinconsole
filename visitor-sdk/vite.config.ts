@@ -51,14 +51,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5174,
+    port: 7074,
     strictPort: true,
     // SDK 用 location.host 推断 WS/API 端点。从 5174 加载时,默认会去连
     // ws://localhost:5174 而不是 Go server(8080),导致访客连不上后端,
     // admin dashboard 看不到该访客。代理 /api 和 /ws 到 8080 修复。
     proxy: {
-      '/api': 'http://localhost:8080',
-      '/ws': { target: 'http://localhost:8080', ws: true },
+      '/api': 'http://localhost:7080',
+      '/ws': { target: 'http://localhost:7080', ws: true },
     },
   },
   test: {

@@ -27,7 +27,7 @@ func helperRedisStore(t *testing.T) *storage.Redis {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	rdb, err := storage.ConnectRedis(ctx, config.RedisConfig{Addr: "localhost:6379", PoolSize: 5}, recDiscardLogger())
+	rdb, err := storage.ConnectRedis(ctx, config.RedisConfig{Addr: "localhost:7079", PoolSize: 5}, recDiscardLogger())
 	if err != nil {
 		t.Skipf("redis not available: %v", err)
 	}
@@ -41,13 +41,13 @@ func helperStoresRec(t *testing.T) *storage.Stores {
 	defer cancel()
 
 	pg, err := storage.ConnectPostgres(ctx, config.PostgresConfig{
-		Host: "localhost", Port: "5432", User: "mm", Password: "mm_dev",
+		Host: "localhost", Port: "7032", User: "mm", Password: "mm_dev",
 		Database: "pinconsole", SSLMode: "disable", MaxConns: 5,
 	}, recDiscardLogger())
 	if err != nil {
 		t.Skipf("pg not available: %v", err)
 	}
-	rdb, err := storage.ConnectRedis(ctx, config.RedisConfig{Addr: "localhost:6379", PoolSize: 5}, recDiscardLogger())
+	rdb, err := storage.ConnectRedis(ctx, config.RedisConfig{Addr: "localhost:7079", PoolSize: 5}, recDiscardLogger())
 	if err != nil {
 		pg.Close()
 		t.Skipf("redis not available: %v", err)
@@ -56,7 +56,7 @@ func helperStoresRec(t *testing.T) *storage.Stores {
 	_, _ = rand.Read(b)
 	bucket := "test-rec-" + hex.EncodeToString(b)
 	mio, err := storage.ConnectMinIO(ctx, config.MinIOConfig{
-		Endpoint: "localhost:9000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
+		Endpoint: "localhost:7000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
 		Bucket: bucket, UseSSL: false,
 	}, recDiscardLogger())
 	if err != nil {

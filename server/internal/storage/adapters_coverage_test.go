@@ -36,7 +36,7 @@ func helperRedis(t *testing.T) *Redis {
 func helperPostgresCfg() config.PostgresConfig {
 	return config.PostgresConfig{
 		Host:     "localhost",
-		Port:     "5432",
+		Port:     "7032",
 		User:     "mm",
 		Password: "mm_dev",
 		Database: "pinconsole",
@@ -48,7 +48,7 @@ func helperPostgresCfg() config.PostgresConfig {
 // helperRedisCfg 构造测试用 RedisConfig。
 func helperRedisCfg() config.RedisConfig {
 	return config.RedisConfig{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7079",
 		Password: "",
 		PoolSize: 5,
 	}
@@ -61,7 +61,7 @@ func helperMinIOCfg(t *testing.T) config.MinIOConfig {
 	_, _ = rand.Read(b)
 	bucket := "test-" + hex.EncodeToString(b)
 	return config.MinIOConfig{
-		Endpoint:  "localhost:9000",
+		Endpoint:  "localhost:7000",
 		AccessKey: "mm_dev",
 		SecretKey: "mm_dev_secret",
 		Bucket:    bucket,

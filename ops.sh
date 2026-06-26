@@ -213,7 +213,7 @@ cmd_status() {
     echo "  Server:     http://localhost:${SERVER_PORT:-8080}/"
     echo "  Admin:      http://localhost:${SERVER_PORT:-8080}/admin"
     echo "  Landing:    http://localhost:${SERVER_PORT:-8080}/"
-    echo "  MinIO:      http://localhost:9001 (console)"
+    echo "  MinIO:      http://localhost:7001 (console)"
     echo "  Server Log: $LOG_FILE"
     echo ""
 }

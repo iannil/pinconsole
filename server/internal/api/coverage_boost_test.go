@@ -880,7 +880,7 @@ func helperAPIStores(t *testing.T) *storage.Stores {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, "postgres://mm:mm_dev@localhost:5432/pinconsole?sslmode=disable")
+	pool, err := pgxpool.New(ctx, "postgres://mm:mm_dev@localhost:7032/pinconsole?sslmode=disable")
 	if err != nil {
 		t.Skipf("pg not available: %v", err)
 	}
@@ -888,12 +888,12 @@ func helperAPIStores(t *testing.T) *storage.Stores {
 		pool.Close()
 		t.Skipf("pg ping: %v", err)
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:7079"})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		pool.Close()
 		t.Skipf("redis not available: %v", err)
 	}
-	mclient, err := minio.New("localhost:9000", &minio.Options{
+	mclient, err := minio.New("localhost:7000", &minio.Options{
 		Creds:  credentials.NewStaticV4("mm_dev", "mm_dev_secret", ""),
 		Secure: false,
 	})

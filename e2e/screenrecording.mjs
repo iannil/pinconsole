@@ -10,7 +10,7 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 const ADMIN_EMAIL = 'admin@pinconsole.local';
 const ADMIN_PASS = 'devpass_test_only_1781760461';
-const BASE = 'http://localhost:8080';
+const BASE = 'http://localhost:7080';
 
 async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));

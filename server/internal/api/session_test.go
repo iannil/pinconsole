@@ -28,7 +28,7 @@ func TestListSessions_FlaggedSession_ReturnsIsFlaggedTrue(t *testing.T) {
 	if testing.Short() {
 		t.Skip("需要 Redis")
 	}
-	redisAddr := "localhost:6379"
+	redisAddr := "localhost:7079"
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
