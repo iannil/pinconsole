@@ -21,22 +21,6 @@ vi.mock('../src/commands/toast', () => ({
   })),
 }));
 
-vi.mock('../src/commands/nodeMap', () => ({
-  NodeMap: vi.fn().mockImplementation(() => ({
-    start: vi.fn(),
-    stop: vi.fn(),
-    get: vi.fn((id: number) => {
-      // mock: id=1 返回 input,id=2 返回 div,id=99 返回 null
-      if (id === 99) return null;
-      const el = document.createElement(id === 1 ? 'input' : 'div');
-      el.setAttribute('data-test-id', String(id));
-      el.click = vi.fn();
-      document.body.appendChild(el);
-      return el;
-    }),
-  })),
-}));
-
 const showPopupMock = vi.fn();
 vi.mock('../src/ui/popup', () => ({
   showPopup: (...args: any[]) => showPopupMock(...args),

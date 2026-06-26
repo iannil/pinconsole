@@ -49,7 +49,8 @@ export type SdkMessageKey = keyof typeof sdkMessages['zh'];
 
 export function t(key: SdkMessageKey, locale?: Locale, params?: Record<string, string>): string {
   const loc = locale ?? detectLocale();
-  let s: string = sdkMessages[loc][key] ?? sdkMessages.en[key] ?? key;
+  const msgs = sdkMessages[loc] ?? sdkMessages.en;
+  let s: string = msgs[key] ?? sdkMessages.en[key] ?? key;
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       s = s.replace(`{${k}}`, v);

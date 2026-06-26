@@ -90,18 +90,6 @@ function onClick(e: MouseEvent) {
   });
 }
 
-/**
- * 1f：向 rrweb-player iframe 发 postMessage 请求坐标处的 nodeID。
- * iframe 内部收到后用 document.elementFromPoint + 读 data-rr-node-id 回复。
- *
- * 注：当前 rrweb-player v2 alpha 未原生支持该协议；
- * 1f MVP 用坐标 fallback（nodeID=0）+ 服务端按坐标点击。
- * 后续可通过 monkey-patch rrweb-player 添加 message listener 实现。
- */
-/**
- * Lookup nodeID at screen coordinates from the replay iframe.
- * Walks up from elementFromPoint to find the nearest element with data-rr-node-id.
- */
 async function requestNodeIdAt(clientX: number, clientY: number): Promise<number> {
   // Find the replay iframe in the DOM
   const iframe = document.querySelector('.player-container iframe') as HTMLIFrameElement | null;
@@ -129,6 +117,7 @@ async function requestNodeIdAt(clientX: number, clientY: number): Promise<number
 async function sendClick(nodeID: number, x: number, y: number) {
   if (!props.sessionId) return;
   try {
+    // fork-4: nodeID 精确寻址为主; x,y 保留用于服务端审计日志
     await sendCommand(props.sessionId, 'click', { node_id: nodeID, x, y });
     commandCount.value++;
     emit('command-sent', 'click', commandCount.value);

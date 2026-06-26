@@ -1,8 +1,7 @@
-// CV-5 切片补测:fingerprint + nodeMap + cursor + toast + ui banners。
+// CV-5 切片补测:fingerprint + cursor + toast + ui banners。
 // 测试策略:jsdom 直接 DOM 操作 + class 实例化。
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { collectFingerprint } from '../src/fingerprint';
-import { NodeMap } from '../src/commands/nodeMap';
 import { OperatorCursor } from '../src/commands/cursor';
 import { OperatorToast } from '../src/commands/toast';
 import { showCoBrowseBanner, removeCoBrowseBanner } from '../src/ui/coBrowseBanner';
@@ -29,89 +28,6 @@ describe('fingerprint', () => {
     const a = collectFingerprint();
     const b = collectFingerprint();
     expect(a.combined_hash).toBe(b.combined_hash);
-  });
-});
-
-// === nodeMap.ts ===
-
-describe('NodeMap', () => {
-  let nm: NodeMap;
-
-  beforeEach(() => {
-    document.body.innerHTML = '';
-    nm = new NodeMap();
-  });
-
-  afterEach(() => {
-    nm.stop();
-  });
-
-  it('start 后 rebuild 读 data-rr-node-id', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-rr-node-id', '42');
-    document.body.appendChild(el);
-
-    nm.start();
-    expect(nm.get(42)).toBe(el);
-  });
-
-  it('start 后 rebuild 读 data-mm-node-id', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-mm-node-id', '100');
-    document.body.appendChild(el);
-
-    nm.start();
-    expect(nm.get(100)).toBe(el);
-  });
-
-  it('未在 map 中的 ID 走 fallback querySelector', () => {
-    const el = document.createElement('span');
-    el.setAttribute('data-rr-node-id', '999');
-    document.body.appendChild(el);
-
-    nm.start();
-    // clear map 模拟 cache miss
-    expect(nm.get(999)).toBe(el);
-  });
-
-  it('get 不存在的 ID 返回 null', () => {
-    nm.start();
-    expect(nm.get(12345)).toBeNull();
-  });
-
-  it('rebuild 跳过非数字 ID', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-rr-node-id', 'not-a-number');
-    document.body.appendChild(el);
-
-    nm.rebuild();
-    // 不应 panic,get 应走 fallback 返回 null
-    expect(nm.get(0)).toBeNull();
-  });
-
-  it('rebuild 跳过无 ID attr 元素', () => {
-    const el = document.createElement('div');
-    document.body.appendChild(el);
-
-    nm.rebuild();
-    // 不应 panic
-  });
-
-  it('stop 清理 observer + map', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-rr-node-id', '5');
-    document.body.appendChild(el);
-
-    nm.start();
-    nm.stop();
-    // 验证不 panic
-  });
-
-  it('多次 start 幂等', () => {
-    nm.start();
-    nm.start();
-    nm.start();
-    nm.stop();
   });
 });
 

@@ -15,14 +15,6 @@ vi.mock('../src/commands/cursor', () => ({
   })),
 }));
 
-vi.mock('../src/commands/nodeMap', () => ({
-  NodeMap: vi.fn().mockImplementation(() => ({
-    start: vi.fn(),
-    stop: vi.fn(),
-    get: vi.fn(() => null), // 默认返回 null,doClick/doFill 走 "not found" 分支
-  })),
-}));
-
 vi.mock('../src/commands/toast', () => ({
   OperatorToast: vi.fn().mockImplementation(() => ({
     show: vi.fn(),

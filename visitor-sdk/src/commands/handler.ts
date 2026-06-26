@@ -4,7 +4,6 @@
 import type { Envelope } from '@pinconsole/proto';
 import type { CommandPayload } from '@pinconsole/proto';
 import { OperatorCursor } from './cursor';
-import { NodeMap } from './nodeMap';
 import { OperatorToast } from './toast';
 import { sdkLogger } from '../logging';
 import { t } from '../ui/i18n';
@@ -43,7 +42,6 @@ export interface CommandHandlerOptions {
 export class CommandHandler {
   private opts: Required<CommandHandlerOptions>;
   private cursor: OperatorCursor;
-  private nodeMap: NodeMap;
   private toast: OperatorToast;
   private active = false;
   private lockedInputs: Set<HTMLElement> = new Set();
@@ -58,7 +56,6 @@ export class CommandHandler {
       onControlStart: opts.onControlStart ?? (() => {}),
     };
     this.cursor = new OperatorCursor();
-    this.nodeMap = new NodeMap();
     this.toast = new OperatorToast();
   }
 
@@ -66,7 +63,6 @@ export class CommandHandler {
   start(): void {
     if (this.active) return;
     this.active = true;
-    this.nodeMap.start();
     this.attachKeyboard();
     if (this.opts.debug) {
       // eslint-disable-next-line no-console
@@ -77,7 +73,6 @@ export class CommandHandler {
   stop(): void {
     this.active = false;
     this.cursor.destroy();
-    this.nodeMap.stop();
     this.toast.destroy();
     this.detachKeyboard();
     this.clearLocks();
@@ -146,7 +141,7 @@ export class CommandHandler {
   }
 
   private doClick(nodeID: number): void {
-    const el = this.nodeMap.get(nodeID);
+    const el = this.findElement(nodeID);
     if (!el) {
       this.log('click: node not found', nodeID);
       return;
@@ -159,7 +154,7 @@ export class CommandHandler {
   }
 
   private doFill(nodeID: number, value: string): void {
-    const el = this.nodeMap.get(nodeID);
+    const el = this.findElement(nodeID);
     if (!el) {
       this.log('fill: node not found', nodeID);
       return;
@@ -251,6 +246,10 @@ export class CommandHandler {
       window.removeEventListener('keydown', this.keyHandler);
       this.keyHandler = null;
     }
+  }
+
+  private findElement(nodeID: number): Element | null {
+    return document.querySelector(`[data-rr-node-id="${nodeID}"]`);
   }
 
   private log(...args: unknown[]): void {

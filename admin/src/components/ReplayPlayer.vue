@@ -6,7 +6,7 @@
 import { ref, watch, onUnmounted, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { EventPayload } from '@pinconsole/proto';
-import { Replayer, type playerConfig } from '@pinconsole/replay-core';
+import { Replayer, type playerConfig, type eventWithTime } from '@pinconsole/replay-core';
 import { useResponsivePlayerSize } from '../composables/useResponsivePlayerSize';
 
 const { t } = useI18n();
@@ -103,7 +103,7 @@ function appendEvents(events: EventPayload[]) {
   if (!replayer) return;
   const rrwebEvents = extractRRWeb(events);
   for (const ev of rrwebEvents) {
-    replayer.addEvent(ev as never);
+    replayer.addEvent(ev as eventWithTime);
   }
 }
 
