@@ -3,7 +3,8 @@
 **切片编号**：vendor-rrweb（fork-0 ~ fork-4 工作流总纲）
 **类型**：重构 / 新功能（横切录制端 + 回放端）
 **创建时间**：2026-06-25
-**状态**：fork-0 ✅ (2026-06-25), fork-0-parity ✅, fork-1 ✅, fork-2 ✅ (2026-06-26 T00:00), fork-3a ✅ (T00:05), fork-4 ✅ (T00:15)
+**状态**：✅ completed — All forks implemented, merged to master (`82a7a355`)
+**实现报告**：[2026-06-25-vendor-rrweb-implementation.md](./2026-06-25-vendor-rrweb-implementation.md)
 **关联**：[PLAN.md §4 技术栈](../../PLAN.md)、[CLAUDE.md 已锁定架构决策](../../CLAUDE.md)、[verification-depth 标准](../standards/verification-depth.md)
 
 ## Context

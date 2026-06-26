@@ -149,8 +149,9 @@ export const useVisitorsStore = defineStore('visitors', () => {
     // 原实现 push 到旧 array + set 旧 reference,导致 ReplayPlayer 的 watch 不触发
     // (浅比较 array reference 不变)→ incremental events 永远不进 player。
     let newList = [...oldList, ...payloads];
-    // 1c：rrweb 事件多，从 200 扩到 500
-    if (newList.length > 500) newList = newList.slice(newList.length - 500);
+    // 1c：rrweb 事件多，从 200 扩到 500；2026-06-26 从 500 扩到 5000
+    // 原因：ReplayPlayer watch 依赖新数组长度判断增量，cap 裁切后长度不变导致事件静默丢失
+    if (newList.length > 5000) newList = newList.slice(newList.length - 5000);
     events.value.set(sessionId, newList);
     events.value = new Map(events.value);
 

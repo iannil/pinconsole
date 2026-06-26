@@ -13,6 +13,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      // PostCSS destructures require('path') at module scope; provide a
+      // browser polyfill so Vite bundles it instead of externalizing.
+      // PostCSS destructures Node built-in modules at module scope; provide
+      // browser polyfills so Vite bundles them instead of externalizing.
+      path: resolve(__dirname, 'src/lib/path-polyfill.ts'),
+      'source-map-js': resolve(__dirname, 'src/lib/node-polyfills.ts'),
+      url: resolve(__dirname, 'src/lib/node-polyfills.ts'),
+      fs: resolve(__dirname, 'src/lib/node-polyfills.ts'),
     },
   },
   server: {

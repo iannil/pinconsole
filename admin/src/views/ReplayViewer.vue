@@ -311,8 +311,6 @@ watch(() => route.params.session_id, (newId) => {
 /* replay-core Replayer 全局样式 */
 .replayer-wrapper {
   transform-origin: top left;
-  left: 50%;
-  top: 50%;
   position: relative;
 }
 </style>
@@ -385,9 +383,9 @@ watch(() => route.params.session_id, (newId) => {
 
 .player-container {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 

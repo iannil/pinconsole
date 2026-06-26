@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-20(1ai-h 完成 — SessionHandler 接口化 + initSession happy path + replay 纯函数测试,api 包覆盖实测 38.2%(docker 环境);1ag~1ai-h 累计 +75 测试 + 5 接口化重构 + 2 代码 fix;同日完成 marketing-monitor → pinconsole 全量重命名重构 5 步 + 单元测试覆盖率评估;累计 28 T0 + 40 T1 + 2 代码 bug + 9 + 23 test-health + 22 api-handler + 2 followup-fix + 22 storage-repo + 14 happy-path 项)
+**最后更新**:2026-06-26(vendor-rrweb 硬分叉 fork-0~4 全部完成 + 合并 master + 遗留清理 + ReplayPlayer 实时事件/cover sizing 修复 + 文档全面归档整理)
 
 ---
 
@@ -18,14 +18,14 @@
 
 ## 2. 当前阶段
 
-**v1 主干完全收口**:1a-1z 全切片 + e2e acceptance + 5 个 followup fix + admin flagged UI/prod-mode CI 全部完成(70+ commits)。**当前无活跃切片**。
+**v1 主干完全收口 + rrweb 硬分叉自维护 + 测试债补全 + ReplayPlayer 实时修复**。
 
-最新进展(2026-06-20):
+最新进展(2026-06-25~26):
 
-- ✅ 1ai-d ~ 1ai-h 接口化重构与 happy path 测试(8 commit,~28h):AuthHandler / ClaimHandler / ChatHandler / CommandHandler / requireClaimOwnership / SessionHandler 全部接口化,api 包覆盖从 20% 提升到实测 38.2%(详见 [`audits/2026-06-20-coverage-assessment.md`](./audits/2026-06-20-coverage-assessment.md))
-- ✅ marketing-monitor → pinconsole 全量重命名重构(5 commit,详见 §2.2)
-- ✅ gofmt 全量清债(struct field 对齐 + 缩进规范,1 commit)
-- ✅ storage 时间窗口测试 sleep 10ms → 100ms 防 PG 时钟漂移 flaky(1 commit)
+- ✅ **vendor-rrweb 硬分叉**（21 commits, `feat/vendor-rrweb` 分支 → merged to master `82a7a355`）: 将 rrweb alpha.20 TS 源码拷贝至 `packages/replay-core`，经 fork-0~4 逐步替换 SDK record / admin replay / 简化文件 / 实现 nodeID 跨端寻址。删除 Svelte rrweb-player 依赖（-600 行 hack）。详见 [`reports/completed/2026-06-25-vendor-rrweb-implementation.md`](./reports/completed/2026-06-25-vendor-rrweb-implementation.md)
+- ✅ **ReplayPlayer 实时事件修复 + cover sizing**（2026-06-26, 11 文件未提交改动）: 创建 Replayer 后立即 `startLive(farFuture)` 而非等待 `finish` 事件；sizing 从 contain 改为 cover 模式；store cap 500→5000；iframe sandbox `allow-scripts` 全开。详见 [`progress/2026-06-26-replay-live-mode-and-sizing-fix.md`](./progress/2026-06-26-replay-live-mode-and-sizing-fix.md)
+- ✅ **全量 T2/T3 组件测试补全**（2026-06-26, `{daily}/2026-06-26.md`）: 新增 11 个测试文件 / +70 测试用例。admin 24 files / 203 passed（原 14 files / 146）；visitor-sdk 14 files / 219 passed（原 13 files / 206）
+- ✅ **docs 全量整理归档**（2026-06-26）: vendor-rrweb spec+impl 归档、live-input-render 归档、replay-sizing 标记 superseded、project-status/daily/MEMORY 全量更新
 
 前序进展(2026-06-18~19):
 
@@ -36,12 +36,12 @@
 - ✅ e2e 后真实使用发现的 5 个生产 bug 全部修复([`reports/completed/2026-06-18-v1-followups.md`](./reports/completed/2026-06-18-v1-followups.md))
 - ✅ admin SPA 消费 flagged 字段 + prod-mode/docker-prod e2e CI(`a660622`)
 
-切片深度分布(v1 主干,2026-06-19 测试信心审计 + 1ac + 1ac-final + 1ad + 1ai-a~1ai-h 完成):
+切片深度分布(v1 主干 + vendor-rrweb,2026-06-26):
 
 - 🟢 verified-deep ×23(4 strict + 1 aligned + 18 touched)
 - 🟡 verified-shallow ×9
-- 🔴 implemented-unverified ×0(全部 7 个原 🔴 升 🟡/🟢)
-- 全部切片已交付
+- 🔴 implemented-unverified ×0
+- ✅ vendor-rrweb: 🟢 touched（全部 5 切片完成并合并）
 
 > **2026-06-19 测试信心审计结果**:`project-status.md` §5 此前自报 🟢 ×31,经 spec→test 对照实测,20 个切片应降级。审计方法详见 [`audits/2026-06-19-test-confidence-audit.md`](./audits/2026-06-19-test-confidence-audit.md)。降级原因:T0/T1 测试 gap 集中在认证/授权/GDPR/限流/可观测路径。修复 plan 见审计 §5。
 >
@@ -86,14 +86,15 @@
 | v1-e2e(全量 e2e acceptance) | 🟡 |
 | v1-followups(5 个生产 bug fix) | 🟡 |
 
-### 2.1 代码体量(2026-06-20 实测)
+### 2.1 代码体量(2026-06-26 实测)
 
 | 维度 | 数值 |
 |---|---|
 | Go 后端代码(server/,不含测试) | ~6700 LOC |
 | Go 测试文件 | 59 个(`*_test.go`) |
-| TypeScript 单测(admin + visitor-sdk) | 16 个(`*.test.ts`,150 用例) |
-| E2E 测试场景 | 19 个 spec(91 test cases) |
+| TypeScript 单测(admin + visitor-sdk) | 38 个(`*.test.ts`, +500 用例) |
+| E2E 测试场景 | 22 个 spec(91+ test cases) |
+| packages/replay-core | 37 源文件,~268KB, ESM bundle 396KB |
 | Go 加权整体覆盖率(docker 环境) | ~65% |
 | config 包覆盖 | 98.0% 🟢 |
 | privacy 包覆盖 | 95.0% 🟢 |
@@ -233,24 +234,32 @@
 - storage 包覆盖 20.1% → 实测 57.6%(docker 环境;repo 函数 70-100%,适配器 0%)
 - 接口化模式 PoC 在 5 个 handler 验证
 
-**累计估时**:solo 全职约 14-17 周(3.5-4 个月);业余约 9-12 个月。实际本次集中冲刺:2026-06-17~20 共 4 天,90+ commits。测试信心补全完成,可考虑 post-v1 路线(自定义域名 / 页面编辑器 / Tauri)。
+**vendor-rrweb 统计**(2026-06-25~26, feat 分支 21 commits):
+- fork-0~4 全部完成并合并至 master（`82a7a355`）
+- 删除 Svelte rrweb-player 依赖,净减 ~600 行 hack 代码
+- ESM bundle: 423KB→396KB(-27KB) via fork-3a 精简
+- 新增 2 parity e2e,360 单元测试全绿
+- nodeID 跨端寻址全链路打通（snapshot 写 data-rr-node-id → elementFromPoint → Server → NodeMap.get → element.click()）
+
+**累计估时**:solo 全职约 15-18 周(3.5-4.5 个月);业余约 10-13 个月。实际本次集中冲刺:2026-06-17~20 共 4 天(90+ commits) + 2026-06-25~26 共 2 天(21 commits: vendor-rrweb + 测试债 + ReplayPlayer 修复)。
 
 ## 6. 已识别风险
 
 详见 [`PLAN.md`](../PLAN.md) §10 + [`audits/2026-06-18-deep-audit.md`](./audits/2026-06-18-deep-audit.md)。
 
-**已闭环**（详情见各切片报告）:
+**已闭环**（含 vendor-rrweb 更新）:
 - ✅ 全部 13 个 P0 安全/合规/部署阻断项(1k/1l 修 11 个真修,1v 补 2 个 workaround 已文档化)
 - ✅ 1k-1u regression 8 个新发现(1v)
 - ✅ 文档虚标(P0-10/11/12) → 1n 修复
 - ✅ e2e 静默跳过 → 1n 改 strict assertion
 - ✅ 浅测补深 → 1n + e2e acceptance
 - ✅ 5 个 e2e 后生产 bug(v1-followups)
+- ✅ **rrweb 在动态 SPA 下节点 ID 不稳定** → fork-4 nodeID 跨端寻址已打通（snapshot 写 `data-rr-node-id`,CoBrowseOverlay 真实 elementFromPoint 查询,end-to-end 验证通过）
 
 **未修(不阻断 v1 release)**:
 - 🟡 **P2/P3**:~20 条非阻断项(代码质量、文档完善、测试深化),详见审计文档,留作 post-v1 backlog
-- **rrweb 在动态 SPA 下节点 ID 不稳定**:测试矩阵需覆盖主流框架
-- **AGPL 可能劝退部分企业采用**:双 license 路径预留
+- **AGPL 可能劝退部分企业采用**:双 license 路径预留（已加 "commercial license available" 措辞）
+- **fork-3b 上游测试转 Playwright**:5 组(snapshot/replayer/observer/shadow DOM/iframe/mask)暂留 backlog
 
 ## 7. 下一步动作
 
@@ -277,7 +286,8 @@
 1. **自定义域名**(PLAN.md §8 #3)— DNS 验证 + Let's Encrypt ACME + Host-header 路由
 2. **页面编辑器**(PLAN.md §8 #2)— 拖拽 / 低代码 / JSON schema → Go 模板渲染
 3. **Tauri 桌面端**(PLAN.md §8 #4)— Win + Mac,复用 admin SPA
-4. **反爬加固**(PLAN.md §8 #5)— CAPTCHA + honeypot + 动态类名/ID
+4. **fork-3b 上游测试转 Playwright** — 5 组 snapshot/replayer/observer/shadow DOM/iframe/mask（~2-3d）
+5. **反爬加固**(PLAN.md §8 #5)— CAPTCHA + honeypot + 动态类名/ID
 
 ## 8. LLM 协作提示
 
@@ -287,7 +297,8 @@
 2. 再按需读 [`CLAUDE.md`](../CLAUDE.md)(工作指南)、[`PLAN.md`](../PLAN.md)(架构详情)
 3. 读当日的 `memory/daily/{date}.md`(如有)
 4. 读相关的 `docs/reports/completed/`(注意每份报告顶部有**深度 badge + 叙述免责 disclaimer**)
-5. 如需理解 e2e 后的真实使用反馈,读 [`reports/completed/2026-06-18-v1-followups.md`](./reports/completed/2026-06-18-v1-followups.md)
+5. 如需理解回放核心,读 `packages/replay-core/`（rrweb alpha.20 TS 源码 fork，非 rrweb-player Svelte）
+6. 如需理解 e2e 后的真实使用反馈,读 [`reports/completed/2026-06-18-v1-followups.md`](./reports/completed/2026-06-18-v1-followups.md)
 
 **遇到冲突时**:
 

@@ -107,6 +107,7 @@ const claimButtonLabel = computed(() =>
   height: 100%;
   background: var(--pc-color-bg-surface);
   min-width: 0;
+  min-height: 0;
   flex: 1;
 }
 

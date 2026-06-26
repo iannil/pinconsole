@@ -12,7 +12,7 @@
 import type { Ref } from 'vue';
 import type { Replayer } from '@pinconsole/replay-core';
 
-// 从 Replayer.wrapper 中找 iframe，读 width/height attribute
+// 从 Replayer 的 iframe 读 width/height attribute
 function readRecordingDims(replayer: Replayer): { width: number; height: number } | null {
   const iframe = replayer.iframe;
   if (!iframe) return null;
@@ -30,12 +30,16 @@ function readRecordingDims(replayer: Replayer): { width: number; height: number 
   return null;
 }
 
+const MAX_RETRIES = 20;   // 最多等 2s（100ms × 20）
+const RETRY_MS = 100;
+
 export function useResponsivePlayerSize(
   containerRef: Ref<HTMLElement | null>,
   getReplayer: () => Replayer | null,
 ) {
   let resizeObserver: ResizeObserver | null = null;
   let deferredTimer: ReturnType<typeof setTimeout> | null = null;
+  let retryCount = 0;
 
   const apply = (): void => {
     const container = containerRef.value;
@@ -47,27 +51,36 @@ export function useResponsivePlayerSize(
     if (cw === 0 || ch === 0) return;
 
     const recDims = readRecordingDims(replayer);
-    if (!recDims) return;
+    if (!recDims) {
+      // iframe 尚未就绪（meta event 可能还未处理）:重试
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        setTimeout(apply, RETRY_MS);
+      }
+      return;
+    }
+
+    retryCount = 0;
 
     const ratio = recDims.width / recDims.height;
     let newW: number;
     let newH: number;
     if (cw / ch > ratio) {
-      newH = ch;
-      newW = ch * ratio;
-    } else {
+      // container is wider than recording → fill width (height overflows, clipped by overflow:hidden)
       newW = cw;
       newH = cw / ratio;
+    } else {
+      // container is taller/narrower → fill height (width overflows)
+      newH = ch;
+      newW = ch * ratio;
     }
 
-    // 直接设 wrapper 尺寸（不再走 $set + triggerResize）
     const wrapper = replayer.wrapper;
     if (wrapper) {
       wrapper.style.width = `${Math.floor(newW)}px`;
       wrapper.style.height = `${Math.floor(newH)}px`;
     }
 
-    // let replay-core handle internal iframe scaling
     replayer.handleResize({ width: recDims.width, height: recDims.height });
   };
 
@@ -76,8 +89,8 @@ export function useResponsivePlayerSize(
     const container = containerRef.value;
     if (!container) return;
 
-    // defer: wait for Replayer iframe to be ready
-    deferredTimer = setTimeout(apply, 100);
+    retryCount = 0;
+    deferredTimer = setTimeout(apply, RETRY_MS);
 
     resizeObserver = new ResizeObserver(apply);
     resizeObserver.observe(container);
@@ -86,6 +99,7 @@ export function useResponsivePlayerSize(
   function stop(): void {
     resizeObserver?.disconnect();
     resizeObserver = null;
+    retryCount = 0;
     if (deferredTimer) { clearTimeout(deferredTimer); deferredTimer = null; }
   }
 

@@ -612,10 +612,15 @@ export class Replayer {
     }
 
     this.iframe = document.createElement('iframe');
-    const attributes = ['allow-same-origin'];
-    if (this.config.UNSAFE_replayCanvas) {
-      attributes.push('allow-scripts');
-    }
+    // allow-scripts is always needed: rebuild.ts sets attributes on elements
+    // inside the iframe's document (e.g. <script src>), and without it the
+    // browser blocks those operations with "Blocked script execution" errors.
+    // allow-same-origin is also required: the replay process reads
+    // contentWindow.innerWidth / .scrollTo() etc, and the replayed page may
+    // access localStorage. Without it all these are cross-origin-blocked.
+    // Chrome warns about this combination — it is a known trade-off for
+    // rrweb-style replay (the iframe only loads pre-recorded data).
+    const attributes = ['allow-same-origin', 'allow-scripts'];
     // hide iframe before first meta event
     this.iframe.style.display = 'none';
     this.iframe.setAttribute('sandbox', attributes.join(' '));

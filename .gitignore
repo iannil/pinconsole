@@ -69,3 +69,4 @@ docker-compose.override.yml
 .dev/
 server/cmd/server/embedded/
 reasonix.toml
+test-results/

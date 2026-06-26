@@ -1,9 +1,10 @@
 # Replay Player 响应式 sizing 修复
 
-**状态**:in_progress(待用户在浏览器验证后移到 `reports/completed/`)
+**状态**:superseded — vendor-rrweb fork (2026-06-25) 彻底替换回放引擎，原 bugs 由新架构自动解决
 **开始**:2026-06-21
-**完成**:(待浏览器验证)
+**完成**:（superseded 2026-06-26）
 **关联**:实时回放切片 `docs/reports/completed/2026-06-17-slice-1c-*.md`,历史回放切片 `docs/reports/completed/2026-06-17-slice-1d-*.md`
+**Superseded By**: `docs/reports/completed/2026-06-25-vendor-rrweb-spec.md`
 
 ## Context
 

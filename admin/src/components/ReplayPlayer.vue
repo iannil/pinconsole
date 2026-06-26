@@ -23,6 +23,10 @@ const hasEnoughEvents = ref(false);
 
 let replayer: Replayer | null = null;
 let initialized = false;
+// 记录已追加到 replayer 的事件数（不受 store cap 裁切影响）
+let lastProcessedCount = 0;
+// cap 裁切后，用最后一条 rrweb 事件时间戳识别真正的新事件
+let lastSeenTimestamp = 0;
 
 // 响应式 sizing
 const { start: startResponsiveSizing, stop: stopResponsiveSizing } =
@@ -84,10 +88,11 @@ async function rebuildPlayer() {
     replayer = new Replayer(rrwebEvents, config);
     initialized = true;
 
-    // listen for finish → switch to live mode
-    replayer.on('finish', () => {
-      replayer?.startLive(Date.now() + 365 * 24 * 60 * 60 * 1000);
-    });
+    // 立即切入 live 模式：Replayer 直用不走 rrweb-player Svelte 时不会自动播放，
+    // finish 事件永不触发，addEvent 在 paused 状态（baselineTime=0，timer 未激活）
+    // 会静默丢弃事件。startLive(farFuture) 将 baselineTime 设为远未来，
+    // 使后续所有 addEvent 的 isSync=true 并立即渲染。
+    replayer.startLive(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
     // 启动响应式 sizing
     startResponsiveSizing();
@@ -113,15 +118,42 @@ watch(
   (newEvents, oldEvents) => {
     if (!initialized || !replayer) {
       rebuildPlayer();
+      lastProcessedCount = newEvents.length;
+      updateLastSeenTimestamp(newEvents);
       return;
     }
-    if (newEvents.length > (oldEvents?.length ?? 0)) {
-      const fresh = newEvents.slice(oldEvents?.length ?? 0);
+    if (newEvents.length > lastProcessedCount) {
+      // 正常增长（大多数情况）
+      const fresh = newEvents.slice(lastProcessedCount);
       appendEvents(fresh);
+      lastProcessedCount = newEvents.length;
+      updateLastSeenTimestamp(fresh);
+    } else if (newEvents !== oldEvents && newEvents.length > 0) {
+      // cap 裁切边界：数组引用变了但长度未增长。
+      // 用 rrweb 事件时间戳识别真正的新事件，避免重建 player。
+      const allRRWeb = extractRRWeb(newEvents);
+      for (const ev of allRRWeb) {
+        const ts = (ev as { timestamp: number }).timestamp ?? 0;
+        if (ts > lastSeenTimestamp) {
+          replayer.addEvent(ev as eventWithTime);
+          lastSeenTimestamp = ts;
+        }
+      }
     }
   },
   { deep: false },
 );
+
+/** 从事件列表中提取最后一条 rrweb 事件的时间戳并记录 */
+function updateLastSeenTimestamp(events: EventPayload[]) {
+  const rrwebEvents = extractRRWeb(events);
+  if (rrwebEvents.length > 0) {
+    const last = rrwebEvents[rrwebEvents.length - 1] as { timestamp: number };
+    if (last.timestamp > lastSeenTimestamp) {
+      lastSeenTimestamp = last.timestamp;
+    }
+  }
+}
 
 // sessionId 变化 → 强制重建
 watch(
@@ -163,8 +195,6 @@ defineExpose({ appendEvents });
 /* replay-core Replayer CSS（继承自 rrweb，放在全局作用域让 iframe 内部生效） */
 .replayer-wrapper {
   transform-origin: top left;
-  left: 50%;
-  top: 50%;
   position: relative;
 }
 </style>
@@ -191,10 +221,11 @@ defineExpose({ appendEvents });
 
 .player-container {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow: hidden;
   background: #f5f7fa;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -202,5 +233,6 @@ defineExpose({ appendEvents });
 .player-container :deep(iframe) {
   display: block !important;
   pointer-events: auto !important;
+  border: 0;
 }
 </style>

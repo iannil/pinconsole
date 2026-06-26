@@ -51,7 +51,7 @@ describe('useResponsivePlayerSize', () => {
     vi.useRealTimers();
   });
 
-  it('容器更宽时高度撑满，wrapper 按录制比例计算', () => {
+  it('容器更宽时宽度撑满（cover 模式），wrapper 按录制比例计算', () => {
     const container = makeContainer(1000, 500);
     const replayer = makeMockReplayer(800, 600); // 4:3
     container.appendChild(replayer.wrapper);
@@ -64,16 +64,16 @@ describe('useResponsivePlayerSize', () => {
     resizeCbs.forEach((cb) => cb()); // trigger ResizeObserver
 
     // 容器 1000x500 (2:1) > 录制 800x600 (4:3 ≈ 1.33:1)
-    // 高度撑满: newH = 500, newW = 500 * 1.33 ≈ 666
+    // cover 模式: fill width → newW = 1000, newH = 1000 / 1.33 = 750
     const style = replayer.wrapper.style;
-    expect(style.width).toBe('666px');
-    expect(style.height).toBe('500px');
+    expect(style.width).toBe('1000px');
+    expect(style.height).toBe('750px');
     expect(replayer.handleResize).toHaveBeenCalledWith({ width: 800, height: 600 });
 
     stop();
   });
 
-  it('容器更窄时宽度撑满', () => {
+  it('容器更窄时高度撑满（cover 模式）', () => {
     const container = makeContainer(400, 900);
     const replayer = makeMockReplayer(800, 600); // 4:3 → ratio 1.33
     container.appendChild(replayer.wrapper);
@@ -86,10 +86,10 @@ describe('useResponsivePlayerSize', () => {
     resizeCbs.forEach((cb) => cb());
 
     // 容器 400x900 (0.44:1) < 录制 800x600 (1.33:1)
-    // 宽度撑满: newW = 400, newH = 400 / 1.33 ≈ 300
+    // cover 模式: fill height → newH = 900, newW = 900 * 1.33 = 1200
     const style = replayer.wrapper.style;
-    expect(style.width).toBe('400px');
-    expect(style.height).toBe('300px');
+    expect(style.width).toBe('1200px');
+    expect(style.height).toBe('900px');
   });
 
   it('replayer 为 null 时不崩溃', () => {
@@ -126,7 +126,7 @@ describe('useResponsivePlayerSize', () => {
     start();
     vi.advanceTimersByTime(100);
     resizeCbs.forEach((cb) => cb()); // first apply
-    expect(replayer.wrapper.style.width).toBe('666px'); // was applied
+    expect(replayer.wrapper.style.width).toBe('1000px'); // was applied
 
     stop();
 
@@ -135,8 +135,8 @@ describe('useResponsivePlayerSize', () => {
     resizeCbs.forEach((cb) => cb());
 
     // style 保持 stop 前的值
-    expect(replayer.wrapper.style.width).toBe('666px');
-    expect(replayer.wrapper.style.height).toBe('500px');
+    expect(replayer.wrapper.style.width).toBe('1000px');
+    expect(replayer.wrapper.style.height).toBe('750px');
   });
 
   it('重复 start 不会创建多个 observer', () => {
