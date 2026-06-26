@@ -103,6 +103,16 @@ type VisitorConsent struct {
 // 多租户未激活,所有记录均归属此 tenant。
 var DefaultTenantID = uuid.Nil
 
+// WidgetConfig 是 widget 配置的 DB 模型（page-editor pe-1）。
+type WidgetConfig struct {
+	ID         int64     `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	WidgetType string    `json:"widget_type"`
+	Config     []byte    `json:"config"` // JSONB
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 // scanner 兼容 *pgx.Row 与 *pgx.Rows 的 Scan 接口。
 type scanner interface {
 	Scan(dest ...any) error

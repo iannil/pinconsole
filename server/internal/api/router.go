@@ -104,6 +104,10 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	sessionH := NewSessionHandler(opts.Stores, opts.Hub, opts.Logger)
 	sessionH.Register(r)
 
+	// pe-1：Widget 配置（公开 GET + 保护 PUT）
+	widgetCfgH := NewWidgetConfigHandler(opts.Stores, opts.Logger)
+	widgetCfgH.RegisterPublic(r)
+
 	// 1l：隐私合规 consent 端点(公开,SDK 用)
 	privacyH := NewPrivacyHandler(opts.Stores, opts.Logger)
 	privacyH.RegisterPublic(r)
@@ -148,6 +152,9 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 
 		// 1l:erasure(GDPR Art.17 被遗忘权,admin only)
 		protected.DELETE("/api/privacy/visitor/:fingerprint", privacyH.DeleteVisitor)
+
+		// pe-1:Widget 配置编辑(admin only)
+		widgetCfgH.RegisterProtected(protected)
 	}
 
 	// 静态资源（landing / sdk / admin）
