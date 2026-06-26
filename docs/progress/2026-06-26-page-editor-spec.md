@@ -3,7 +3,8 @@
 **切片编号**：page-editor（post-v1 #2）
 **类型**：新功能（运营端页面/Widget 编辑器）
 **创建时间**：2026-06-26
-**状态**：draft（待用户确认决策）
+**状态**：✅ completed — pe-1(proto+PG+Go+API) + pe-2(admin UI) + pe-3(SDK 配置驱动) 全部实现并合并
+**实现 commits**: `19eca36`(pe-1) `42a5625`(pe-2) `1dcda74`(pe-3)
 **关联**：[PLAN.md §8 post-v1 候选](../../PLAN.md)、[design-system.md 前端基线](../design-system.md)
 
 ## Context

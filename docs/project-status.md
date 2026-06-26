@@ -8,7 +8,7 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-26(vendor-rrweb 硬分叉 fork-0~4 全部完成 + 合并 master + 遗留清理 + ReplayPlayer 实时事件/cover sizing 修复 + 文档全面归档整理)
+**最后更新**:2026-06-26(page-editor 全部 3 切片完成 + fork-3b 测试债补全 + Go 后端三包 90%+)
 
 ---
 
@@ -18,7 +18,17 @@
 
 ## 2. 当前阶段
 
-**v1 主干完全收口 + rrweb 硬分叉自维护 + 测试债补全 + ReplayPlayer 实时修复**。
+**v1 主干完全收口 + rrweb 硬分叉自维护 + 测试债补全 + ReplayPlayer 实时修复 + page-editor 全 3 切片 + Go 覆盖 90%+**。
+
+最新进展(2026-06-26):
+
+- ✅ **page-editor 全 3 切片**（3 commits: `19eca36` `42a5625` `1dcda74`）: post-v1 页面编辑器。pe-1 proto 类型 + PG 迁移 + Go CRUD + API handler；pe-2 admin WidgetsView.vue + 路由 + i18n；pe-3 SDK widget-config 获取器 + 配置驱动渲染。详见 [`progress/2026-06-26-page-editor-spec.md`](./progress/2026-06-26-page-editor-spec.md)
+- ✅ **fork-3b 上游测试转译 + record 模块测试深化**（+88+29=+117 测试）: replay-core 从 57→146 测试，0 failed。Timer/machine/Replayer/record-helpers/mutation-buffer 全覆盖。
+- ✅ **Go 后端覆盖三包 90%+**: recording 90.7% / api 90.0% / storage 91.5%。修复 snapshot.go Meta 缓存 0%→100%、authenticateOperatorWS 81%→90.5%、truncate 75%→100%。
+- ✅ **开发端口迁移 7000-7100**: 30 文件变更。7080(server)/7073(admin)/7074(SDK)/7032(PG)/7079(Redis)/7020(MinIO)/7021(Console)。修复 macOS AirPlay 与 7000 端口冲突。
+- ✅ **vendor-rrweb 硬分叉**（21 commits, feat 分支 → merged to master）
+- ✅ **ReplayPlayer 实时事件修复 + cover sizing**
+- ✅ **docs 全量整理归档**
 
 最新进展(2026-06-25~26):
 
@@ -95,8 +105,8 @@
 | Go 测试文件 | 59 个(`*_test.go`) |
 | TypeScript 单测(admin + visitor-sdk) | 38 个(`*.test.ts`, +500 用例) |
 | E2E 测试场景 | 22 个 spec(91+ test cases) |
-| packages/replay-core | 37 源文件,~268KB, ESM bundle 396KB; 8 test files, 145 tests |
-| Go 加权整体覆盖率(docker 环境) | ~65% |
+| packages/replay-core | 37 源文件,~268KB; 8 测试文件, **146 测试** |
+| Go 加权整体覆盖率(docker 环境) | recording **90.7%** / api **90.0%** / storage **91.5%** |
 | config 包覆盖 | 98.0% 🟢 |
 | privacy 包覆盖 | 95.0% 🟢 |
 | proto 包覆盖 | **100.0%** 🟢(Go-1) |

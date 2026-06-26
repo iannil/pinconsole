@@ -11,7 +11,7 @@ SERVER_BIN="${SERVER_BIN:-server/bin/pinconsole-server}"
 PID_FILE=".server.pid"
 LOG_FILE="/tmp/pinconsole-server.log"
 COMPOSE="docker compose"
-HEALTH_URL="http://localhost:${SERVER_PORT:-8080}/healthz"
+HEALTH_URL="http://localhost:${SERVER_PORT:-7080}/healthz"
 
 # 1k fail-secure 后 server 启动需要显式 env（ADMIN_PASSWORD 等）；
 # 自动 source 根目录 .env（若存在），让 ./ops.sh start 开箱即用。
