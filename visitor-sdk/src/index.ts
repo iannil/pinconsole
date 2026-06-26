@@ -18,6 +18,7 @@ import { showConsentBanner, removeConsentBanner } from './ui/consentBanner';
 import { showCoBrowseBanner, removeCoBrowseBanner } from './ui/coBrowseBanner';
 import { injectTokenStyles } from './styles/tokens';
 import { sdkLogger } from './logging';
+import { fetchWidgetConfig, type WidgetConfigMap } from './widget-config';
 
 const SDK_VERSION = '0.4.0';
 
@@ -34,6 +35,8 @@ class MarketingMonitorSDK {
   // 1l:consent 状态(是否允许采集 surveillance 数据)
   private consentAccepted: boolean | null = null;
   private fingerprint: ReturnType<typeof collectFingerprint> | null = null;
+  /** pe-3:widget 配置缓存 */
+  private widgetConfigs: Partial<WidgetConfigMap> = {};
 
   constructor() {
     this.config = resolveConfig();
@@ -63,6 +66,9 @@ class MarketingMonitorSDK {
 
     // 1l:从服务端查 consent 状态
     await this.loadConsent(apiBase);
+
+    // pe-3:拉取 widget 配置（弹窗/聊天等文案）
+    this.widgetConfigs = await fetchWidgetConfig(apiBase);
 
     // 1l:根据 consentMode + consentAccepted 决定是否启动 surveillance
     const shouldCollect = this.shouldCollectSurveillance();
@@ -95,6 +101,7 @@ class MarketingMonitorSDK {
 
     // 1e/1g：命令处理器（cursor_highlight / click / scroll / fill_input / navigate / show_popup / chat_message）
     // 1g：聊天 widget（右下角浮动气泡）
+    const chatCfg = this.widgetConfigs?.chat;
     this.chatWidget = new ChatWidget({
       onSend: (content) => {
         // 访客发消息：POST /api/sessions/:id/visitor-message（公开端点，
@@ -127,7 +134,9 @@ class MarketingMonitorSDK {
           created_at: m.created_at,
         }));
       },
-    });
+    },
+      chatCfg ? { header: chatCfg.header, placeholder: chatCfg.placeholder, sendLabel: chatCfg.send_label } : undefined,
+    );
     this.chatWidget.show();
 
     this.commandHandler = new CommandHandler({
@@ -249,8 +258,16 @@ class MarketingMonitorSDK {
   /** 1l:opt-in 模式下未同意时显示 banner。 */
   private showConsentBannerIfNeeded(apiBase: string): void {
     if (this.consentAccepted !== null) return; // 已有记录(接受或拒绝)
+    // pe-3:服务端 widget 配置优先级高于 config.consentBannerText
+    const serverText = this.widgetConfigs?.consent_banner;
+    const mergedText = {
+      title: serverText?.title || this.config.consentBannerText?.title,
+      body: serverText?.body || this.config.consentBannerText?.body,
+      accept: serverText?.accept_label || this.config.consentBannerText?.accept,
+      reject: serverText?.reject_label || this.config.consentBannerText?.reject,
+    };
     showConsentBanner({
-      text: this.config.consentBannerText,
+      text: mergedText.title || mergedText.body ? mergedText : this.config.consentBannerText,
       onAccept: async () => {
         this.consentAccepted = true;
         // POST 到服务端持久化

@@ -30,6 +30,13 @@ export interface ChatWidgetCallbacks {
   onFetchMessages?: (sinceId: number) => Promise<ChatMessage[]>;
 }
 
+/** pe-3:Chat widget 文案配置(可选,默认用 i18n)。 */
+export interface ChatWidgetConfig {
+  header?: string;
+  placeholder?: string;
+  sendLabel?: string;
+}
+
 export class ChatWidget {
   private callbacks: ChatWidgetCallbacks;
   private container: HTMLDivElement | null = null;
@@ -38,6 +45,8 @@ export class ChatWidget {
   private messageList: HTMLDivElement | null = null;
   private input: HTMLInputElement | null = null;
   private unreadCount = 0;
+  // pe-3:自定义文案
+  private config: ChatWidgetConfig;
   // WS 层面去重:已 acknowledge 的 server 消息 id。
   // 防止同一条 WS 消息重复推送时,unread 被多次累加。
   private seenIds = new Set<number>();
@@ -50,8 +59,9 @@ export class ChatWidget {
   private fetchCursor = 0;
   private expanded = false;
 
-  constructor(callbacks: ChatWidgetCallbacks) {
+  constructor(callbacks: ChatWidgetCallbacks, config?: ChatWidgetConfig) {
     this.callbacks = callbacks;
+    this.config = config || {};
   }
 
   show(): void {
@@ -188,7 +198,7 @@ export class ChatWidget {
     headerIcon.style.cssText = 'display: inline-flex; align-items: center; width: 16px; height: 16px';
     headerIcon.innerHTML = CHAT_ICON_SVG.replace('width="24"', 'width="16"').replace('height="24"', 'height="16"');
     const headerText = document.createElement('span');
-    headerText.textContent = t('chat_header');
+    headerText.textContent = this.config.header || t('chat_header');
     header.appendChild(headerIcon);
     header.appendChild(headerText);
     this.panel.appendChild(header);
@@ -205,7 +215,7 @@ export class ChatWidget {
       'display:flex;padding: 10px 12px;gap: 6px;border-top: 1px solid var(--pinconsole-color-border-default, #e7e5e4)';
     this.input = document.createElement('input');
     this.input.type = 'text';
-    this.input.placeholder = t('chat_input_placeholder');
+    this.input.placeholder = this.config.placeholder || t('chat_input_placeholder');
     this.input.style.cssText = [
       'flex:1',
       'padding: 8px 12px',
