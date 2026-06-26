@@ -277,7 +277,7 @@ describe('visitors store', () => {
       expect(v.eventCount).toBe(1);
     });
 
-    it('caps events at 500 (slices oldest)', () => {
+    it('keeps events within cap (cap=5000, 502 < cap so all retained)', () => {
       const store = useVisitorsStore();
       store.applyPresence(basePresence({ sessionId: 's1' }));
 
@@ -290,10 +290,10 @@ describe('visitors store', () => {
       }
 
       const evs = store.events.get('s1')!;
-      expect(evs).toHaveLength(500);
-      // 保留最后 500 个 (i=2..501)
-      expect(evs[0]!.data).toEqual({ i: 2 });
-      expect(evs[499]!.data).toEqual({ i: 501 });
+      expect(evs).toHaveLength(502);
+      // 保留全部 502 个 (cap=5000, i=0..501 全部保留)
+      expect(evs[0]!.data).toEqual({ i: 0 });
+      expect(evs[499]!.data).toEqual({ i: 499 });
     });
   });
 
