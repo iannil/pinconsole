@@ -23,6 +23,7 @@
 最新进展(2026-06-25~26):
 
 - ✅ **vendor-rrweb 硬分叉**（21 commits, `feat/vendor-rrweb` 分支 → merged to master `82a7a355`）: 将 rrweb alpha.20 TS 源码拷贝至 `packages/replay-core`，经 fork-0~4 逐步替换 SDK record / admin replay / 简化文件 / 实现 nodeID 跨端寻址。删除 Svelte rrweb-player 依赖（-600 行 hack）。详见 [`reports/completed/2026-06-25-vendor-rrweb-implementation.md`](./reports/completed/2026-06-25-vendor-rrweb-implementation.md)
+- ✅ **fork-3b 上游测试转译 + record 模块测试深化**（2026-06-26, `e40d8f7`）: 新增 5 测试文件 / +88 测试，覆盖 Timer 类、状态机、Replayer 核心 API、error-handler、ProcessedNodeManager、StylesheetManager、MutationBuffer。replay-core 从 57→145 测试，**0 failed**。详见 [`reports/2026-06-26-fork-3b-record-test-verification.md`](./reports/2026-06-26-fork-3b-record-test-verification.md)
 - ✅ **ReplayPlayer 实时事件修复 + cover sizing**（2026-06-26, 11 文件未提交改动）: 创建 Replayer 后立即 `startLive(farFuture)` 而非等待 `finish` 事件；sizing 从 contain 改为 cover 模式；store cap 500→5000；iframe sandbox `allow-scripts` 全开。详见 [`progress/2026-06-26-replay-live-mode-and-sizing-fix.md`](./progress/2026-06-26-replay-live-mode-and-sizing-fix.md)
 - ✅ **全量 T2/T3 组件测试补全**（2026-06-26, `{daily}/2026-06-26.md`）: 新增 11 个测试文件 / +70 测试用例。admin 24 files / 203 passed（原 14 files / 146）；visitor-sdk 14 files / 219 passed（原 13 files / 206）
 - ✅ **docs 全量整理归档**（2026-06-26）: vendor-rrweb spec+impl 归档、live-input-render 归档、replay-sizing 标记 superseded、project-status/daily/MEMORY 全量更新
@@ -94,7 +95,7 @@
 | Go 测试文件 | 59 个(`*_test.go`) |
 | TypeScript 单测(admin + visitor-sdk) | 38 个(`*.test.ts`, +500 用例) |
 | E2E 测试场景 | 22 个 spec(91+ test cases) |
-| packages/replay-core | 37 源文件,~268KB, ESM bundle 396KB |
+| packages/replay-core | 37 源文件,~268KB, ESM bundle 396KB; 8 test files, 145 tests |
 | Go 加权整体覆盖率(docker 环境) | ~65% |
 | config 包覆盖 | 98.0% 🟢 |
 | privacy 包覆盖 | 95.0% 🟢 |
