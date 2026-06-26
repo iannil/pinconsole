@@ -294,7 +294,7 @@ func TestLoad_ProdModeAllowsLocalPGSSLDisable(t *testing.T) {
 	t.Setenv("PG_PASSWORD", "prod-pg-secret")
 	t.Setenv("MINIO_ACCESS_KEY", "prod-access-key")
 	t.Setenv("MINIO_SECRET_KEY", "prod-minio-secret")
-	t.Setenv("MINIO_ENDPOINT", "localhost:7000")
+	t.Setenv("MINIO_ENDPOINT", "localhost:7020")
 
 	_, err := Load()
 	if err != nil {

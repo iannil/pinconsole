@@ -893,7 +893,7 @@ func helperAPIStores(t *testing.T) *storage.Stores {
 		pool.Close()
 		t.Skipf("redis not available: %v", err)
 	}
-	mclient, err := minio.New("localhost:7000", &minio.Options{
+	mclient, err := minio.New("localhost:7020", &minio.Options{
 		Creds:  credentials.NewStaticV4("mm_dev", "mm_dev_secret", ""),
 		Secure: false,
 	})

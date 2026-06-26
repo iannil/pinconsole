@@ -106,7 +106,7 @@ type RedisConfig struct {
 
 // MinIOConfig 是 MinIO 连接配置。
 type MinIOConfig struct {
-	Endpoint  string `env:"MINIO_ENDPOINT" envDefault:"localhost:7000"`
+	Endpoint  string `env:"MINIO_ENDPOINT" envDefault:"localhost:7020"`
 	AccessKey string `env:"MINIO_ACCESS_KEY" envDefault:""`
 	SecretKey string `env:"MINIO_SECRET_KEY" envDefault:""`
 	Bucket    string `env:"MINIO_BUCKET" envDefault:"pinconsole"`

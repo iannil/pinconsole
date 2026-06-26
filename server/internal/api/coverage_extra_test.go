@@ -223,7 +223,7 @@ func helperAPIConfig(t *testing.T) *config.Config {
 		},
 		Redis: config.RedisConfig{Addr: "localhost:7079", PoolSize: 5},
 		MinIO: config.MinIOConfig{
-			Endpoint: "localhost:7000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
+			Endpoint: "localhost:7020", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
 			Bucket: "test-api-" + uuid.New().String()[:8], UseSSL: false,
 		},
 	}

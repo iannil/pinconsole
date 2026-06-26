@@ -61,7 +61,7 @@ func helperMinIOCfg(t *testing.T) config.MinIOConfig {
 	_, _ = rand.Read(b)
 	bucket := "test-" + hex.EncodeToString(b)
 	return config.MinIOConfig{
-		Endpoint:  "localhost:7000",
+		Endpoint:  "localhost:7020",
 		AccessKey: "mm_dev",
 		SecretKey: "mm_dev_secret",
 		Bucket:    bucket,

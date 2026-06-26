@@ -157,7 +157,7 @@ func helperMinIOClient(t *testing.T) (*minio.Client, string) {
 	if bucket == "" {
 		bucket = "pinconsole"
 	}
-	mio, err := minio.New("localhost:7000", &minio.Options{
+	mio, err := minio.New("localhost:7020", &minio.Options{
 		Creds:  minioCredentialsStatic(accessKey, secretKey),
 		Secure: false,
 	})

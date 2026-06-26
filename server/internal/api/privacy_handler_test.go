@@ -33,7 +33,7 @@ func helperMinioIfAvailable(t *testing.T) (*minio.Client, string) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client, err := minio.New("localhost:7000", &minio.Options{
+	client, err := minio.New("localhost:7020", &minio.Options{
 		Creds:  credentials.NewStaticV4("mm_dev", "mm_dev_secret", ""),
 		Secure: false,
 	})

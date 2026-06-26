@@ -56,7 +56,7 @@ func helperStoresRec(t *testing.T) *storage.Stores {
 	_, _ = rand.Read(b)
 	bucket := "test-rec-" + hex.EncodeToString(b)
 	mio, err := storage.ConnectMinIO(ctx, config.MinIOConfig{
-		Endpoint: "localhost:7000", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
+		Endpoint: "localhost:7020", AccessKey: "mm_dev", SecretKey: "mm_dev_secret",
 		Bucket: bucket, UseSSL: false,
 	}, recDiscardLogger())
 	if err != nil {
