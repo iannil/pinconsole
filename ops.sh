@@ -266,7 +266,7 @@ show_help() {
     echo -e "  ${GREEN}clean${NC}     停止全部 + 清理构建产物"
     echo ""
     echo "环境变量:"
-    echo "  SERVER_PORT     server 端口（默认 8080）"
+    echo "  SERVER_PORT     server 端口（默认 7080）"
     echo "  SERVER_BIN      二进制路径（默认 server/bin/pinconsole-server）"
     echo "  PG_USER         PG 用户（默认 mm）"
     echo "  PG_DB           PG 库名（默认 pinconsole）"
