@@ -67,7 +67,7 @@ describe('i18n key parity', () => {
   it('静态 key 计数稳定（防意外删减）', () => {
     const enKeys = flattenKeys(enUS as unknown as I18nRecord);
     // 当前已知 key 数: en-US = zh-CN
-    expect(enKeys.length).toBeGreaterThanOrEqual(70);
-    expect(enKeys.length).toBeLessThanOrEqual(120);
+    expect(enKeys.length).toBeGreaterThanOrEqual(90);
+    expect(enKeys.length).toBeLessThanOrEqual(150);
   });
 });

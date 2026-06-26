@@ -48,6 +48,11 @@ const routes: RouteRecordRaw[] = [
         name: 'privacy',
         component: () => import('../views/Privacy.vue'),
       },
+      {
+        path: 'widgets',
+        name: 'widgets',
+        component: () => import('../views/WidgetsView.vue'),
+      },
     ],
   },
 ];

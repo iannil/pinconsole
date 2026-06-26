@@ -14,6 +14,7 @@ vi.mock('@phosphor-icons/vue', () => ({
   PhMonitor: { template: '<span class="mock-icon" />' },
   PhPlayCircle: { template: '<span class="mock-icon" />' },
   PhShieldCheck: { template: '<span class="mock-icon" />' },
+  PhPencilSimple: { template: '<span class="mock-icon" />' },
   PhUserCircle: { template: '<span class="mock-icon" />' },
   PhSignOut: { template: '<span class="mock-icon" />' },
   PhCaretDown: { template: '<span class="mock-icon" />' },
@@ -65,13 +66,14 @@ describe('StatusBadge.vue', () => {
 
 // ============== AppNav ==============
 describe('AppNav.vue', () => {
-  it('渲染 3 个导航项', () => {
+  it('渲染 4 个导航项', () => {
     const w = mount(AppNav, { global: { plugins: [i18n, router] } });
     const items = w.findAll('.nav-item');
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
     expect(items[0].text()).toContain('Live Monitor');
     expect(items[1].text()).toContain('History');
     expect(items[2].text()).toContain('Privacy');
+    expect(items[3].text()).toContain('Widgets');
     w.unmount();
   });
 });
