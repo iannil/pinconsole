@@ -8,11 +8,11 @@
 # 服务在后台运行,PID 写入 .dev/*.pid,日志写入 .dev/*.log。
 #
 # 用法:
-#   ./dev.sh start             启动全部(Go + admin + sdk)
+#   ./dev.sh start             启动全部(Go + admin + sdk + marketing)
 #   ./dev.sh stop              关闭全部
 #   ./dev.sh restart           重启全部
 #   ./dev.sh status            查看服务状态
-#   ./dev.sh logs [name]       跟踪日志(name: go|admin|sdk,省略则全部)
+#   ./dev.sh logs [name]       跟踪日志(name: go|admin|sdk|marketing,省略则全部)
 #
 # 启动选项(仅 start / restart 有效):
 #   --no-go      只起前端(admin + sdk),假设 Go server 已在 7080 跑
@@ -22,6 +22,7 @@
 #   admin(开发,带 HMR):http://localhost:7073/admin/
 #   admin(7080 embed,生产模式):http://localhost:7080/admin/
 #   访客 demo:http://localhost:7080/
+#   marketing(开发,带 HMR):http://localhost:7075/
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,10 +32,10 @@ RUN_DIR="$SCRIPT_DIR/.dev"
 mkdir -p "$RUN_DIR"
 
 # 服务定义:名称用于 pid/log 文件命名与状态展示。
-SERVICES=(go admin sdk)
+SERVICES=(go admin sdk marketing)
 
 # 端口兜底清理映射:与 SERVICES 数组索引对齐
-SERVICE_PORTS=(7080 7073 7074)
+SERVICE_PORTS=(7080 7073 7074 7075)
 
 # ===== 颜色 =====
 if [[ -t 1 ]]; then
@@ -164,6 +165,9 @@ cmd_start() {
 
     log "启动 visitor-sdk vite(HMR,http://localhost:7074/)..."
     spawn sdk "${SERVICE_PORTS[2]}" "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/visitor-sdk dev"
+
+    log "启动 marketing Astro(HMR,http://localhost:7075/)..."
+    spawn marketing "${SERVICE_PORTS[3]}" "cd '$SCRIPT_DIR/marketing' && exec pnpm astro dev --port 7075 --host"
 
     echo
     # 等待服务端口就绪(最多 8 秒),避免刚启动时误判为 hang
@@ -307,7 +311,7 @@ for arg in "$@"; do
     case "$arg" in
         --no-go)    NO_GO=1 ;;
         --no-build) NO_BUILD=1 ;;
-        go|admin|sdk) LOG_TARGET="$arg" ;;
+        go|admin|sdk|marketing) LOG_TARGET="$arg" ;;
         *) err "未知参数: $arg"; exit 2 ;;
     esac
 done

@@ -177,7 +177,7 @@ cmd_deploy() {
     echo "  事后配置：./scripts/deploy.sh secrets"
     cmd_build
 
-    step "部署到 Cloudflare Pages（project: $PROJECT_NAME）"
+    step "Deploy to Cloudflare Pages (project: pinconsole)"
     local deploy_out
     deploy_out=$(wr pages deploy ./dist --project-name "$PROJECT_NAME" 2>&1 | tee /dev/stderr)
 
