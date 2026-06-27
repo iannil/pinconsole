@@ -1,0 +1,27 @@
+/**
+ * pinconsole marketing — Self-hosted fonts.
+ *
+ * Separated from global.css so Vite doesn't inline ~400KB of @fontsource
+ * Noto Sans SC CSS into every HTML page, which causes chunked-encoding
+ * truncation (ERR_INCOMPLETE_CHUNKED_ENCODING) in Vite dev server.
+ *
+ * Load this via <link rel="stylesheet"> in layout <head>.
+ */
+
+/* IBM Plex Sans — 4 weights + italic (~4KB per weight) */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-sans/400-italic.css';
+
+/* Noto Sans SC — 4 weights (~105KB each → ~420KB total) */
+@import '@fontsource/noto-sans-sc/400.css';
+@import '@fontsource/noto-sans-sc/500.css';
+@import '@fontsource/noto-sans-sc/600.css';
+@import '@fontsource/noto-sans-sc/700.css';
+
+/* IBM Plex Mono — 3 weights (~4KB per weight) */
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';

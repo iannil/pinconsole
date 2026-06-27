@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
+import fontsCssUrl from '../styles/fonts.css?url';
 import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
 import Footer from '../components/Footer.astro';
 import type { PageContent } from '../content/types';
 
@@ -42,8 +44,17 @@ const jsonLd = {
       '@type': 'SoftwareApplication',
       name: 'PinConsole',
       applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'CustomerAnalytics, WebAnalytics, SessionReplay',
       operatingSystem: 'Linux, macOS, Windows (Docker)',
       description: softwareAppDesc,
+      image: `${siteUrl}/og-image.webp`,
+      screenshot: [
+        `${siteUrl}/screenshots/dashboard.webp`,
+        `${siteUrl}/screenshots/replay.webp`,
+        `${siteUrl}/screenshots/cobrowse.webp`,
+      ],
+      featureList: 'Session replay, Co-browsing, Real-time visitor monitoring, Popup chat, Anti-bot protection, Self-hosted, Open source',
+      softwareVersion: '1.0.0',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -107,6 +118,9 @@ const jsonLd = {
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
+
+    <!-- Self-hosted fonts (loaded as external module via Vite dev server) -->
+    <link rel="stylesheet" href={fontsCssUrl} />
 
     <!-- Baidu site verification (conditional — leave blank if not using Baidu Webmaster Tools) -->
     {baiduVerificationToken && (

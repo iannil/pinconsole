@@ -76,34 +76,37 @@ function onKeydown(e: KeyboardEvent) {
 .floating-input {
   position: fixed;
   z-index: 1000;
-  background: #fff;
-  border: 2px solid #409eff;
-  border-radius: 4px;
-  padding: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: var(--pc-color-bg-surface);
+  border: 2px solid var(--pc-color-accent-default);
+  border-radius: var(--pc-radius-md);
+  padding: var(--pc-space-field);
+  box-shadow: var(--pc-shadow-lg);
   min-width: 220px;
-  font-family: system-ui, sans-serif;
+  font-family: var(--pc-font-sans);
 }
 label {
   display: block;
-  font-size: 12px;
-  color: #606266;
+  font-size: var(--pc-text-xs);
+  color: var(--pc-color-text-secondary);
   margin-bottom: 4px;
 }
 input {
   width: 100%;
   padding: 4px 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 3px;
-  font-size: 14px;
+  border: 1px solid var(--pc-color-border-default);
+  border-radius: var(--pc-radius-sm);
+  font-size: var(--pc-text-base);
   outline: none;
+  background: var(--pc-color-bg-surface);
+  color: var(--pc-color-text-primary);
 }
 input:focus {
-  border-color: #409eff;
+  border-color: var(--pc-color-accent-default);
+  box-shadow: var(--pc-focus-ring);
 }
 .hint {
   font-size: 11px;
-  color: #909399;
+  color: var(--pc-color-text-muted);
   margin-top: 4px;
 }
 </style>

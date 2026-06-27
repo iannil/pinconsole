@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/iannil/pinconsole/internal/antiscrape"
+	"github.com/iannil/pinconsole/internal/cert"
 	"github.com/iannil/pinconsole/internal/hub"
 	"github.com/iannil/pinconsole/internal/logging"
 	"github.com/iannil/pinconsole/internal/pages"
@@ -51,6 +52,10 @@ type Options struct {
 	TrustedProxies []string
 	// pe-1: 页面编辑器 SSR 渲染器
 	PagesRenderer *pages.Renderer
+	// cd-1: 自定义域名证书管理
+	CertManager *cert.Manager
+	// cd-1: 平台主域名（不走 certmagic 自动证书）
+	PlatformDomain string
 }
 
 // NewRouterWithOpts 注册全部路由并返回 gin.Engine。
@@ -96,6 +101,11 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 		}
 	})
 
+	// cd-1:Host-header 域名验证 middleware
+	if opts.CertManager != nil || opts.PlatformDomain != "" {
+		r.Use(HostDomainMiddleware(opts.CertManager, opts.PlatformDomain))
+	}
+
 	// 健康检查（公开）
 	r.GET("/healthz", healthLive)
 	r.GET("/readyz", healthReady(opts.Stores))
@@ -111,6 +121,9 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	// pe-1：Widget 配置（公开 GET + 保护 PUT）
 	widgetCfgH := NewWidgetConfigHandler(opts.Stores, opts.Logger)
 	widgetCfgH.RegisterPublic(r)
+
+	// cd-1：自定义域名 REST API
+	customDomainH := NewCustomDomainHandler(opts.Stores, opts.CertManager, opts.Logger)
 
 	// pe-1：Page 编辑器（公开 SSR + form 提交）
 	var pageH *PageHandler
@@ -171,6 +184,11 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 		if opts.PagesRenderer != nil {
 			pageH.RegisterProtected(protected)
 		}
+
+		// cd-1:自定义域名 CRUD(admin only)
+		protected.GET("/api/custom-domains", customDomainH.List)
+		protected.POST("/api/custom-domains", customDomainH.Create)
+		protected.DELETE("/api/custom-domains/:id", customDomainH.Delete)
 	}
 
 	// 静态资源（landing / sdk / admin）
@@ -181,6 +199,44 @@ func NewRouterWithOpts(opts Options) *gin.Engine {
 	r.NoRoute(handler.NoRoute)
 
 	return r
+}
+
+// HostDomainMiddleware 验证 Host 头是否为已知的域名（自定义域名或平台域名）。
+// 仅当 CertManager 非 nil（有自定义域名配置）时有效。
+// 未知域名返回 404。
+func HostDomainMiddleware(certManager *cert.Manager, platformDomain string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if certManager == nil {
+			c.Next()
+			return
+		}
+
+		host := c.Request.Host
+		// 去掉端口部分
+		if colon := strings.LastIndex(host, ":"); colon > 0 {
+			host = host[:colon]
+		}
+
+		// 平台域名始终允许
+		if platformDomain != "" && (host == platformDomain || strings.HasSuffix(host, "."+platformDomain)) {
+			c.Next()
+			return
+		}
+
+		// 自定义域名
+		if certManager.HasDomain(host) {
+			c.Next()
+			return
+		}
+
+		// localhost / IP 开发环境
+		if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+			c.Next()
+			return
+		}
+
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 // staticHandler 封装 dev/prod 两套静态资源逻辑。

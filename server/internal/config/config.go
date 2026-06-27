@@ -72,6 +72,18 @@ type Config struct {
 	// 1ab P1-5:显式声明部署拓扑。true = 部署在反代后(TrustedProxies 必填)。
 	// false/默认 = 直接暴露(TrustedProxies 应为空,XFF 被忽略防伪造)。
 	BehindReverseProxy bool `env:"BEHIND_REVERSE_PROXY" envDefault:"false"`
+
+	// cd-1:自定义域名与 ACME 配置
+	// PlatformDomain 是平台主域名（如 pinconsole.com），不走 certmagic 自动证书。
+	PlatformDomain string `env:"PLATFORM_DOMAIN" envDefault:""`
+	// ACMEEmail 是 Let's Encrypt 注册邮箱（必填否则证书签发失败）。
+	ACMEEmail string `env:"ACME_EMAIL" envDefault:""`
+	// ACMEStaging 为 true 时使用 Let's Encrypt staging endpoint（防 rate limit）。
+	ACMEStaging bool `env:"ACME_STAGING" envDefault:"true"`
+	// ACMEDataDir 是 certmagic 证书缓存目录。
+	ACMEDataDir string `env:"ACME_DATA_DIR" envDefault:"./data/certmagic"`
+	// ACMEPort 是 HTTP-01 challenge + 301 redirect 的监听端口（默认 80，但开发期可改）。
+	ACMEPort string `env:"ACME_HTTP_PORT" envDefault:"80"`
 }
 
 // PostgresConfig 是 PostgreSQL 连接配置。

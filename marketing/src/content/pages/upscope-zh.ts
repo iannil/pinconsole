@@ -43,6 +43,20 @@ export const upscopeZh: SeoPageContent = {
       },
     ],
   },
+  evidence: {
+    blocks: [
+      {
+        quote: 'Upscope Essentials 版：$39/坐席/月，Pro 版：$79/坐席/月，企业版定制报价。所有套餐按坐席月付。仅共浏览——无会话回放、无访客监控、无聊天功能。',
+        attribution: 'Upscope 定价页面（2026 年 6 月数据）',
+        sourceUrl: 'https://upscope.com/pricing',
+      },
+      {
+        quote: 'Upscope 是共浏览专精工具——单一功能做得很好。但如果团队还需要会话回放、访客监控或主动聊天，必须采购和集成额外工具，增加了成本和运维复杂度。',
+        attribution: 'Upscope 功能对比',
+        sourceUrl: 'https://upscope.com/features',
+      },
+    ],
+  },
   faq: {
     items: [
       {

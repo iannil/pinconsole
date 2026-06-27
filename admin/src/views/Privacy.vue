@@ -1,35 +1,35 @@
 <template>
   <div class="privacy-page">
-    <h1>{{ t('privacy.title') }}</h1>
-    <p class="desc">{{ t('privacy.description') }}</p>
+    <h1 class="page-title">{{ t('privacy.title') }}</h1>
+    <p class="page-desc">{{ t('privacy.description') }}</p>
 
-    <section class="card">
-      <h2>{{ t('privacy.erasure_title') }}</h2>
+    <section class="pc-card">
+      <h2 class="section-title">{{ t('privacy.erasure_title') }}</h2>
       <p class="warn">{{ t('privacy.erasure_warning') }}</p>
 
-      <div class="form">
+      <div class="form-row">
         <input
           v-model="fingerprint"
           type="text"
           :placeholder="t('privacy.fingerprint_placeholder')"
-          class="fp-input"
+          class="pc-input"
           :disabled="loading"
         />
         <button
           :disabled="loading || !fingerprint.trim()"
-          class="delete-btn"
+          class="pc-btn pc-btn--danger"
           @click="onErase"
         >
           {{ loading ? t('privacy.deleting') : t('privacy.delete') }}
         </button>
       </div>
 
-      <div v-if="result" class="result success">
+      <div v-if="result" class="result result-success">
         {{ t('privacy.deleted_sessions', { n: result.deleted_sessions }) }}
         ·
         {{ t('privacy.deleted_objects', { n: result.deleted_minio_objects }) }}
       </div>
-      <div v-if="error" class="result error">{{ error }}</div>
+      <div v-if="error" class="result result-error">{{ error }}</div>
     </section>
   </div>
 </template>
@@ -65,70 +65,61 @@ async function onErase() {
 
 <style scoped>
 .privacy-page {
-  padding: 24px 32px;
-  font-family: system-ui, sans-serif;
-  color: #303133;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--pc-space-page);
 }
-.desc {
-  color: #606266;
-  line-height: 1.6;
-  margin-bottom: 24px;
+
+.page-title {
+  font-size: var(--pc-text-2xl);
+  font-weight: var(--pc-weight-semibold);
+  margin: 0 0 var(--pc-space-field);
 }
-.card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
+
+.page-desc {
+  color: var(--pc-color-text-secondary);
+  line-height: var(--pc-leading-relaxed);
+  margin: 0 0 var(--pc-space-section);
 }
-.card h2 {
-  font-size: 18px;
-  margin: 0 0 12px;
+
+.section-title {
+  font-size: var(--pc-text-lg);
+  font-weight: var(--pc-weight-semibold);
+  margin: 0 0 var(--pc-space-component);
 }
+
 .warn {
-  color: #856404;
-  background: #fff3cd;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  margin-bottom: 16px;
+  color: var(--pc-color-warning);
+  background: var(--pc-color-warning-subtle);
+  padding: var(--pc-space-field) var(--pc-space-component);
+  border-radius: var(--pc-radius-md);
+  font-size: var(--pc-text-sm);
+  margin: 0 0 var(--pc-space-card);
 }
-.form {
+
+.form-row {
   display: flex;
-  gap: 8px;
+  gap: var(--pc-space-field);
 }
-.fp-input {
+
+.form-row .pc-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
 }
-.delete-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-.delete-btn:disabled {
-  background: #c0c4cc;
-  cursor: not-allowed;
-}
+
 .result {
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 13px;
+  margin-top: var(--pc-space-component);
+  padding: var(--pc-space-field) var(--pc-space-component);
+  border-radius: var(--pc-radius-md);
+  font-size: var(--pc-text-sm);
 }
-.result.success {
-  background: #f0f9eb;
-  color: #67c23a;
+
+.result-success {
+  background: var(--pc-color-success-subtle);
+  color: var(--pc-color-success);
 }
-.result.error {
-  background: #fef0f0;
-  color: #f56c6c;
+
+.result-error {
+  background: var(--pc-color-danger-subtle);
+  color: var(--pc-color-danger);
 }
 </style>

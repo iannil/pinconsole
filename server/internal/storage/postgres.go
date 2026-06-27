@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -10,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// ErrConflict 表示唯一约束冲突，用于 Create 方法。
+var ErrConflict = fmt.Errorf("record already exists")
+
+// pgErrCode 从 error 中提取 PostgreSQL 错误码，非 PG 错误返回空串。
+func pgErrCode(err error) string {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code
+	}
+	return ""
+}
 
 // PgxPool 是 Postgres.Pool 的最小接口(1ae R2 引入)。
 // 仅声明 storage 包用到的 5 个方法 + Begin(migrations 用),让测试可注入事务包装器

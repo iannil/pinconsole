@@ -24,6 +24,13 @@ export interface SeoPageContent {
       body: string;
     }[];
   };
+  evidence?: {
+    blocks: {
+      quote: string;
+      attribution: string;
+      sourceUrl?: string;
+    }[];
+  };
   faq: {
     items: { question: string; answer: string }[];
   };

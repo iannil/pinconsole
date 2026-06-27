@@ -70,6 +70,14 @@
   color: var(--pc-color-text-primary);
 }
 
+/* Icon-only (square, no text padding) */
+.pc-btn--icon {
+  padding: 4px;
+  min-height: 28px;
+  min-width: 28px;
+  gap: 0;
+}
+
 /* Danger */
 .pc-btn--danger {
   background: var(--pc-color-danger);

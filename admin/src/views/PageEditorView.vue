@@ -6,6 +6,9 @@ import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus';
 import {
   PhArrowLeft, PhFloppyDisk, PhEye, PhTrash, PhPlus,
+  PhHouse, PhTextT, PhImageSquare, PhCursorClick,
+  PhStar, PhClipboardText, PhMinus, PhArrowsVertical,
+  PhLayout, PhFile,
 } from '@phosphor-icons/vue';
 import type { Section, PageSchema, SectionType } from '@pinconsole/proto';
 import { usePagesStore } from '../stores/pages';
@@ -35,7 +38,7 @@ const componentPalette: ComponentDef[] = [
   { type: 'text', label: t('pages.text'), defaultProps: { content: '文本内容' } },
   { type: 'image', label: t('pages.image'), defaultProps: { src: 'https://placehold.co/800x400', alt: '', max_width: '100%', align: 'center' } },
   { type: 'button', label: t('pages.button'), defaultProps: { label: '按钮', url: '', size: 'md' } },
-  { type: 'features', label: t('pages.features'), defaultProps: { items: [{ icon: '✨', title: '特性1', description: '描述' }], columns: 3 } },
+  { type: 'features', label: t('pages.features'), defaultProps: { items: [{ icon: 'star', title: '特性1', description: '描述' }], columns: 3 } },
   { type: 'form', label: t('pages.form'), defaultProps: { fields: [{ name: 'email', type: 'email', label: '邮箱', required: true }], submit_label: '提交', submit_action: 'store' } },
   { type: 'divider', label: t('pages.divider'), defaultProps: {} },
   { type: 'spacer', label: t('pages.spacer'), defaultProps: { height: 48 } },
@@ -139,6 +142,19 @@ const colorFields = new Set(['primary_color', 'color', 'background', 'text_color
 function isSelectField(key: string): boolean { return key in selectFields; }
 function isColorField(key: string): boolean { return colorFields.has(key); }
 
+// ── section icon map (Phosphor, no emoji) ──
+const sectionIcons: Record<string, any> = {
+  hero: PhHouse,
+  text: PhTextT,
+  image: PhImageSquare,
+  button: PhCursorClick,
+  features: PhStar,
+  form: PhClipboardText,
+  divider: PhMinus,
+  spacer: PhArrowsVertical,
+  columns: PhLayout,
+};
+
 function getSectionTitle(s: Section): string {
   if (s.type === 'hero' && s.props?.title) return String(s.props.title).slice(0, 30);
   if (s.type === 'text' && s.props?.content) return String(s.props.content).slice(0, 30);
@@ -146,13 +162,7 @@ function getSectionTitle(s: Section): string {
   return s.type;
 }
 
-function sectionIcon(s: Section): string {
-  const icons: Record<string, string> = {
-    hero: '🏠', text: '📝', image: '🖼', button: '🔘',
-    features: '✨', form: '📋', divider: '➖', spacer: '⏹', columns: '📐',
-  };
-  return icons[s.type] || '📄';
-}
+
 </script>
 
 <template>
@@ -160,17 +170,17 @@ function sectionIcon(s: Section): string {
     <!-- 顶栏 -->
     <header class="editor-topbar">
       <div class="topbar-left">
-        <button class="btn-text" @click="goBack"><PhArrowLeft :size="18" /> {{ store.current?.title || props.slug }}</button>
-        <span class="status-badge" :class="store.current?.status === 'published' ? 'published' : 'draft'">
+        <button class="pc-btn pc-btn--ghost" @click="goBack"><PhArrowLeft :size="18" /> {{ store.current?.title || props.slug }}</button>
+        <span :class="store.current?.status === 'published' ? 'pc-badge pc-badge--success' : 'pc-badge pc-badge--accent'">
           {{ t(`pages.${store.current?.status || 'draft'}`) }}
         </span>
       </div>
       <div class="topbar-right">
-        <button class="btn-text" @click="handlePreview"><PhEye :size="16" /> {{ t('pages.preview') }}</button>
-        <button class="btn-text" @click="handlePublish">
+        <button class="pc-btn pc-btn--ghost" @click="handlePreview"><PhEye :size="16" /> {{ t('pages.preview') }}</button>
+        <button class="pc-btn pc-btn--ghost" @click="handlePublish">
           {{ store.current?.status === 'published' ? t('pages.unpublish') : t('pages.publish') }}
         </button>
-        <button class="btn btn-primary" :disabled="!dirty || store.saving" @click="save">
+        <button class="pc-btn pc-btn--primary" :disabled="!dirty || store.saving" @click="save">
           <PhFloppyDisk :size="16" /> {{ store.saving ? t('pages.saving') : t('pages.save') }}
         </button>
       </div>
@@ -215,10 +225,10 @@ function sectionIcon(s: Section): string {
           >
             <div class="section-header">
               <span class="drag-handle">⠿</span>
-              <span class="section-icon">{{ sectionIcon(section) }}</span>
+              <span class="section-icon"><component :is="sectionIcons[section.type] || PhFile" :size="14" /></span>
               <span class="section-type">{{ section.type }}</span>
               <span class="section-title">{{ getSectionTitle(section) }}</span>
-              <button class="btn-icon btn-icon-danger" @click.stop="removeSection(idx)" :title="t('pages.delete_section')">
+              <button class="pc-btn pc-btn--icon" @click.stop="removeSection(idx)" :title="t('pages.delete_section')">
                 <PhTrash :size="14" />
               </button>
             </div>
@@ -296,7 +306,7 @@ function sectionIcon(s: Section): string {
               <div v-for="(item, ai) in value" :key="ai" class="array-item">
                 <div class="array-item-header">
                   <span>{{ key }} #{{ ai + 1 }}</span>
-                  <button class="btn-icon btn-icon-danger" @click="removeArrayItem(key, ai)">
+                  <button class="pc-btn pc-btn--icon" @click="removeArrayItem(key, ai)">
                     <PhTrash :size="12" />
                   </button>
                 </div>
@@ -321,7 +331,7 @@ function sectionIcon(s: Section): string {
               <!-- add item button for features items / form fields -->
               <button
                 v-if="key === 'items' || key === 'fields'"
-                class="btn-text btn-add"
+                class="pc-btn pc-btn--ghost add-item-btn"
                 @click="addArrayItem(key, key === 'items' ? { icon: '', title: '', description: '' } : { name: '', type: 'text', label: '', required: false })"
               >
                 <PhPlus :size="12" /> {{ t('pages.add_section') }}
@@ -338,56 +348,45 @@ function sectionIcon(s: Section): string {
 </template>
 
 <style scoped>
-.editor { display: flex; flex-direction: column; height: calc(100vh - 56px); }
-.editor-topbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--color-border-default, #e7e5e4); background: var(--color-bg-surface, #fff); flex-shrink: 0; }
-.topbar-left, .topbar-right { display: flex; align-items: center; gap: 8px; }
-.btn-text { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-size: 14px; font-family: inherit; color: var(--color-text-secondary, #57534e); }
-.btn-text:hover { background: var(--color-bg-subtle, #f5f1ec); }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
-.btn-primary { background: var(--color-accent-default, #0f766e); color: #fff; }
-.btn-primary:hover { opacity: .9; }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-.btn-icon { display: inline-flex; align-items: center; justify-content: center; padding: 4px; border: none; background: transparent; cursor: pointer; border-radius: 4px; color: var(--color-text-muted, #78716c); }
-.btn-icon-danger:hover { color: #dc2626; }
-.btn-add { font-size: 12px; padding: 4px 8px; margin-top: 4px; }
-.status-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
-.status-badge.published { background: #d1fae5; color: #065f46; }
-.status-badge.draft { background: #f5f5f4; color: #44403c; }
+.editor { display: flex; flex-direction: column; height: calc(100vh - var(--pc-topbar-height)); }
+.editor-topbar { display: flex; justify-content: space-between; align-items: center; padding: 8px var(--pc-space-card); border-bottom: 1px solid var(--pc-color-border-default); background: var(--pc-color-bg-surface); flex-shrink: 0; }
+.topbar-left, .topbar-right { display: flex; align-items: center; gap: var(--pc-space-field); }
+.add-item-btn { font-size: var(--pc-text-xs); padding: 4px var(--pc-space-field); margin-top: 4px; }
 .editor-body { display: flex; flex: 1; overflow: hidden; }
-.panel { width: 260px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--color-border-default, #e7e5e4); padding: 16px; }
-.panel-right { border-right: none; border-left: 1px solid var(--color-border-default, #e7e5e4); }
-.panel-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--color-text-muted, #78716c); margin: 0 0 12px; }
+.panel { width: 260px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--pc-color-border-default); padding: var(--pc-space-card); }
+.panel-right { border-right: none; border-left: 1px solid var(--pc-color-border-default); }
+.panel-title { font-size: var(--pc-text-sm); font-weight: var(--pc-weight-semibold); text-transform: uppercase; letter-spacing: .5px; color: var(--pc-color-text-muted); margin: 0 0 var(--pc-space-component); }
 .component-list { display: flex; flex-direction: column; gap: 4px; }
-.component-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--color-border-default, #e7e5e4); border-radius: 8px; background: var(--color-bg-surface, #fff); cursor: pointer; font-size: 13px; font-family: inherit; color: var(--color-text-primary, #1c1917); }
-.component-item:hover { border-color: var(--color-accent-default, #0f766e); background: var(--color-bg-subtle, #f5f1ec); }
-.canvas { flex: 1; overflow-y: auto; padding: 24px; background: #fafaf9; }
-.canvas-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-text-muted, #78716c); }
+.component-item { display: flex; align-items: center; gap: var(--pc-space-field); padding: 8px var(--pc-space-component); border: 1px solid var(--pc-color-border-default); border-radius: var(--pc-radius-md); background: var(--pc-color-bg-surface); cursor: pointer; font-size: var(--pc-text-sm); font-family: inherit; color: var(--pc-color-text-primary); }
+.component-item:hover { border-color: var(--pc-color-accent-default); background: var(--pc-color-bg-subtle); }
+.canvas { flex: 1; overflow-y: auto; padding: var(--pc-space-section); background: var(--pc-color-bg-canvas); }
+.canvas-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--pc-color-text-muted); }
 .canvas-list { display: flex; flex-direction: column; gap: 6px; min-height: 200px; }
-.canvas-section { background: #fff; border: 2px solid transparent; border-radius: 8px; padding: 10px 14px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.canvas-section:hover { border-color: var(--color-border-default, #e7e5e4); }
-.canvas-section.selected { border-color: var(--color-accent-default, #0f766e); }
-.section-header { display: flex; align-items: center; gap: 8px; }
-.drag-handle { cursor: grab; color: var(--color-text-muted, #78716c); font-size: 16px; user-select: none; }
-.section-icon { font-size: 16px; }
-.section-type { font-size: 12px; font-weight: 600; color: var(--color-accent-default, #0f766e); text-transform: uppercase; }
-.section-title { font-size: 13px; color: var(--color-text-primary, #1c1917); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-.ghost { opacity: .4; background: var(--color-bg-subtle, #f5f1ec); }
-.panel-empty { padding: 24px 0; text-align: center; color: var(--color-text-muted, #78716c); font-size: 13px; }
+.canvas-section { background: var(--pc-color-bg-surface); border: 2px solid transparent; border-radius: var(--pc-radius-md); padding: 10px 14px; cursor: pointer; box-shadow: var(--pc-shadow-xs); }
+.canvas-section:hover { border-color: var(--pc-color-border-default); }
+.canvas-section.selected { border-color: var(--pc-color-accent-default); }
+.section-header { display: flex; align-items: center; gap: var(--pc-space-field); }
+.drag-handle { cursor: grab; color: var(--pc-color-text-muted); font-size: 16px; user-select: none; }
+.section-icon { font-size: 16px; display: inline-flex; align-items: center; }
+.section-type { font-size: var(--pc-text-xs); font-weight: var(--pc-weight-semibold); color: var(--pc-color-accent-default); text-transform: uppercase; }
+.section-title { font-size: var(--pc-text-sm); color: var(--pc-color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.ghost { opacity: .4; background: var(--pc-color-bg-subtle); }
+.panel-empty { padding: var(--pc-space-section) 0; text-align: center; color: var(--pc-color-text-muted); font-size: var(--pc-text-sm); }
 .props-form { display: flex; flex-direction: column; gap: 10px; }
 .prop-field { display: flex; flex-direction: column; gap: 4px; }
-.prop-field > label { font-size: 11px; font-weight: 600; color: var(--color-text-muted, #78716c); text-transform: uppercase; letter-spacing: .3px; }
-.input { width: 100%; padding: 6px 10px; border: 1px solid var(--color-border-default, #e7e5e4); border-radius: 6px; font-size: 13px; font-family: inherit; background: var(--color-bg-surface, #fff); }
-.input:focus { outline: none; border-color: var(--color-accent-default, #0f766e); }
+.prop-field > label { font-size: 11px; font-weight: var(--pc-weight-semibold); color: var(--pc-color-text-muted); text-transform: uppercase; letter-spacing: .3px; }
+.input { width: 100%; padding: 6px 10px; border: 1px solid var(--pc-color-border-default); border-radius: var(--pc-radius-sm); font-size: var(--pc-text-sm); font-family: inherit; background: var(--pc-color-bg-surface); color: var(--pc-color-text-primary); }
+.input:focus { outline: none; border-color: var(--pc-color-accent-default); box-shadow: var(--pc-focus-ring); }
 select.input { cursor: pointer; }
 .textarea { min-height: 80px; resize: vertical; }
 .color-row { display: flex; gap: 6px; align-items: center; }
-.color-row input[type="color"] { width: 32px; height: 32px; padding: 2px; border: 1px solid var(--color-border-default, #e7e5e4); border-radius: 6px; cursor: pointer; }
+.color-row input[type="color"] { width: 32px; height: 32px; padding: 2px; border: 1px solid var(--pc-color-border-default); border-radius: var(--pc-radius-sm); cursor: pointer; }
 .color-row .input { flex: 1; }
 .checkbox { width: 18px; height: 18px; cursor: pointer; }
-.array-editor { display: flex; flex-direction: column; gap: 8px; }
-.array-item { border: 1px solid var(--color-border-default, #e7e5e4); border-radius: 6px; padding: 8px; background: var(--color-bg-subtle, #f5f1ec); }
-.array-item-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 600; color: var(--color-text-secondary, #57534e); margin-bottom: 6px; }
+.array-editor { display: flex; flex-direction: column; gap: var(--pc-space-field); }
+.array-item { border: 1px solid var(--pc-color-border-default); border-radius: var(--pc-radius-sm); padding: var(--pc-space-field); background: var(--pc-color-bg-subtle); }
+.array-item-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: var(--pc-weight-semibold); color: var(--pc-color-text-secondary); margin-bottom: 6px; }
 .array-field { margin-bottom: 4px; }
-.nested-label { font-size: 11px; color: var(--color-text-muted, #78716c); display: block; margin-bottom: 1px; }
-.prop-complex { font-size: 12px; color: var(--color-text-muted, #78716c); font-style: italic; }
+.nested-label { font-size: 11px; color: var(--pc-color-text-muted); display: block; margin-bottom: 1px; }
+.prop-complex { font-size: var(--pc-text-xs); color: var(--pc-color-text-muted); font-style: italic; }
 </style>

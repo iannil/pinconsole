@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import fontsCssUrl from '../styles/fonts.css?url';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import type { SeoPageContent } from '../content/pages/types';
@@ -48,8 +49,17 @@ const jsonLd = {
       '@type': 'SoftwareApplication',
       name: 'PinConsole',
       applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'CustomerAnalytics, WebAnalytics, SessionReplay',
       operatingSystem: 'Linux, macOS, Windows (Docker)',
       description: 'Open source ToB real-time visitor monitoring + operator interaction + session replay platform. AGPL-3.0, self-hosted.',
+      image: `${siteUrl}/og-image.webp`,
+      screenshot: [
+        `${siteUrl}/screenshots/dashboard.webp`,
+        `${siteUrl}/screenshots/replay.webp`,
+        `${siteUrl}/screenshots/cobrowse.webp`,
+      ],
+      featureList: 'Session replay, Co-browsing, Real-time visitor monitoring, Popup chat, Anti-bot protection, Self-hosted, Open source',
+      softwareVersion: '1.0.0',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -109,6 +119,9 @@ const jsonLd = {
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
+
+    <!-- Self-hosted fonts (loaded as external module via Vite dev server) -->
+    <link rel="stylesheet" href={fontsCssUrl} />
 
     {baiduVerificationToken && (
       <meta name="baidu-site-verification" content={baiduVerificationToken} />
@@ -250,6 +263,30 @@ const jsonLd = {
           ))}
         </div>
       </section>
+
+      <!-- Evidence / quote blocks -->
+      {content.evidence && content.evidence.blocks.length > 0 && (
+        <section class="seo-evidence">
+          <div class="container container-narrow">
+            <h2>{locale === 'zh' ? '事实与数据' : 'Facts & Evidence'}</h2>
+            <div class="evidence-list">
+              {content.evidence.blocks.map((block) => (
+                <blockquote class="evidence-block">
+                  <p class="evidence-quote">“{block.quote}”</p>
+                  <footer class="evidence-attribution">
+                    — {block.attribution}
+                    {block.sourceUrl && (
+                      <a href={block.sourceUrl} target="_blank" rel="noopener noreferrer" class="evidence-source">
+                        {locale === 'zh' ? '查看来源' : 'View source'}
+                      </a>
+                    )}
+                  </footer>
+                </blockquote>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <!-- FAQ -->
       {content.faq.items.length > 0 && (
@@ -506,5 +543,42 @@ const jsonLd = {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 24px;
+  }
+
+  /* Evidence / quote blocks */
+  .seo-evidence {
+    padding: 48px 0;
+    background: var(--pc-color-bg-surface);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+  .seo-evidence h2 {
+    font-size: var(--pc-text-headline, 24px);
+    font-weight: 600;
+    margin: 0 0 24px;
+    color: var(--pc-color-text-primary);
+  }
+  .evidence-list { display: flex; flex-direction: column; gap: 20px; }
+  .evidence-block {
+    margin: 0;
+    padding: 24px 28px;
+    border-left: 4px solid var(--pc-color-accent-default);
+    border-radius: var(--pc-radius-sm, 6px);
+    background: var(--pc-color-bg-canvas);
+  }
+  .evidence-quote {
+    font-size: var(--pc-text-body, 16px);
+    line-height: 1.7;
+    color: var(--pc-color-text-primary);
+    margin: 0 0 12px;
+    font-style: italic;
+  }
+  .evidence-attribution {
+    font-size: var(--pc-text-body-sm, 14px);
+    color: var(--pc-color-text-muted);
+  }
+  .evidence-source {
+    margin-left: 12px;
+    color: var(--pc-color-accent-default);
+    text-decoration: underline;
   }
 </style>

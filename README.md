@@ -2,20 +2,37 @@
 
 > **Your visitors, your data.** · [中文](./README.zh.md)
 
-Open-source ToB real-time visitor monitoring + co-browsing + session replay. AGPL-3.0, self-hosted, data never leaves your infra — the open-source alternative to SaaS visitor-engagement platforms.
+**Open-source self-hosted alternative to FullStory, Hotjar, LogRocket, and Smartlook** — real-time visitor monitoring, co-browsing, and session replay. AGPL-3.0, data never leaves your infra.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-0F766E.svg)](./LICENSE)
 [![e2e: 70 passed](https://img.shields.io/badge/e2e-70%20passed%20%2F%200%20failed-15803D.svg)](./docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)
 [![v1: shipped](https://img.shields.io/badge/v1-shipped-0F766E.svg)](./docs/project-status.md)
 [![i18n: zh/en](https://img.shields.io/badge/i18n-zh%20%2F%20en-0E7490.svg)](#)
 
-Design decision:
+[![vs FullStory](https://img.shields.io/badge/vs_FullStory-see_comparison-0F766E)](https://pinconsole.com/alternatives/fullstory/)
+[![vs Hotjar](https://img.shields.io/badge/vs_Hotjar-see_comparison-0F766E)](https://pinconsole.com/alternatives/hotjar/)
+[![vs LogRocket](https://img.shields.io/badge/vs_LogRocket-see_comparison-0F766E)](https://pinconsole.com/alternatives/logrocket/)
+[![vs Smartlook](https://img.shields.io/badge/vs_Smartlook-see_comparison-0F766E)](https://pinconsole.com/alternatives/smartlook/)
+[![vs Cobrowse.io](https://img.shields.io/badge/vs_Cobrowse.io-see_comparison-0F766E)](https://pinconsole.com/alternatives/cobrowse-io/)
+
+Design decisions:
 
 - **Data sovereignty** — every visitor action, operator chat, and session recording lives in **your** PostgreSQL / Redis / MinIO. No third-party calls, no external dependencies.
 - **AGPL-3.0 strong copyleft** — every modification must be open-sourced. Cloud vendors cannot take this and re-sell it as SaaS. License-level hard protection.
 - **Standard stack, no lock-in** — Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO. Industry-standard at every layer. The schema is yours.
+- **~15KB gzip SDK** — lightweight visitor SDK, served from your own domain. No CDN dependency, no third-party script loaders.
 
-**Decision-maker?** → [pinconsole.com](https://pinconsole.com)　·　**Engineer?** → [Self-host](#self-host)
+**Decision-maker?** → [pinconsole.com](https://pinconsole.com) · **Engineer?** → [Self-host](#self-host) · **Compare?** → [FullStory](https://pinconsole.com/alternatives/fullstory/) · [Hotjar](https://pinconsole.com/alternatives/hotjar/) · [LogRocket](https://pinconsole.com/alternatives/logrocket/) · [Smartlook](https://pinconsole.com/alternatives/smartlook/)
+
+---
+
+## Who is this for?
+
+- **Product teams** that need session replay without per-session pricing or data leaving their infrastructure
+- **Customer support teams** that want co-browsing capabilities without third-party SaaS subscriptions
+- **Compliance-conscious organizations** (GDPR, SOC 2, HIPAA, China PIPL) that need data to stay in-region or on-premise
+- **Developer teams** looking for an open-source, auditable alternative to proprietary session replay tools
+- **Chinese market teams** that need session replay and co-browsing without cross-border network latency
 
 ---
 
@@ -33,6 +50,16 @@ SaaS visitor-engagement tools extract every visitor's behavior, every operator c
 
 pinconsole exists because that data is yours. Run it on your own infra. Audit the code yourself. Leave when you want — your data, schema, and binaries are already in your hands.
 
+**Built as an open-source alternative to:**
+
+| Tool | Why switch |
+|---|---|
+| [FullStory](https://pinconsole.com/alternatives/fullstory/) | SaaS-only, $599+/month, no co-browsing |
+| [Hotjar](https://pinconsole.com/alternatives/hotjar/) | Session caps (35/day free), SaaS-only, no real-time |
+| [LogRocket](https://pinconsole.com/alternatives/logrocket/) | Per-session pricing, SaaS-only, no co-browsing |
+| [Smartlook](https://pinconsole.com/alternatives/smartlook/) | Session quotas, SaaS-only, no co-browsing |
+| [Cobrowse.io](https://pinconsole.com/alternatives/cobrowse-io/) | $30/agent/month, no replay or monitoring included |
+
 ---
 
 ## Features
@@ -45,6 +72,7 @@ pinconsole exists because that data is yours. Run it on your own infra. Audit th
 - **Anti-bot stack** — rate limit + UA blacklist + behavioral analysis + fingerprint (defense in depth)
 - **GDPR-compliant** — consent opt-in + right-to-be-forgotten + IP truncation + co-browse consent banner
 - **Bilingual i18n** — zh/en from day 1, no hard-coded strings
+- **Unlimited session recording** — no session caps, no per-session fees. Your only cost is your own infrastructure.
 
 ---
 
@@ -70,7 +98,49 @@ make docker-up && make build
 docker compose --profile prod up -d --build
 ```
 
+**Custom domains (ACME / Let's Encrypt):**
+
+The server can automatically provision HTTPS certificates for custom domains via certmagic.
+Set the following environment variables to enable:
+
+| Variable | Default | Description |
+|---|---|---|
+| `PLATFORM_DOMAIN` | `""` | Your main domain (e.g. `pinconsole.com`), exempt from Host-header validation |
+| `ACME_EMAIL` | `""` | **Required** — Let's Encrypt registration email. Server won't start ACME without it |
+| `ACME_STAGING` | `true` | Use Let's Encrypt staging CA (recommended for testing). Set `false` for production |
+| `ACME_DATA_DIR` | `./data/certmagic` | certmagic certificate cache directory |
+| `ACME_HTTP_PORT` | `80` | HTTP-01 challenge + redirect port |
+
+When `ACME_EMAIL` is set:
+- Server listens on **:443** (HTTPS) with auto-provisioned certificates
+- Server listens on **:80** for ACME HTTP-01 challenges + 301 redirect to HTTPS
+- Admin UI at `/admin/domains` lets you add/remove custom domains
+- Platform domain (`PLATFORM_DOMAIN`) and custom domains are validated via Host-header middleware
+
 For full Make command list (`make help`), architecture deep-dive, and ops playbook: see [`docs/project-status.md`](./docs/project-status.md) and [`Makefile`](./Makefile).
+
+---
+
+## Architecture
+
+```
+┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
+│ Visitor SDK  │────▶│  Go Server        │────▶│  PostgreSQL   │
+│ (~15KB gzip) │     │  (Gin + WebSocket)│     │  (metadata)   │
+└─────────────┘     │                   │     └──────────────┘
+                    │  Hub-and-spoke    │     ┌──────────────┐
+┌─────────────┐     │  architecture     │────▶│  Redis        │
+│ Admin UI     │◀───▶│  All traffic via  │     │  (presence)   │
+│ (Vue 3 SPA)  │     │  central server  │     └──────────────┘
+└─────────────┘     │                   │     ┌──────────────┐
+                    │  Single binary    │────▶│  MinIO        │
+                    │  (Go embed)       │     │  (event store) │
+                    └──────────────────┘     └──────────────┘
+```
+
+Tech stack: **Go 1.22** · **Vue 3** · **PostgreSQL 16** · **Redis 7** · **MinIO** · **rrweb** · **coder/websocket**
+
+See the blog post: [How We Built a Self-Hosted Session Replay Alternative to FullStory](https://pinconsole.com/blog/building-self-hosted-session-replay/)
 
 ---
 
@@ -110,10 +180,17 @@ For full Make command list (`make help`), architecture deep-dive, and ops playbo
 
 v1 is shipped. Post-v1, prioritized (see [`PLAN.md`](./PLAN.md) §8 for full backlog):
 
-1. **Custom domain** — DNS verification + Let's Encrypt ACME + Host-header routing
-2. **Tauri desktop client** — Win + Mac, reuses admin SPA
-3. **Low-code page editor** — drag-drop / JSON schema → Go template render
+1. ✅ **Custom domain** — DNS verification + Let's Encrypt ACME + Host-header routing
+2. ✅ **Low-code page editor** — drag-drop / JSON schema → Go template render
+3. **Tauri desktop client** — Win + Mac, reuses admin SPA
 4. **SSO / SAML / OIDC** — enterprise auth
+
+---
+
+## Blog
+
+- [How We Built a Self-Hosted Session Replay Alternative to FullStory](https://pinconsole.com/blog/building-self-hosted-session-replay/) (EN) · [中文](https://pinconsole.com/blog/self-hosted-fullstory-alternative/)
+- [AGPL-3.0 vs MIT: Why We Chose AGPL for Our Open Source Project](https://pinconsole.com/blog/agpl-vs-mit/) (EN) · [中文](https://pinconsole.com/blog/agpl-vs-mit-zh/)
 
 ---
 

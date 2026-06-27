@@ -70,6 +70,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../views/PageLeadsView.vue'),
         props: true,
       },
+      {
+        path: 'domains',
+        name: 'domains',
+        component: () => import('../views/DomainsView.vue'),
+      },
     ],
   },
 ];

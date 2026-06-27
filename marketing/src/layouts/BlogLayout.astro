@@ -1,0 +1,406 @@
+---
+import '../styles/global.css';
+import fontsCssUrl from '../styles/fonts.css?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import type { BlogContent } from '../content/blog/types';
+
+interface Props {
+  content: BlogContent;
+}
+
+const { content } = Astro.props;
+const locale = content.locale;
+const siteUrl = 'https://pinconsole.com';
+
+const canonicalUrl = Astro.url.href;
+const ogImageUrl = `${siteUrl}/og-image.webp`;
+const cfAnalyticsToken = import.meta.env.CF_WEB_ANALYTICS_TOKEN || '';
+const baiduVerificationToken = '';
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || '';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: 'PinConsole',
+      url: siteUrl,
+      logo: `${siteUrl}/favicon.svg`,
+      description: content.meta.description,
+    },
+    {
+      '@type': 'WebSite',
+      name: 'PinConsole',
+      url: siteUrl,
+      inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+      description: content.meta.description,
+    },
+    {
+      '@type': 'Article',
+      headline: content.meta.title,
+      description: content.meta.description,
+      author: {
+        '@type': 'Person',
+        name: content.blog.author,
+      },
+      datePublished: content.blog.publishedDate,
+      image: ogImageUrl,
+      publisher: {
+        '@type': 'Organization',
+        name: 'PinConsole',
+        logo: `${siteUrl}/favicon.svg`,
+      },
+      mainEntityOfPage: canonicalUrl,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'PinConsole', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: locale === 'zh' ? '博客' : 'Blog', item: `${siteUrl}/blog/` },
+        { '@type': 'ListItem', position: 3, name: content.meta.title, item: canonicalUrl },
+      ],
+    },
+    {
+      '@type': 'WebPage',
+      name: content.meta.title,
+      description: content.meta.description,
+      url: canonicalUrl,
+      inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang={content.htmlLang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{content.meta.title}</title>
+    <meta name="description" content={content.meta.description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={content.meta.ogTitle} />
+    <meta property="og:description" content={content.meta.ogDescription} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={locale === 'zh' ? 'zh_CN' : 'en_US'} />
+    <meta property="og:site_name" content="PinConsole" />
+    <meta property="article:published_time" content={content.blog.publishedDate} />
+    <meta name="author" content={content.blog.author} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={content.meta.ogTitle} />
+    <meta name="twitter:description" content={content.meta.ogDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
+
+    <!-- Self-hosted fonts (loaded as external module via Vite dev server) -->
+    <link rel="stylesheet" href={fontsCssUrl} />
+
+    {baiduVerificationToken && (
+      <meta name="baidu-site-verification" content={baiduVerificationToken} />
+    )}
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- GA4 Consent Mode v2 — default denied -->
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500,
+      });
+    </script>
+
+    {gaId && (
+      <Fragment>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+        <script is:inline define:vars={{ gaId }}>
+          gtag('js', new Date());
+          gtag('config', gaId, { anonymize_ip: true });
+        </script>
+      </Fragment>
+    )}
+  </head>
+  <body>
+    {locale === 'zh' ? (
+      <Header content={{
+        locale: 'zh',
+        htmlLang: 'zh-CN',
+        meta: { title: '', description: '', ogTitle: '', ogDescription: '' },
+        nav: {
+          links: [
+            { label: '首页', href: '/' },
+            { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
+          ],
+          cta: '预约咨询',
+          localeSwitch: { label: 'EN', href: '/en' },
+        },
+        hero: { eyebrow: '', h1: '', h2: '', cta: { primary: { label: '', href: '' } } },
+        features: { eyebrow: '', title: '', subtitle: '', items: [] },
+        dataSovereignty: { eyebrow: '', title: '', subtitle: '', pillars: [], architectureAlt: '' },
+        selfHost: { eyebrow: '', title: '', subtitle: '', code: '', docsLink: { label: '', href: '' } },
+        roadmap: { eyebrow: '', title: '', subtitle: '', columns: [] },
+        faq: { eyebrow: '', title: '', subtitle: '', items: [] },
+        finalCTA: { eyebrow: '', title: '', subtitle: '', form: { nameLabel: '', namePlaceholder: '', companyLabel: '', companyPlaceholder: '', contactLabel: '', contactPlaceholder: '', purposeLabel: '', purposes: [], messageLabel: '', messagePlaceholder: '', submitLabel: '', privacyNote: '', successMessage: '', errorMessage: '' } },
+        footer: { tagline: '', columns: [], license: '', sourceNote: '' },
+      }} />
+    ) : (
+      <Header content={{
+        locale: 'en',
+        htmlLang: 'en-US',
+        meta: { title: '', description: '', ogTitle: '', ogDescription: '' },
+        nav: {
+          links: [
+            { label: 'Home', href: '/en' },
+            { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
+          ],
+          cta: 'Request consultation',
+          localeSwitch: { label: '中', href: '/' },
+        },
+        hero: { eyebrow: '', h1: '', h2: '', cta: { primary: { label: '', href: '' } } },
+        features: { eyebrow: '', title: '', subtitle: '', items: [] },
+        dataSovereignty: { eyebrow: '', title: '', subtitle: '', pillars: [], architectureAlt: '' },
+        selfHost: { eyebrow: '', title: '', subtitle: '', code: '', docsLink: { label: '', href: '' } },
+        roadmap: { eyebrow: '', title: '', subtitle: '', columns: [] },
+        faq: { eyebrow: '', title: '', subtitle: '', items: [] },
+        finalCTA: { eyebrow: '', title: '', subtitle: '', form: { nameLabel: '', namePlaceholder: '', companyLabel: '', companyPlaceholder: '', contactLabel: '', contactPlaceholder: '', purposeLabel: '', purposes: [], messageLabel: '', messagePlaceholder: '', submitLabel: '', privacyNote: '', successMessage: '', errorMessage: '' } },
+        footer: { tagline: '', columns: [], license: '', sourceNote: '' },
+      }} />
+    )}
+
+    <main>
+      <!-- Blog post header -->
+      <header class="blog-header">
+        <div class="container container-narrow">
+          <div class="blog-meta">
+            <time datetime={content.blog.publishedDate}>{content.blog.publishedDate}</time>
+            <span class="blog-meta-sep">·</span>
+            <span>{content.blog.author}</span>
+            <span class="blog-meta-sep">·</span>
+            <span>{content.blog.readingTime}</span>
+          </div>
+          <h1>{content.hero.h1}</h1>
+          <p class="blog-subtitle">{content.hero.subtitle}</p>
+          <div class="blog-tags">
+            {content.blog.tags.map((tag) => <span class="blog-tag">{tag}</span>)}
+          </div>
+        </div>
+      </header>
+
+      <!-- Blog content sections -->
+      <section class="blog-content">
+        <div class="container container-narrow">
+          {content.content.sections.map((section) => (
+            <article class="blog-section">
+              <h2>{section.heading}</h2>
+              <div class="blog-body">
+                {section.body.split('\n\n').map((para) => <p>{para.trim()}</p>)}
+              </div>
+              {section.code && (
+                <pre class="blog-code"><code class={section.codeLanguage}>{section.code}</code></pre>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="blog-cta">
+        <div class="container container-narrow">
+          <h2>{content.cta.title}</h2>
+          <p>{content.cta.subtitle}</p>
+          <div class="cta-buttons">
+            <a href={content.cta.primary.href} class="btn-primary">{content.cta.primary.label}</a>
+            {content.cta.secondary && (
+              <a href={content.cta.secondary.href} class="btn-secondary">{content.cta.secondary.label}</a>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer content={{
+      locale: locale,
+      htmlLang: locale === 'zh' ? 'zh-CN' : 'en-US',
+      meta: { title: '', description: '', ogTitle: '', ogDescription: '' },
+      nav: { links: [], cta: '', localeSwitch: { label: '', href: '' } },
+      hero: { eyebrow: '', h1: '', h2: '', cta: { primary: { label: '', href: '' } } },
+      features: { eyebrow: '', title: '', subtitle: '', items: [] },
+      dataSovereignty: { eyebrow: '', title: '', subtitle: '', pillars: [], architectureAlt: '' },
+      selfHost: { eyebrow: '', title: '', subtitle: '', code: '', docsLink: { label: '', href: '' } },
+      roadmap: { eyebrow: '', title: '', subtitle: '', columns: [] },
+      faq: { eyebrow: '', title: '', subtitle: '', items: [] },
+      finalCTA: { eyebrow: '', title: '', subtitle: '', form: { nameLabel: '', namePlaceholder: '', companyLabel: '', companyPlaceholder: '', contactLabel: '', contactPlaceholder: '', purposeLabel: '', purposes: [], messageLabel: '', messagePlaceholder: '', submitLabel: '', privacyNote: '', successMessage: '', errorMessage: '' } },
+      footer: {
+        tagline: '',
+        columns: [
+          {
+            title: locale === 'zh' ? '产品' : 'Product',
+            links: [
+              { label: locale === 'zh' ? '首页' : 'Home', href: locale === 'zh' ? '/' : '/en' },
+              { label: 'Blog', href: locale === 'zh' ? '/blog/' : '/en/blog/' },
+            ],
+          },
+        ],
+        license: 'AGPL-3.0-or-later',
+        sourceNote: '© 2026 PinConsole. Built with Calm Crafted design system.',
+      },
+    }} />
+
+    {cfAnalyticsToken && (
+      <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${cfAnalyticsToken}"`} />
+    )}
+  </body>
+</html>
+
+<style is:global>
+  /* Blog header */
+  .blog-header {
+    padding: 80px 0 48px;
+    background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+  .blog-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--pc-text-body-sm, 14px);
+    color: var(--pc-color-text-muted);
+    margin-bottom: 16px;
+  }
+  .blog-meta-sep { color: var(--pc-color-border-default); }
+  .blog-header h1 {
+    font-size: var(--pc-hero-h1, clamp(28px, 4vw, 48px));
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0 0 16px;
+    color: var(--pc-color-text-primary);
+  }
+  .blog-subtitle {
+    font-size: var(--pc-text-body-lg, 18px);
+    line-height: 1.6;
+    color: var(--pc-color-text-secondary);
+    max-width: 720px;
+    margin: 0 0 20px;
+  }
+  .blog-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .blog-tag {
+    display: inline-flex;
+    padding: 4px 12px;
+    border-radius: var(--pc-radius-sm, 6px);
+    background: var(--pc-color-accent-subtle);
+    color: var(--pc-color-accent-default);
+    font-size: var(--pc-text-body-xs, 12px);
+    font-weight: 500;
+  }
+
+  /* Blog content */
+  .blog-content {
+    padding: 48px 0;
+    background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+  .blog-section {
+    margin-bottom: 40px;
+  }
+  .blog-section:last-child { margin-bottom: 0; }
+  .blog-section h2 {
+    font-size: var(--pc-text-headline, 24px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin: 0 0 16px;
+    color: var(--pc-color-text-primary);
+  }
+  .blog-body p {
+    font-size: var(--pc-text-body, 16px);
+    line-height: 1.8;
+    color: var(--pc-color-text-secondary);
+    margin: 0 0 16px;
+  }
+  .blog-body p:last-child { margin-bottom: 0; }
+  .blog-code {
+    margin: 20px 0 0;
+    padding: 20px;
+    background: var(--pc-color-bg-elevated);
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-sm, 6px);
+    overflow-x: auto;
+    font-size: var(--pc-text-body-sm, 14px);
+    line-height: 1.6;
+  }
+
+  /* CTA */
+  .blog-cta {
+    padding: 64px 0;
+    background: var(--pc-color-bg-surface);
+    text-align: center;
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+  .blog-cta h2 {
+    font-size: var(--pc-text-headline, 24px);
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: var(--pc-color-text-primary);
+  }
+  .blog-cta p {
+    font-size: var(--pc-text-body, 16px);
+    color: var(--pc-color-text-secondary);
+    margin: 0 0 24px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 24px;
+    border-radius: var(--pc-radius-sm, 6px);
+    font-size: var(--pc-text-body-sm, 14px);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--pc-duration-fast, 150ms);
+  }
+  .btn-primary {
+    background: var(--pc-color-accent-default);
+    color: var(--pc-color-text-inverse, #fff);
+    border: 1px solid var(--pc-color-accent-default);
+  }
+  .btn-primary:hover {
+    background: var(--pc-color-accent-hover);
+    border-color: var(--pc-color-accent-hover);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--pc-color-text-primary);
+    border: 1px solid var(--pc-color-border-strong);
+  }
+  .btn-secondary:hover {
+    border-color: var(--pc-color-accent-default);
+    color: var(--pc-color-accent-default);
+  }
+
+  .container-narrow {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+</style>

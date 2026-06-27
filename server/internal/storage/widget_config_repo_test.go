@@ -47,6 +47,12 @@ func TestWidgetConfigRepo_CRUD(t *testing.T) {
 	pg := &Postgres{Pool: pool}
 	tenantID := DefaultTenantID
 
+	// 清除该 tenant 的旧测试数据，确保初始为空
+	_, err = pool.Exec(ctx, `DELETE FROM widget_configs WHERE tenant_id = $1`, tenantID)
+	if err != nil {
+		t.Fatalf("cleanup: %v", err)
+	}
+
 	// 初始应为空
 	got, err := pg.GetWidgetConfig(ctx, tenantID, "popup")
 	if err != nil {

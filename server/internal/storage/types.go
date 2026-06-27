@@ -103,6 +103,17 @@ type VisitorConsent struct {
 // 多租户未激活,所有记录均归属此 tenant。
 var DefaultTenantID = uuid.Nil
 
+// CustomDomain 是自定义域名的 DB 模型（cd-1）。
+type CustomDomain struct {
+	ID         int64     `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	Domain     string    `json:"domain"`
+	CertStatus string    `json:"cert_status"`  // pending / active / failed
+	CertError  string    `json:"cert_error"`   // 失败原因（成功时 ""）
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 // WidgetConfig 是 widget 配置的 DB 模型（page-editor pe-1）。
 type WidgetConfig struct {
 	ID         int64     `json:"id"`

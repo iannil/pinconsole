@@ -33,6 +33,9 @@ mkdir -p "$RUN_DIR"
 # 服务定义:名称用于 pid/log 文件命名与状态展示。
 SERVICES=(go admin sdk)
 
+# 端口兜底清理映射:与 SERVICES 数组索引对齐
+SERVICE_PORTS=(7080 7073 7074)
+
 # ===== 颜色 =====
 if [[ -t 1 ]]; then
     C_RESET='\033[0m'; C_GREEN='\033[32m'; C_CYAN='\033[36m'; C_YELLOW='\033[33m'; C_RED='\033[31m'; C_MAG='\033[35m'
@@ -90,7 +93,12 @@ ensure_docker() {
 # 后台启动一个服务并记录 PID。
 # 用法:spawn <name> <command...>
 spawn() {
-    local name="$1"; shift
+    local name="$1" port="$2"; shift 2
+    # 端口兜底:先清理该端口上的僵尸进程(pid 文件失效但端口被占)
+    if port_is_listening "$port"; then
+        warn "$name 端口 $port 被僵尸进程占用,正在清理..."
+        kill_port_if_occupied "$port" "$name"
+    fi
     if running_pid "$name" >/dev/null; then
         warn "$name 已在运行(PID $(running_pid "$name")),跳过"
         return 0
@@ -105,8 +113,28 @@ spawn() {
     bash -c "$*" >"$lf" 2>&1 &
     local pid=$!
     set +m
+    disown
     echo "$pid" >"$(pid_file "$name")"
     ok "$name 已启动(PID $pid,日志 ${lf#$SCRIPT_DIR/})"
+}
+
+# 端口兜底清理:当进程组方式失效(Vite/node 脱离进程组)时,
+# 用 lsof 找到并杀死占用已知端口的进程。
+kill_port_if_occupied() {
+    local port="$1" name="$2"
+    local pids
+    # macOS:lsof -ti :PORT 输出 PID 列表(一行一个)
+    pids="$(lsof -ti ":$port" 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+        warn "$name 端口 $port 仍被进程占用(PID $(echo "$pids" | tr '\n' ' ')),正在清理..."
+        echo "$pids" | xargs kill -TERM 2>/dev/null || true
+        sleep 1
+        pids="$(lsof -ti ":$port" 2>/dev/null || true)"
+        if [[ -n "$pids" ]]; then
+            warn "$name 端口 $port 未优雅退出,强制结束"
+            echo "$pids" | xargs kill -9 2>/dev/null || true
+        fi
+    fi
 }
 
 # ===== start =====
@@ -126,18 +154,33 @@ cmd_start() {
             go install github.com/air-verse/air@latest
         fi
         log "启动 Go server(air 热重载,http://localhost:${SERVER_PORT})..."
-        spawn go "cd '$SCRIPT_DIR/server' && exec '$air_bin'"
+        spawn go "${SERVICE_PORTS[0]}" "cd '$SCRIPT_DIR/server' && exec '$air_bin'"
     else
         warn "--no-go 已指定,跳过 Go server"
     fi
 
     log "启动 admin vite(HMR,http://localhost:7073/admin/)..."
-    spawn admin "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/admin dev"
+    spawn admin "${SERVICE_PORTS[1]}" "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/admin dev"
 
     log "启动 visitor-sdk vite(HMR,http://localhost:7074/)..."
-    spawn sdk "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/visitor-sdk dev"
+    spawn sdk "${SERVICE_PORTS[2]}" "cd '$SCRIPT_DIR' && exec pnpm --filter @pinconsole/visitor-sdk dev"
 
     echo
+    # 等待服务端口就绪(最多 8 秒),避免刚启动时误判为 hang
+    log "等待服务就绪..."
+    local idx=0
+    for name in "${SERVICES[@]}"; do
+        local port="${SERVICE_PORTS[$idx]}"
+        local tries=0
+        while [[ $tries -lt 8 ]]; do
+            if port_is_listening "$port"; then
+                break
+            fi
+            sleep 1
+            tries=$((tries + 1))
+        done
+        idx=$((idx + 1))
+    done
     cmd_status
     echo
     ok "全部启动完毕。查看日志:./dev.sh logs   关闭:./dev.sh stop"
@@ -157,44 +200,81 @@ cmd_stop() {
         fi
     done
 
-    if [[ "$any" -eq 0 ]]; then
-        warn "没有运行中的服务"
-        return 0
+    if [[ "$any" -eq 1 ]]; then
+        # 等待最多 5s 优雅退出,否则 SIGKILL 兜底。
+        for _ in 1 2 3 4 5; do
+            local alive=0
+            for name in "${SERVICES[@]}"; do
+                running_pid "$name" >/dev/null && alive=1
+            done
+            [[ "$alive" -eq 0 ]] && break
+            sleep 1
+        done
+
+        for name in "${SERVICES[@]}"; do
+            local pid
+            if pid="$(running_pid "$name")"; then
+                warn "$name 未优雅退出,强制结束(PID $pid)"
+                kill -9 "-$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null || true
+            fi
+            rm -f "$(pid_file "$name")"
+        done
+    else
+        warn "没有运行中的服务(pid 文件)"
     fi
 
-    # 等待最多 5s 优雅退出,否则 SIGKILL 兜底。
-    for _ in 1 2 3 4 5; do
-        local alive=0
-        for name in "${SERVICES[@]}"; do
-            running_pid "$name" >/dev/null && alive=1
-        done
-        [[ "$alive" -eq 0 ]] && break
-        sleep 1
-    done
-
+    # 端口兜底:清理脱离进程组的僵尸进程
+    local idx=0
     for name in "${SERVICES[@]}"; do
-        local pid
-        if pid="$(running_pid "$name")"; then
-            warn "$name 未优雅退出,强制结束(PID $pid)"
-            kill -9 "-$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null || true
-        fi
+        kill_port_if_occupied "${SERVICE_PORTS[$idx]}" "$name"
         rm -f "$(pid_file "$name")"
+        idx=$((idx + 1))
     done
     ok "已全部关闭"
+}
+
+# 检查指定端口是否在监听(用 lsof -ti,兼容 macOS/Linux)。
+# 返回 0(true)表示端口上有进程监听。
+port_is_listening() {
+    local port="$1"
+    lsof -ti ":$port" 2>/dev/null | grep -q .
 }
 
 # ===== status =====
 cmd_status() {
     printf "${C_MAG}%-8s %-10s %-8s %s${C_RESET}\n" "服务" "状态" "PID" "日志"
+    local idx=0
     for name in "${SERVICES[@]}"; do
-        local pid lf
+        local port="${SERVICE_PORTS[$idx]}"
+        local pid lf state_label pid_display
         lf="$(log_file "$name")"
         lf="${lf#$SCRIPT_DIR/}"
+        pid_display="-"
+        state_label="${C_RED}stopped${C_RESET}"
+
         if pid="$(running_pid "$name")"; then
-            printf "%-8s ${C_GREEN}%-10s${C_RESET} %-8s %s\n" "$name" "running" "$pid" "$lf"
-        else
-            printf "%-8s ${C_RED}%-10s${C_RESET} %-8s %s\n" "$name" "stopped" "-" "$lf"
+            # PID 文件有效且进程存活
+            if port_is_listening "$port"; then
+                # 优先显示实际监听端口的进程 PID(air→server 场景)
+                local actual_pid
+                actual_pid="$(lsof -ti ":$port" 2>/dev/null | head -1)"
+                pid_display="${actual_pid:-$pid}"
+                state_label="${C_GREEN}running${C_RESET}"
+            else
+                # PID 存活但端口没在监听——进程可能卡住或 non-server 状态
+                pid_display="$pid"
+                state_label="${C_YELLOW}hang${C_RESET}"
+            fi
+        elif port_is_listening "$port"; then
+            # 端口上有进程但 pid 文件失效(僵尸/脱离进程组)
+            local orphan_pid
+            orphan_pid="$(lsof -ti ":$port" 2>/dev/null | head -1)"
+            pid_display="$orphan_pid"
+            state_label="${C_YELLOW}zombie${C_RESET}"
         fi
+
+        printf "%-8s ${state_label} %-8s %s\n" "$name" "$pid_display" "$lf"
+        idx=$((idx + 1))
     done
 }
 

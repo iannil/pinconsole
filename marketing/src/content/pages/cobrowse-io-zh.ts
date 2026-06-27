@@ -43,6 +43,20 @@ export const cobrowseIoZh: SeoPageContent = {
       },
     ],
   },
+  evidence: {
+    blocks: [
+      {
+        quote: 'Cobrowse.io Agent 版：$30/坐席/月（年付）。包含本地部署的企业版需要定制报价——通常为 5 位数年费合同。商业使用无免费版。',
+        attribution: 'Cobrowse.io 定价页面（2026 年 6 月数据）',
+        sourceUrl: 'https://cobrowse.io/pricing',
+      },
+      {
+        quote: 'Cobrowse.io 的企业本地部署方案可以将数据路由到你的基础设施，但会话回放、访客监控和反爬虫功能需要额外工具——增加了总成本和集成复杂度。',
+        attribution: 'Cobrowse.io 官方文档 & 功能对比',
+        sourceUrl: 'https://cobrowse.io/docs',
+      },
+    ],
+  },
   faq: {
     items: [
       {

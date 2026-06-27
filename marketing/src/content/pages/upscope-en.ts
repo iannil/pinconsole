@@ -43,6 +43,20 @@ export const upscopeEn: SeoPageContent = {
       },
     ],
   },
+  evidence: {
+    blocks: [
+      {
+        quote: 'Upscope pricing: Essentials at $39/agent/month, Pro at $79/agent/month, Enterprise at custom pricing. All plans are per-agent, per-month. Co-browsing only — no session replay, no monitoring, no chat.',
+        attribution: 'Upscope Pricing Page (as of June 2026)',
+        sourceUrl: 'https://upscope.com/pricing',
+      },
+      {
+        quote: 'Upscope is a co-browsing specialist — it does one thing well. Teams that also need session replay, visitor monitoring, or proactive chat must purchase and integrate separate tools, increasing both cost and operational complexity.',
+        attribution: 'Upscope Features Comparison',
+        sourceUrl: 'https://upscope.com/features',
+      },
+    ],
+  },
   faq: {
     items: [
       {

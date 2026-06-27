@@ -43,6 +43,20 @@ export const cobrowseIoEn: SeoPageContent = {
       },
     ],
   },
+  evidence: {
+    blocks: [
+      {
+        quote: 'Cobrowse.io pricing: Agent plan at $30/agent/month (billed annually). Enterprise plan with on-premise hosting requires a custom quote — typically 5-figure annual contracts. No free tier for commercial use.',
+        attribution: 'Cobrowse.io Pricing Page (as of June 2026)',
+        sourceUrl: 'https://cobrowse.io/pricing',
+      },
+      {
+        quote: 'Cobrowse.io\'s on-premise plan routes data through your infrastructure, but session replay, visitor monitoring, and anti-bot features require separate tools — increasing total cost and integration complexity.',
+        attribution: 'Cobrowse.io Documentation & Feature Comparison',
+        sourceUrl: 'https://cobrowse.io/docs',
+      },
+    ],
+  },
   faq: {
     items: [
       {

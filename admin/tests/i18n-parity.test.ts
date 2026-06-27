@@ -68,6 +68,6 @@ describe('i18n key parity', () => {
     const enKeys = flattenKeys(enUS as unknown as I18nRecord);
     // 当前已知 key 数: en-US = zh-CN
     expect(enKeys.length).toBeGreaterThanOrEqual(90);
-    expect(enKeys.length).toBeLessThanOrEqual(150);
+    expect(enKeys.length).toBeLessThanOrEqual(200);
   });
 });

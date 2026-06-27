@@ -4,21 +4,10 @@
  * IBM Plex Sans / Mono + Noto Sans SC.
  * Editorial v1 patterns retired: paper noise, drop cap, manifesto-serif accents,
  * heavy 4px rules, italic display variants.
+ *
+ * Fonts are loaded via src/styles/fonts.css (<link> in layout <head>)
+ * to avoid inlining ~400KB of @font-face CSS into HTML.
  */
-
-/* Self-hosted fonts — OSS principle (no Google CDN tracking). */
-@import '@fontsource/ibm-plex-sans/400.css';
-@import '@fontsource/ibm-plex-sans/500.css';
-@import '@fontsource/ibm-plex-sans/600.css';
-@import '@fontsource/ibm-plex-sans/700.css';
-@import '@fontsource/ibm-plex-sans/400-italic.css';
-@import '@fontsource/noto-sans-sc/400.css';
-@import '@fontsource/noto-sans-sc/500.css';
-@import '@fontsource/noto-sans-sc/600.css';
-@import '@fontsource/noto-sans-sc/700.css';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/500.css';
-@import '@fontsource/ibm-plex-mono/600.css';
 
 @import './tokens.css';
 

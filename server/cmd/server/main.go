@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/iannil/pinconsole/internal/api"
+	"github.com/iannil/pinconsole/internal/cert"
 	"github.com/iannil/pinconsole/internal/config"
 	"github.com/iannil/pinconsole/internal/hub"
 	"github.com/iannil/pinconsole/internal/logging"
@@ -89,6 +91,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	// cd-1：初始化 certmagic 证书管理器（仅 ACME_EMAIL 已设时激活）
+	var certManager *cert.Manager
+	if cfg.ACMEEmail != "" {
+		certManager, err = cert.New(rootCtx, stores.PG, logger, cfg.ACMEEmail, cfg.ACMEDataDir, cfg.ACMEStaging)
+		if err != nil {
+			logger.Error("证书管理器初始化失败", "error", err)
+			os.Exit(1)
+		}
+		logger.Info("certmagic 证书管理器已初始化",
+			"email", cfg.ACMEEmail,
+			"staging", cfg.ACMEStaging,
+			"data_dir", cfg.ACMEDataDir,
+			"platform_domain", cfg.PlatformDomain,
+		)
+	}
+
 	// 路由
 	// 1i:解析 BannedUAs
 	bannedUAs := []string{}
@@ -123,6 +141,8 @@ func main() {
 		BannedUAs:              bannedUAs,
 		TrustedProxies:         trustedProxies,
 		PagesRenderer:          pageRenderer,
+		CertManager:            certManager,
+		PlatformDomain:         cfg.PlatformDomain,
 	})
 
 	// 1o P1-6:WriteTimeout=0(coder/websocket 文档明确要求,否则所有 WS 每 30s 被踢)
@@ -142,6 +162,49 @@ func main() {
 		}
 	}()
 	logger.Info("HTTP server 已监听", "addr", srv.Addr)
+
+	// cd-1: 如果 certmagic 已初始化，启动 HTTPS + HTTP-01 challenge listener
+	if certManager != nil {
+		// HTTPS listener on 443
+		tlsSrv := &http.Server{
+			Addr:         ":443",
+			Handler:      router,
+			ReadTimeout:  0,
+			WriteTimeout: 0,
+			IdleTimeout:  120 * time.Second,
+		}
+		go func() {
+			tlsListener, err := tls.Listen("tcp", ":443", certManager.TLSConfig())
+			if err != nil {
+				logger.Error("HTTPS listener 启动失败", "error", err)
+				return
+			}
+			if err := tlsSrv.Serve(tlsListener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Error("HTTPS server 异常退出", "error", err)
+				os.Exit(1)
+			}
+		}()
+		logger.Info("HTTPS server 已监听", "addr", ":443")
+
+		// HTTP-01 challenge + redirect listener on ACME port
+		acmeHandler := certManager.HTTPChallengeHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+		}))
+		acmeSrv := &http.Server{
+			Addr:         ":" + cfg.ACMEPort,
+			Handler:      acmeHandler,
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
+		go func() {
+			if err := acmeSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Error("ACME HTTP server 异常退出", "error", err)
+				os.Exit(1)
+			}
+		}()
+		logger.Info("ACME HTTP challenge server 已监听", "addr", ":"+cfg.ACMEPort)
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
