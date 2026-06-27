@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-27(docs 全量二次归档整理 + progress/ 清空 + marketing/ 独立目录)
+**最后更新**：2026-06-27(cd-1 + cd-2 自定义域名完成)
 
 ---
 
@@ -48,6 +48,14 @@
 - **page-editor**: post-v1 页面编辑器全 3 切片(pe-1 proto+PG+Go+API / pe-2 admin UI / pe-3 SDK 配置驱动)
 - **端口迁移**: 全部开发端口移至 7000-7100 范围(7080/7073/7074/7032/7079/7020/7021)
 - **Tier 1 技术债务清理**: Go data race atomic.Bool 修复 / cap 5000 裁切测试补齐 / Playwright e2e fork-5 直播回放渲染验证 / Makefile test-go 自动 docker up + migrations 应用（Go 12/12 ✅, JS 423 ✅）
+
+**cd-1 + cd-2 自定义域名**(2026-06-26~27, ~1 天):
+- Config 扩展 + PG migration 000009 + storage repo(7 方法, 2 PG 集成测试)
+- certmagic 封装(内建 HTTPS 443 + ACME HTTP-01 80, FileStorage)
+- REST API(List/Create/Delete + 异步证书签发)
+- HostDomainMiddleware + route 注册
+- Admin DomainsView.vue(添加/列表/删除/DNS 指引) + 18 双语 i18n keys
+- 验证: Go build ✅, 全部测试 ✅
 
 **测试信心补全完整路径**(2026-06-19):
 - 审计:31 切片 badge 系统性虚标,28 T0 + 40 T1 + 30 T2 + 10 T3 = 108 gap

@@ -13,8 +13,13 @@ const locale = content.locale;
 const siteUrl = 'https://pinconsole.com';
 const canonicalPath = locale === 'zh' ? '/' : '/en/';
 const canonicalUrl = `${siteUrl}${canonicalPath}`;
-const ogImageUrl = `${siteUrl}/og-image.png`;
-const cfAnalyticsToken = 'PASTE_CF_WEB_ANALYTICS_TOKEN'; // overridden by env in production
+const ogImageUrl = `${siteUrl}/og-image.webp`;
+const cfAnalyticsToken = import.meta.env.CF_WEB_ANALYTICS_TOKEN || '';
+const baiduVerificationToken = '';
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || '';
+
+const softwareAppDesc =
+  'Open source ToB real-time visitor monitoring + operator interaction + session replay platform. AGPL-3.0, self-hosted, data never leaves your infrastructure.';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -32,6 +37,38 @@ const jsonLd = {
       url: siteUrl,
       inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
       description: content.meta.description,
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'PinConsole',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Linux, macOS, Windows (Docker)',
+      description: softwareAppDesc,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+        priceValidUntil: '2030-12-31',
+      },
+      license: 'https://github.com/iannil/pinconsole/blob/master/LICENSE',
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'PinConsole',
+          item: canonicalUrl,
+        },
+      ],
+    },
+    {
+      '@type': 'WebPage',
+      name: content.meta.title,
+      description: content.meta.description,
+      url: canonicalUrl,
+      inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
     },
   ],
 };
@@ -71,12 +108,38 @@ const jsonLd = {
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
 
+    <!-- Baidu site verification (conditional — leave blank if not using Baidu Webmaster Tools) -->
+    {baiduVerificationToken && (
+      <meta name="baidu-site-verification" content={baiduVerificationToken} />
+    )}
+
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-    <!-- Cloudflare Turnstile widget script (loaded on all pages; rendered only on form mount) -->
-    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" async />
-
     <slot name="head" />
+
+    <!-- GA4 Consent Mode v2 — default denied (no cookies; cookieless ping for modeling) -->
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500,
+      });
+    </script>
+
+    <!-- GA4 gtag.js — only renders when measurement ID is configured -->
+    {gaId && (
+      <Fragment>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+        <script is:inline define:vars={{ gaId }}>
+          gtag('js', new Date());
+          gtag('config', gaId, { anonymize_ip: true });
+        </script>
+      </Fragment>
+    )}
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to content</a>
@@ -87,7 +150,7 @@ const jsonLd = {
     <Footer content={content} />
 
     <!-- Cloudflare Web Analytics — privacy-friendly, no cookies -->
-    {cfAnalyticsToken && cfAnalyticsToken !== 'PASTE_CF_WEB_ANALYTICS_TOKEN' && (
+    {cfAnalyticsToken && (
       <script
         defer
         src="https://static.cloudflareinsights.com/beacon.min.js"

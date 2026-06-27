@@ -11,3 +11,4 @@
 | [GA4 接入设计](./2026-06-23-marketing-ga4-design.md) | 技术设计 | draft |
 | [国内金融线 GTM](./2026-06-25-domestic-finance-gtm-plan.md) | GTM 计划 | 待用户确认 |
 | [英语市场冷启动 GTM](./2026-06-25-english-cold-start-gtm-plan.md) | GTM 计划 | 待用户确认 |
+| [SEO+GEO 规划](../progress/2026-06-26-marketing-seo-geo-spec.md) | 策略设计 | spec（已锁定） |

@@ -6,7 +6,7 @@ export const en: PageContent = {
   meta: {
     title: 'PinConsole — Your visitors, your data.',
     description:
-      'Open source ToB real-time visitor monitoring + operator interaction + session replay. AGPL-3.0, self-hosted, data never leaves your infrastructure.',
+      'Open source ToB real-time visitor monitoring + operator interaction + session replay platform. AGPL-3.0, self-hosted, data never leaves your infrastructure. An open-source alternative to Upscope and Cobrowse.io.',
     ogTitle: 'PinConsole — Your visitors, your data.',
     ogDescription:
       'Open source ToB real-time visitor monitoring + operator interaction + session replay. Self-hosted, AGPL-3.0, data never leaves.',
@@ -27,7 +27,7 @@ export const en: PageContent = {
     eyebrow: 'AGPL-3.0 · Self-hosted · Data Sovereignty',
     h1: 'Your visitors,\nyour data.',
     h2:
-      'Commercial customer-ops SaaS at $30-100K/year locks your data, locks features, and raises prices every year.',
+      'PinConsole is an open-source, self-hosted alternative to Upscope and Cobrowse.io for real-time co-browsing, session replay, and visitor monitoring. Commercial customer-ops SaaS at $30-100K/year locks your data, locks features, and raises prices every year.',
     cta: {
       primary: { label: 'Request consultation', href: '#consult' },
       secondary: { label: 'Self-host in 5 min', href: '#data-sovereignty' },
@@ -50,7 +50,7 @@ export const en: PageContent = {
           'Behavior serialization (stable rrweb node IDs)',
           'Visitor SDK same-origin, single JS file',
         ],
-        screenshot: '/screenshots/dashboard.png',
+        screenshot: '/screenshots/dashboard.webp',
       },
       {
         icon: 'arrows-out-cardinal',
@@ -62,7 +62,7 @@ export const en: PageContent = {
           'Form-fill debounce 300ms',
           'Navigation takeover + cross-page session handoff',
         ],
-        screenshot: '/screenshots/cobrowse-active.png',
+        screenshot: '/screenshots/cobrowse-active.webp',
       },
       {
         icon: 'video',
@@ -74,7 +74,7 @@ export const en: PageContent = {
           '30-day default retention, configurable',
           'GDPR right-to-be-forgotten one-shot',
         ],
-        screenshot: '/screenshots/replay.png',
+        screenshot: '/screenshots/replay.webp',
       },
       {
         icon: 'chat-circle-dots',
@@ -86,7 +86,7 @@ export const en: PageContent = {
           'History searchable by session',
           'Operator 1:1 locking to prevent conflicts',
         ],
-        screenshot: '/screenshots/chat.png',
+        screenshot: '/screenshots/chat.webp',
       },
       {
         icon: 'shield-check',
@@ -98,7 +98,7 @@ export const en: PageContent = {
           'GDPR consent opt-in default',
           'IP truncation /24, retention configurable',
         ],
-        screenshot: '/screenshots/privacy.png',
+        screenshot: '/screenshots/privacy.webp',
       },
     ],
   },
@@ -272,8 +272,17 @@ make docker-up build-frontend build
         ],
       },
       {
+        title: 'Compare',
+        links: [
+          { label: 'vs Upscope', href: '/en/alternatives/upscope' },
+          { label: 'vs Cobrowse.io', href: '/en/alternatives/cobrowse-io' },
+        ],
+      },
+      {
         title: 'Resources',
         links: [
+          { label: 'Self-hosted co-browsing', href: '/en/co-browsing/self-hosted' },
+          { label: 'Self-hosted session replay', href: '/en/session-replay/self-hosted' },
           { label: 'GitHub repo', href: 'https://github.com/iannil/pinconsole' },
           { label: 'Deploy docs', href: 'https://github.com/iannil/pinconsole#readme' },
           { label: 'FAQ', href: '#faq' },

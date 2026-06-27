@@ -52,19 +52,35 @@ const renderTurnstile = () => {
   });
 };
 
-onMounted(() => {
-  // Wait for turnstile script to load (FinalCTA injects it via head slot)
-  if ((window as any).turnstile) {
-    renderTurnstile();
-  } else {
-    const interval = setInterval(() => {
-      if ((window as any).turnstile) {
-        clearInterval(interval);
-        renderTurnstile();
-      }
-    }, 200);
-    setTimeout(() => clearInterval(interval), 5000);
-  }
+const loadTurnstileScript = (): Promise<void> => {
+  return new Promise((resolve) => {
+    if ((window as any).turnstile) {
+      resolve();
+      return;
+    }
+    // Prevent duplicate script injection
+    if (document.querySelector('script[src*="turnstile"]')) {
+      const check = setInterval(() => {
+        if ((window as any).turnstile) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 200);
+      setTimeout(() => clearInterval(check), 5000);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    document.head.appendChild(script);
+  });
+};
+
+onMounted(async () => {
+  await loadTurnstileScript();
+  renderTurnstile();
 });
 
 const onSubmit = async () => {
@@ -111,6 +127,15 @@ const onSubmit = async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     status.value = 'success';
+
+    // Fire GA4 conversion event（cookieless ping；gtag 未加载时 no-op）
+    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'lead_submit', {
+        purpose: form.purpose,
+        locale: props.locale,
+      });
+    }
+
     form.name = '';
     form.company = '';
     form.contact = '';

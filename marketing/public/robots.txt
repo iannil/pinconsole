@@ -2,3 +2,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://pinconsole.com/sitemap-index.xml
+
+# Baidu Webmaster Tools — submit the same sitemap URL via Baidu Ziyuan platform.
+# Astro sitemap output is compatible with both Google and Baidu.

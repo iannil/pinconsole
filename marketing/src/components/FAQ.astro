@@ -8,9 +8,24 @@ interface Props {
 const { content } = Astro.props;
 const faq = content.faq;
 const ordinal = (n: number) => (n + 1).toString().padStart(2, '0');
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.items.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
 ---
 
 <section id="faq" class="section faq-section">
+  <!-- FAQPage structured data for SEO/GEO -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
   <div class="container container-wide">
     <header class="section-header reveal">
       <span class="section-number">04 — {faq.eyebrow}</span>

@@ -24,9 +24,27 @@ const flowNodes = isZh
     ];
 
 const codeLines = s.code.split('\n');
+
+const howToSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: isZh ? '5 分钟自托管 PinConsole' : 'Self-host PinConsole in 5 minutes',
+  description: isZh
+    ? '一行 docker compose 在你的服务器上跑起 PinConsole。'
+    : 'Run PinConsole on your own server with a single docker compose command.',
+  step: [
+    { '@type': 'HowToStep', position: 1, name: 'Clone the repo', text: 'git clone https://github.com/iannil/pinconsole' },
+    { '@type': 'HowToStep', position: 2, name: 'Enter directory', text: 'cd pinconsole' },
+    { '@type': 'HowToStep', position: 3, name: 'Configure environment', text: 'cp .env.example .env' },
+    { '@type': 'HowToStep', position: 4, name: 'Start services and build', text: 'make docker-up build-frontend build' },
+    { '@type': 'HowToStep', position: 5, name: 'Run the server', text: './server/bin/pinconsole-server' },
+  ],
+};
 ---
 
 <section id="data-sovereignty" class="section why-section">
+  <!-- HowTo structured data for SEO/GEO — deployment steps -->
+  <script type="application/ld+json" set:html={JSON.stringify(howToSchema)} />
   <div class="container">
     <header class="section-header reveal">
       <span class="section-number">01 — {d.eyebrow}</span>

@@ -6,7 +6,7 @@ export const zh: PageContent = {
   meta: {
     title: 'PinConsole — 你的访客，你的数据。',
     description:
-      '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。AGPL-3.0，自托管，数据从不出门。竞品 SaaS 的开源替代。',
+      '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。AGPL-3.0，自托管，数据从不出门。竞品 SaaS 的开源替代。PinConsole 是开源的自托管共浏览和录像回放方案。',
     ogTitle: 'PinConsole — 你的访客，你的数据。',
     ogDescription:
       '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。自托管，AGPL-3.0，数据从不出门。',
@@ -27,7 +27,7 @@ export const zh: PageContent = {
     eyebrow: 'AGPL-3.0 · 自托管 · 数据主权',
     h1: '你的访客，\n你的数据。',
     h2:
-      '年费 30-100 万的 SaaS 锁住你的数据、锁住你的功能、年年涨价。',
+      'PinConsole 是开源、自托管的实时访客监控、共浏览（co-browsing）和录像回放平台。年费 30-100 万的 SaaS 锁住你的数据、锁住你的功能、年年涨价。',
     cta: {
       primary: { label: '预约咨询', href: '#consult' },
       secondary: { label: '5 分钟自部署', href: '#data-sovereignty' },
@@ -48,7 +48,7 @@ export const zh: PageContent = {
           '行为序列化（rrweb 节点 ID 稳定）',
           '访客 SDK 同源分发，单 JS 文件',
         ],
-        screenshot: '/screenshots/dashboard.png',
+        screenshot: '/screenshots/dashboard.webp',
       },
       {
         icon: 'arrows-out-cardinal',
@@ -59,7 +59,7 @@ export const zh: PageContent = {
           '代填防抖动 300ms',
           '跳转接管 + 跨页面会话续接',
         ],
-        screenshot: '/screenshots/cobrowse-active.png',
+        screenshot: '/screenshots/cobrowse-active.webp',
       },
       {
         icon: 'video',
@@ -70,7 +70,7 @@ export const zh: PageContent = {
           '默认保留 30 天，可配置',
           'GDPR 被遗忘权一键删除',
         ],
-        screenshot: '/screenshots/replay.png',
+        screenshot: '/screenshots/replay.webp',
       },
       {
         icon: 'chat-circle-dots',
@@ -81,7 +81,7 @@ export const zh: PageContent = {
           '历史消息按 session 检索',
           '运营 1:1 锁定避免冲突',
         ],
-        screenshot: '/screenshots/chat.png',
+        screenshot: '/screenshots/chat.webp',
       },
       {
         icon: 'shield-check',
@@ -92,7 +92,7 @@ export const zh: PageContent = {
           'GDPR consent opt-in 默认',
           'IP 截断 /24，行为日志保留可配',
         ],
-        screenshot: '/screenshots/privacy.png',
+        screenshot: '/screenshots/privacy.webp',
       },
     ],
   },
@@ -265,8 +265,17 @@ make docker-up build-frontend build
         ],
       },
       {
+        title: '对比',
+        links: [
+          { label: 'vs Upscope', href: '/alternatives/upscope' },
+          { label: 'vs Cobrowse.io', href: '/alternatives/cobrowse-io' },
+        ],
+      },
+      {
         title: '资源',
         links: [
+          { label: '私有化共浏览', href: '/co-browsing/self-hosted' },
+          { label: '私有化录像回放', href: '/session-replay/self-hosted' },
           { label: 'GitHub 仓库', href: 'https://github.com/iannil/pinconsole' },
           { label: '部署文档', href: 'https://github.com/iannil/pinconsole#readme' },
           { label: 'FAQ', href: '#faq' },
