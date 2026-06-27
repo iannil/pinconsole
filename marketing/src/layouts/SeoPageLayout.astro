@@ -3,6 +3,7 @@ import '../styles/global.css';
 import fontsCssUrl from '../styles/fonts.css?url';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { zhContentHeader, enContentHeader } from '../content/nav-shared';
 import type { SeoPageContent } from '../content/pages/types';
 
 interface Props {
@@ -153,67 +154,7 @@ const jsonLd = {
     )}
   </head>
   <body>
-    {locale === 'zh' ? (
-      <Header content={{
-        locale: 'zh',
-        htmlLang: 'zh-CN',
-        meta: { title: '', description: '', ogTitle: '', ogDescription: '' },
-        nav: {
-          links: [
-            { label: '首页', href: '/' },
-            { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
-          ],
-          cta: '预约咨询',
-          localeSwitch: { label: 'EN', href: '/en' },
-        },
-        hero: { eyebrow: '', h1: '', h2: '', cta: { primary: { label: '', href: '' } } },
-        features: { eyebrow: '', title: '', subtitle: '', items: [] },
-        dataSovereignty: { eyebrow: '', title: '', subtitle: '', pillars: [], architectureAlt: '' },
-        selfHost: { eyebrow: '', title: '', subtitle: '', code: '', docsLink: { label: '', href: '' } },
-        roadmap: { eyebrow: '', title: '', subtitle: '', columns: [] },
-        faq: { eyebrow: '', title: '', subtitle: '', items: [] },
-        finalCTA: {
-          eyebrow: '', title: '', subtitle: '',
-          form: {
-            nameLabel: '', namePlaceholder: '', companyLabel: '', companyPlaceholder: '',
-            contactLabel: '', contactPlaceholder: '', purposeLabel: '',
-            purposes: [], messageLabel: '', messagePlaceholder: '',
-            submitLabel: '', privacyNote: '', successMessage: '', errorMessage: '',
-          },
-        },
-        footer: { tagline: '', columns: [], license: '', sourceNote: '' },
-      }} />
-    ) : (
-      <Header content={{
-        locale: 'en',
-        htmlLang: 'en-US',
-        meta: { title: '', description: '', ogTitle: '', ogDescription: '' },
-        nav: {
-          links: [
-            { label: 'Home', href: '/en' },
-            { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
-          ],
-          cta: 'Request consultation',
-          localeSwitch: { label: '中', href: '/' },
-        },
-        hero: { eyebrow: '', h1: '', h2: '', cta: { primary: { label: '', href: '' } } },
-        features: { eyebrow: '', title: '', subtitle: '', items: [] },
-        dataSovereignty: { eyebrow: '', title: '', subtitle: '', pillars: [], architectureAlt: '' },
-        selfHost: { eyebrow: '', title: '', subtitle: '', code: '', docsLink: { label: '', href: '' } },
-        roadmap: { eyebrow: '', title: '', subtitle: '', columns: [] },
-        faq: { eyebrow: '', title: '', subtitle: '', items: [] },
-        finalCTA: {
-          eyebrow: '', title: '', subtitle: '',
-          form: {
-            nameLabel: '', namePlaceholder: '', companyLabel: '', companyPlaceholder: '',
-            contactLabel: '', contactPlaceholder: '', purposeLabel: '',
-            purposes: [], messageLabel: '', messagePlaceholder: '',
-            submitLabel: '', privacyNote: '', successMessage: '', errorMessage: '',
-          },
-        },
-        footer: { tagline: '', columns: [], license: '', sourceNote: '' },
-      }} />
-    )}
+    <Header content={locale === 'zh' ? zhContentHeader : enContentHeader} />
 
     <main>
       <!-- Hero -->

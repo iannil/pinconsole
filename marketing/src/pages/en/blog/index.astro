@@ -1,0 +1,168 @@
+---
+import '../../../styles/global.css';
+import fontsCssUrl from '../../../styles/fonts.css?url';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { enContentHeader } from '../../../content/nav-shared';
+
+const siteUrl = 'https://pinconsole.com';
+const canonicalUrl = `${siteUrl}/en/blog/`;
+const ogImageUrl = `${siteUrl}/og-image.webp`;
+
+const posts = [
+  {
+    title: 'AGPL-3.0 vs MIT: Why We Chose AGPL for Our Open Source Project',
+    url: '/blog/agpl-vs-mit',
+    date: '2026-06-27',
+    desc: 'A honest look at why PinConsole chose the AGPL-3.0 license over MIT or Apache 2.0 — the strategic reasoning, the trade-offs, and how commercial licensing works for proprietary use.',
+    tags: ['Open Source', 'Licensing', 'AGPL'],
+  },
+  {
+    title: 'How We Built a Self-Hosted Session Replay Alternative to FullStory',
+    url: '/blog/building-self-hosted-session-replay',
+    date: '2026-06-27',
+    desc: 'A technical deep-dive into building PinConsole — Go backend, rrweb DOM capture, MinIO storage, and a single-binary deployment model.',
+    tags: ['Engineering', 'Architecture', 'Self-Hosted'],
+  },
+];
+---
+
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog — PinConsole</title>
+    <meta name="description" content="PinConsole blog: technical deep-dives, architecture decisions, and product updates for the open-source self-hosted co-browsing and session replay platform." />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Blog — PinConsole" />
+    <meta property="og:description" content="PinConsole blog" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="PinConsole" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Blog — PinConsole" />
+    <meta name="twitter:description" content="PinConsole blog" />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="alternate" hreflang="zh-CN" href="/blog/" />
+    <link rel="alternate" hreflang="en-US" href={canonicalUrl} />
+    <link rel="alternate" hreflang="x-default" href="/blog/" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
+
+    <link rel="stylesheet" href={fontsCssUrl} />
+  </head>
+  <body>
+    <Header content={enContentHeader} />
+
+    <main>
+      <section class="blog-listing">
+        <div class="container container-narrow">
+          <h1>Blog</h1>
+          <p class="listing-subtitle">Technical deep-dives, architecture decisions, and product updates</p>
+          <div class="post-list">
+            {posts.map((post) => (
+              <article class="post-card">
+                <a href={post.url} class="post-link">
+                  <time class="post-date">{post.date}</time>
+                  <h2 class="post-title">{post.title}</h2>
+                  <p class="post-desc">{post.desc}</p>
+                  <div class="post-tags">
+                    {post.tags.map((tag) => <span class="tag">{tag}</span>)}
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer content={enContentHeader} />
+
+    <style>
+      .blog-listing {
+        padding: 80px 0;
+        background: var(--pc-color-bg-canvas);
+      }
+      .blog-listing h1 {
+        font-size: var(--pc-hero-h1, clamp(32px, 5vw, 56px));
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 8px;
+        color: var(--pc-color-text-primary);
+      }
+      .listing-subtitle {
+        font-size: var(--pc-text-body-lg, 18px);
+        color: var(--pc-color-text-secondary);
+        margin: 0 0 48px;
+      }
+      .post-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .post-card {
+        border: 1px solid var(--pc-color-border-default);
+        border-radius: var(--pc-radius-sm, 6px);
+        padding: 24px;
+        background: var(--pc-color-bg-surface);
+        transition: border-color var(--pc-duration-fast, 150ms);
+      }
+      .post-card:hover {
+        border-color: var(--pc-color-accent-default);
+      }
+      .post-link {
+        text-decoration: none;
+        color: inherit;
+      }
+      .post-date {
+        display: block;
+        font-family: var(--pc-font-mono);
+        font-size: var(--pc-text-caption, 12px);
+        color: var(--pc-color-text-muted);
+        margin-bottom: 8px;
+      }
+      .post-title {
+        font-size: var(--pc-text-headline, 22px);
+        font-weight: 600;
+        margin: 0 0 8px;
+        color: var(--pc-color-text-primary);
+      }
+      .post-desc {
+        font-size: var(--pc-text-body, 15px);
+        color: var(--pc-color-text-secondary);
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      .post-tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        display: inline-flex;
+        padding: 3px 10px;
+        border-radius: var(--pc-radius-sm, 6px);
+        background: var(--pc-color-accent-subtle);
+        color: var(--pc-color-accent-default);
+        font-size: var(--pc-text-micro, 11px);
+        font-weight: 500;
+      }
+      .container-narrow {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+    </style>
+  </body>
+</html>

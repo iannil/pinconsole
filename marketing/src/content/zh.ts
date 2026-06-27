@@ -1,4 +1,5 @@
 import type { PageContent } from './types';
+import { zhNavLinks, zhNavCta, zhLocaleSwitch } from './nav-shared';
 
 export const zh: PageContent = {
   locale: 'zh',
@@ -11,18 +12,7 @@ export const zh: PageContent = {
     ogDescription:
       '开源 ToB 实时访客监控 + 运营互动 + 录像回放平台。自托管，AGPL-3.0，数据从不出门。',
   },
-  nav: {
-    links: [
-      { label: '首页', href: '#top' },
-      { label: '数据主权', href: '#data-sovereignty' },
-      { label: '能力', href: '#features' },
-      { label: '路线图', href: '#roadmap' },
-      { label: 'FAQ', href: '#faq' },
-      { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
-    ],
-    cta: '预约咨询',
-    localeSwitch: { label: 'EN', href: '/en' },
-  },
+  nav: { links: [...zhNavLinks], cta: zhNavCta, localeSwitch: { ...zhLocaleSwitch } },
   hero: {
     eyebrow: 'AGPL-3.0 · 自托管 · 数据主权',
     h1: '你的访客，\n你的数据。',

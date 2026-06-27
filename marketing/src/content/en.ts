@@ -1,4 +1,5 @@
 import type { PageContent } from './types';
+import { enNavLinks, enNavCta, enLocaleSwitch } from './nav-shared';
 
 export const en: PageContent = {
   locale: 'en',
@@ -11,18 +12,7 @@ export const en: PageContent = {
     ogDescription:
       'Open source ToB real-time visitor monitoring + operator interaction + session replay. Self-hosted, AGPL-3.0, data never leaves.',
   },
-  nav: {
-    links: [
-      { label: 'Home', href: '#top' },
-      { label: 'Data Sovereignty', href: '#data-sovereignty' },
-      { label: 'Features', href: '#features' },
-      { label: 'Roadmap', href: '#roadmap' },
-      { label: 'FAQ', href: '#faq' },
-      { label: 'GitHub', href: 'https://github.com/iannil/pinconsole' },
-    ],
-    cta: 'Request consultation',
-    localeSwitch: { label: '中', href: '/' },
-  },
+  nav: { links: [...enNavLinks], cta: enNavCta, localeSwitch: { ...enLocaleSwitch } },
   hero: {
     eyebrow: 'AGPL-3.0 · Self-hosted · Data Sovereignty',
     h1: 'Your visitors,\nyour data.',
