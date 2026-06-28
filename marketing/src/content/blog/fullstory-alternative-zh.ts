@@ -67,6 +67,11 @@ export const fullstoryAlternativeZh: BlogContent = {
       },
     ],
   },
+  relatedPosts: [
+    { title: '开源共浏览实现：如何让两个浏览器共享一个会话', url: '/blog/building-co-browsing-zh/', description: '基于 rrweb 的双向共浏览、WebSocket hub 路由和原子化声明的实现细节。' },
+    { title: '开源会话回放的隐私设计', url: '/blog/privacy-by-design-zh/', description: 'PinConsole 如何实现 GDPR 优先的会话监控。' },
+    { title: '构建生产级 WebSocket Hub：支撑 500 条并发连接', url: '/blog/websocket-hub-500-concurrent-zh/', description: 'PinConsole 高性能 WebSocket Hub 架构深度解析。' },
+  ],
   cta: {
     title: '立即试用 PinConsole',
     subtitle: '5 分钟自托管部署。AGPL-3.0。你的数据，你的服务器。',

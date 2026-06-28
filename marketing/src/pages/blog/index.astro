@@ -38,7 +38,102 @@ const posts = [
     desc: 'A technical deep-dive into building PinConsole — Go backend, rrweb DOM capture, MinIO storage, single-binary deployment.',
     tags: ['Engineering', 'Architecture', 'Self-Hosted'],
   },
+  {
+    title: 'Building Open-Source Co-Browsing: How We Made Two Browsers Share One Session',
+    url: '/blog/building-co-browsing',
+    date: '2026-06-28',
+    desc: 'Inside PinConsole\'s bidirectional co-browsing — rrweb node ID selectors, 1:1 operator locking, hub-and-spoke WebSocket routing, and safety by design.',
+    tags: ['Engineering', 'Co-Browsing', 'WebSocket'],
+  },
+  {
+    title: '开源共浏览实现：如何让两个浏览器共享一个会话',
+    url: '/blog/building-co-browsing-zh',
+    date: '2026-06-28',
+    desc: '深度解析 PinConsole 的双向共浏览架构——rrweb 节点 ID 选择器、1:1 运营锁定、WebSocket hub 路由和安全机制。',
+    tags: ['技术架构', '共浏览', 'WebSocket'],
+  },
+  {
+    title: '开源会话回放的隐私设计：构建 GDPR 优先的访客监控系统',
+    url: '/blog/privacy-by-design-zh',
+    date: '2026-06-28',
+    desc: 'PinConsole 如何实现隐私优先的访客监控——选择加入同意、选择性脱敏、被遗忘权、数据保留。',
+    tags: ['隐私', 'GDPR', '安全'],
+  },
+  {
+    title: 'Privacy by Design in Open-Source Session Replay',
+    url: '/blog/privacy-by-design',
+    date: '2026-06-28',
+    desc: 'How PinConsole implements privacy-first session monitoring — opt-in consent, selective masking, right-to-be-forgotten, and data retention.',
+    tags: ['Privacy', 'GDPR', 'Security'],
+  },
+  {
+    title: '会话回放的纵深防御：用 Go 构建反爬虫基础设施',
+    url: '/blog/defense-in-depth-zh',
+    date: '2026-06-28',
+    desc: 'PinConsole 的四层反爬虫纵深防御体系——速率限制、行为分析、SDK 指纹、WebSocket 认证和 URL 校验。',
+    tags: ['安全', '反爬虫', '技术架构'],
+  },
+  {
+    title: 'Defense in Depth for Session Replay: Building Anti-Bot Infrastructure in Go',
+    url: '/blog/defense-in-depth',
+    date: '2026-06-28',
+    desc: 'Rate limiting, behavioral analysis, SDK fingerprinting, and WebSocket auth — the four-layer anti-bot defense behind PinConsole.',
+    tags: ['Security', 'Anti-Bot', 'Engineering'],
+  },
+  {
+    title: '构建生产级 WebSocket Hub：支撑 500 条并发会话回放连接',
+    url: '/blog/websocket-hub-500-concurrent-zh',
+    date: '2026-06-28',
+    desc: '深度解析 PinConsole 的 WebSocket Hub 架构——每连接独立 goroutine、非阻塞扇出、Redis Stream 批处理、MinIO 刷盘模式。',
+    tags: ['技术架构', 'WebSocket', 'Go'],
+  },
+  {
+    title: 'Building a Production WebSocket Hub for 500 Concurrent Connections',
+    url: '/blog/websocket-hub-500-concurrent',
+    date: '2026-06-28',
+    desc: 'Goroutine-per-connection, non-blocking fan-out, Redis Stream batching, and MinIO flush patterns — the real-time architecture behind PinConsole.',
+    tags: ['Engineering', 'WebSocket', 'Architecture'],
+  },
+  {
+    title: 'Sustainable Open Source: AGPL-3.0 and Commercial Licensing at PinConsole',
+    url: '/blog/open-source-business-model',
+    date: '2026-06-28',
+    desc: 'No licensing servers, no sales pipeline, no contributor agreements. A transparent look at the business model behind a self-hosted open source project.',
+    tags: ['Open Source', 'Business', 'AGPL'],
+  },
+  {
+    title: '可持续开源：PinConsole 的 AGPL-3.0 与商业授权实践',
+    url: '/blog/open-source-business-model-zh',
+    date: '2026-06-28',
+    desc: '透明地解析 PinConsole 的开源商业模式——AGPL-3.0、商业授权即对话、零许可基础设施。',
+    tags: ['开源', '商业模式', 'AGPL'],
+  },
 ];
+const collectionPageTitle = '博客 — PinConsole';
+const collectionPageDesc = 'PinConsole 官方博客：技术分享、架构解析与产品更新。';
+
+const blogJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'CollectionPage',
+      '@id': canonicalUrl,
+      name: collectionPageTitle,
+      description: collectionPageDesc,
+      url: canonicalUrl,
+      inLanguage: 'zh-CN',
+      isPartOf: { '@type': 'Blog', '@id': `${siteUrl}/blog/`, name: 'PinConsole 博客' },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${canonicalUrl}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'PinConsole', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: '博客', item: canonicalUrl },
+      ],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -74,6 +169,7 @@ const posts = [
     <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
 
     <link rel="stylesheet" href={fontsCssUrl} />
+    <script type="application/ld+json" set:html={JSON.stringify(blogJsonLd)} />
   </head>
   <body>
     <Header content={zhContentHeader} />

@@ -1,0 +1,27 @@
+# PinConsole
+> Open-source alternative to Hotjar, FullStory, and session-replay tools — self-hosted, privacy-first, AGPL-3.0.
+
+## Pages
+- [Home](https://pinconsole.com/en/)
+- [Blog](https://pinconsole.com/en/blog/)
+
+## Blog Posts
+- [AGPL-3.0 vs MIT: Why We Chose AGPL for Our Open Source Project](https://pinconsole.com/en/blog/agpl-vs-mit/)
+- [How We Built a Self-Hosted Session Replay Alternative to FullStory](https://pinconsole.com/en/blog/building-self-hosted-session-replay/)
+- [Building Open-Source Co-Browsing: How We Made Two Browsers Share One Session](https://pinconsole.com/en/blog/building-co-browsing/)
+- [Privacy by Design in Open-Source Session Replay: Building GDPR-First Surveillance](https://pinconsole.com/en/blog/privacy-by-design/)
+- [Defense in Depth for Session Replay: Building Anti-Bot Infrastructure in Go](https://pinconsole.com/en/blog/defense-in-depth/)
+- [Building a Production WebSocket Hub for 500 Concurrent Session Replay Connections](https://pinconsole.com/en/blog/websocket-hub-500-concurrent/)
+- [Sustainable Open Source: How AGPL-3.0 and Commercial Licensing Work for PinConsole](https://pinconsole.com/en/blog/open-source-business-model/)
+
+## Alternatives
+- [PinConsole vs Hotjar](https://pinconsole.com/en/alternatives/hotjar/)
+- [PinConsole vs Smartlook](https://pinconsole.com/en/alternatives/smartlook/)
+- [PinConsole vs FullStory](https://pinconsole.com/en/alternatives/fullstory/)
+- [PinConsole vs LogRocket](https://pinconsole.com/en/alternatives/logrocket/)
+- [PinConsole vs Cobrowse.io](https://pinconsole.com/en/alternatives/cobrowse-io/)
+- [PinConsole vs Upscope](https://pinconsole.com/en/alternatives/upscope/)
+
+## Categories
+- [Self-Hosted Co-Browsing](https://pinconsole.com/en/co-browsing/self-hosted/)
+- [Self-Hosted Session Replay](https://pinconsole.com/en/session-replay/self-hosted/)

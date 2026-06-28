@@ -176,6 +176,23 @@ const jsonLd = {
         </div>
       </section>
 
+      <!-- Related posts -->
+      {content.relatedPosts && content.relatedPosts.length > 0 && (
+        <section class="blog-related">
+          <div class="container container-narrow">
+            <h2>{locale === 'zh' ? '推荐阅读' : 'Related Posts'}</h2>
+            <div class="related-list">
+              {content.relatedPosts.map((post) => (
+                <a href={post.url} class="related-card">
+                  <h3>{post.title}</h3>
+                  <p>{post.description}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <!-- CTA -->
       <section class="blog-cta">
         <div class="container container-narrow">
@@ -302,6 +319,47 @@ const jsonLd = {
     overflow-x: auto;
     font-size: var(--pc-text-body-sm, 14px);
     line-height: 1.6;
+  }
+
+  /* Related posts */
+  .blog-related {
+    padding: 48px 0;
+    background: var(--pc-color-bg-canvas);
+    border-bottom: 1px solid var(--pc-color-border-default);
+  }
+  .blog-related h2 {
+    font-size: var(--pc-text-headline, 22px);
+    font-weight: 600;
+    margin: 0 0 24px;
+    color: var(--pc-color-text-primary);
+  }
+  .related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .related-card {
+    display: block;
+    padding: 20px;
+    border: 1px solid var(--pc-color-border-default);
+    border-radius: var(--pc-radius-sm, 6px);
+    text-decoration: none;
+    transition: border-color var(--pc-duration-fast, 150ms);
+  }
+  .related-card:hover {
+    border-color: var(--pc-color-accent-default);
+  }
+  .related-card h3 {
+    font-size: var(--pc-text-body, 16px);
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--pc-color-text-primary);
+  }
+  .related-card p {
+    font-size: var(--pc-text-body-sm, 14px);
+    color: var(--pc-color-text-muted);
+    margin: 0;
+    line-height: 1.5;
   }
 
   /* CTA */

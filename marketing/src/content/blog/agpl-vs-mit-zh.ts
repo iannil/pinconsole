@@ -51,6 +51,10 @@ export const agplVsMitZh: BlogContent = {
       },
     ],
   },
+  relatedPosts: [
+    { title: '可持续开源：PinConsole 的 AGPL-3.0 与商业授权实践', url: '/blog/open-source-business-model-zh/', description: 'AGPL-3.0 与商业授权如何协同为开源开发提供资金。' },
+    { title: '如何构建一个自托管的 FullStory 替代品', url: '/blog/self-hosted-fullstory-alternative/', description: 'PinConsole 的完整架构——Go、rrweb、MinIO 和单二进制部署。' },
+  ],
   cta: {
     title: '自托管 PinConsole——AGPL-3.0 免费',
     subtitle: '无需注册。零会话上限。你的数据，你的服务器。',

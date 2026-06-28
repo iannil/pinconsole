@@ -1,13 +1,17 @@
 # · pinconsole
 
-> **Your visitors, your data.** · [中文](./README.zh.md)
+> **Your visitors, your data.** · [中文](./README.zh.md) · [Website](https://pinconsole.com) · [Blog](https://pinconsole.com/blog/)
 
 **Open-source self-hosted alternative to FullStory, Hotjar, LogRocket, and Smartlook** — real-time visitor monitoring, co-browsing, and session replay. AGPL-3.0, data never leaves your infra.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-0F766E.svg)](./LICENSE)
-[![e2e: 70 passed](https://img.shields.io/badge/e2e-70%20passed%20%2F%200%20failed-15803D.svg)](./docs/reports/completed/2026-06-18-v1-e2e-acceptance.md)
-[![v1: shipped](https://img.shields.io/badge/v1-shipped-0F766E.svg)](./docs/project-status.md)
+[![Go](https://img.shields.io/github/go-mod/go-version/iannil/pinconsole?filename=server/go.mod&label=Go&color=0F766E)](./server/go.mod)
+[![CI](https://github.com/iannil/pinconsole/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/iannil/pinconsole/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/iannil/pinconsole?color=0F766E&label=version)](./VERSION)
 [![i18n: zh/en](https://img.shields.io/badge/i18n-zh%20%2F%20en-0E7490.svg)](#)
+[![v1: shipped](https://img.shields.io/badge/v1-shipped-0F766E.svg)](./docs/project-status.md)
+
+**Compare with incumbent tools:**
 
 [![vs FullStory](https://img.shields.io/badge/vs_FullStory-see_comparison-0F766E)](https://pinconsole.com/alternatives/fullstory/)
 [![vs Hotjar](https://img.shields.io/badge/vs_Hotjar-see_comparison-0F766E)](https://pinconsole.com/alternatives/hotjar/)
@@ -15,32 +19,48 @@
 [![vs Smartlook](https://img.shields.io/badge/vs_Smartlook-see_comparison-0F766E)](https://pinconsole.com/alternatives/smartlook/)
 [![vs Cobrowse.io](https://img.shields.io/badge/vs_Cobrowse.io-see_comparison-0F766E)](https://pinconsole.com/alternatives/cobrowse-io/)
 
-Design decisions:
-
-- **Data sovereignty** — every visitor action, operator chat, and session recording lives in **your** PostgreSQL / Redis / MinIO. No third-party calls, no external dependencies.
-- **AGPL-3.0 strong copyleft** — every modification must be open-sourced. Cloud vendors cannot take this and re-sell it as SaaS. License-level hard protection.
-- **Standard stack, no lock-in** — Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO. Industry-standard at every layer. The schema is yours.
-- **~15KB gzip SDK** — lightweight visitor SDK, served from your own domain. No CDN dependency, no third-party script loaders.
-
-**Decision-maker?** → [pinconsole.com](https://pinconsole.com) · **Engineer?** → [Self-host](#self-host) · **Compare?** → [FullStory](https://pinconsole.com/alternatives/fullstory/) · [Hotjar](https://pinconsole.com/alternatives/hotjar/) · [LogRocket](https://pinconsole.com/alternatives/logrocket/) · [Smartlook](https://pinconsole.com/alternatives/smartlook/)
-
 ---
 
-## Who is this for?
+## Quick start
 
-- **Product teams** that need session replay without per-session pricing or data leaving their infrastructure
-- **Customer support teams** that want co-browsing capabilities without third-party SaaS subscriptions
-- **Compliance-conscious organizations** (GDPR, SOC 2, HIPAA, China PIPL) that need data to stay in-region or on-premise
-- **Developer teams** looking for an open-source, auditable alternative to proprietary session replay tools
-- **Chinese market teams** that need session replay and co-browsing without cross-border network latency
+```bash
+git clone https://github.com/iannil/pinconsole
+cd pinconsole
+cp .env.example .env
+
+# start infra (PostgreSQL + Redis + MinIO) + build the release binary
+make docker-up && make build
+
+# run the server
+./server/bin/pinconsole-server
+```
+
+- **Visitor landing page:** http://localhost:8080/
+- **Admin console:** http://localhost:8080/admin — default `admin@pinconsole.local` (password set via `ADMIN_PASSWORD` env var)
+
+**Production deploy:**
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+Full Make command list (`make help`), architecture deep-dive, and ops playbook: see [`docs/project-status.md`](./docs/project-status.md) and [`Makefile`](./Makefile).
 
 ---
 
 ## See it
 
-![Dashboard — real-time visitor monitoring](./marketing/public/screenshots/dashboard.png)
+| Dashboard — real-time monitoring | Co-browsing — operator + visitor |
+|---|---|
+| ![Dashboard](./marketing/public/screenshots/dashboard.webp) | ![Co-browsing](./marketing/public/screenshots/cobrowse-active.webp) |
 
-![Co-browsing + live chat](./marketing/public/screenshots/cobrowse-active.png)
+| Session replay | Live chat + popup |
+|---|---|
+| ![Replay](./marketing/public/screenshots/replay.webp) | ![Chat](./marketing/public/screenshots/chat.webp) |
+
+| Privacy & consent controls |
+|---|
+| ![Privacy](./marketing/public/screenshots/privacy.webp) |
 
 ---
 
@@ -48,7 +68,7 @@ Design decisions:
 
 SaaS visitor-engagement tools extract every visitor's behavior, every operator chat, every session recording into their cloud. You pay them to ship your data to their infra — they use it to train their models, lock you in, and price-up next year.
 
-pinconsole exists because that data is yours. Run it on your own infra. Audit the code yourself. Leave when you want — your data, schema, and binaries are already in your hands.
+pinconsole exists because **that data is yours**. Run it on your own infra. Audit the code yourself. Leave when you want — your data, schema, and binaries are already in your hands.
 
 **Built as an open-source alternative to:**
 
@@ -59,6 +79,16 @@ pinconsole exists because that data is yours. Run it on your own infra. Audit th
 | [LogRocket](https://pinconsole.com/alternatives/logrocket/) | Per-session pricing, SaaS-only, no co-browsing |
 | [Smartlook](https://pinconsole.com/alternatives/smartlook/) | Session quotas, SaaS-only, no co-browsing |
 | [Cobrowse.io](https://pinconsole.com/alternatives/cobrowse-io/) | $30/agent/month, no replay or monitoring included |
+
+---
+
+## Who is this for?
+
+- **Product teams** — session replay without per-session pricing or data leaving your infrastructure
+- **Customer support teams** — co-browsing without third-party SaaS subscriptions
+- **Compliance-conscious organizations** (GDPR, SOC 2, HIPAA, China PIPL) — data stays in-region or on-premise
+- **Developer teams** — open-source, auditable alternative to proprietary session replay tools
+- **Chinese market teams** — session replay and co-browsing without cross-border network latency
 
 ---
 
@@ -76,67 +106,25 @@ pinconsole exists because that data is yours. Run it on your own infra. Audit th
 
 ---
 
-## Self-host
-
-```bash
-git clone https://github.com/iannil/pinconsole
-cd pinconsole
-cp .env.example .env
-
-# start infra + build the single release binary
-make docker-up && make build
-
-./server/bin/pinconsole-server
-```
-
-- Visitor landing page: http://localhost:8080/
-- Admin console: http://localhost:8080/admin — default `admin@pinconsole.local` (password set via `ADMIN_PASSWORD` env var)
-
-**Production deploy:**
-
-```bash
-docker compose --profile prod up -d --build
-```
-
-**Custom domains (ACME / Let's Encrypt):**
-
-The server can automatically provision HTTPS certificates for custom domains via certmagic.
-Set the following environment variables to enable:
-
-| Variable | Default | Description |
-|---|---|---|
-| `PLATFORM_DOMAIN` | `""` | Your main domain (e.g. `pinconsole.com`), exempt from Host-header validation |
-| `ACME_EMAIL` | `""` | **Required** — Let's Encrypt registration email. Server won't start ACME without it |
-| `ACME_STAGING` | `true` | Use Let's Encrypt staging CA (recommended for testing). Set `false` for production |
-| `ACME_DATA_DIR` | `./data/certmagic` | certmagic certificate cache directory |
-| `ACME_HTTP_PORT` | `80` | HTTP-01 challenge + redirect port |
-
-When `ACME_EMAIL` is set:
-- Server listens on **:443** (HTTPS) with auto-provisioned certificates
-- Server listens on **:80** for ACME HTTP-01 challenges + 301 redirect to HTTPS
-- Admin UI at `/admin/domains` lets you add/remove custom domains
-- Platform domain (`PLATFORM_DOMAIN`) and custom domains are validated via Host-header middleware
-
-For full Make command list (`make help`), architecture deep-dive, and ops playbook: see [`docs/project-status.md`](./docs/project-status.md) and [`Makefile`](./Makefile).
-
----
-
 ## Architecture
 
+```mermaid
+flowchart LR
+    SDK["Visitor SDK<br/>(~15KB gzip)"] -->|rrweb events / ws| Server["Go Server<br/>Gin + WebSocket"]
+    Admin["Admin UI<br/>(Vue 3 SPA)"] <-->|ws + REST| Server
+    Server --> PG[("PostgreSQL<br/>metadata")]
+    Server --> Redis[("Redis<br/>presence / locking")]
+    Server --> MinIO[("MinIO<br/>event store")]
+
+    style SDK fill:#0F766E,color:#fff
+    style Admin fill:#0F766E,color:#fff
+    style Server fill:#1E293B,color:#fff
+    style PG fill:#B45309,color:#fff
+    style Redis fill:#B45309,color:#fff
+    style MinIO fill:#B45309,color:#fff
 ```
-┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
-│ Visitor SDK  │────▶│  Go Server        │────▶│  PostgreSQL   │
-│ (~15KB gzip) │     │  (Gin + WebSocket)│     │  (metadata)   │
-└─────────────┘     │                   │     └──────────────┘
-                    │  Hub-and-spoke    │     ┌──────────────┐
-┌─────────────┐     │  architecture     │────▶│  Redis        │
-│ Admin UI     │◀───▶│  All traffic via  │     │  (presence)   │
-│ (Vue 3 SPA)  │     │  central server  │     └──────────────┘
-└─────────────┘     │                   │     ┌──────────────┐
-                    │  Single binary    │────▶│  MinIO        │
-                    │  (Go embed)       │     │  (event store) │
-                    └──────────────────┘     └──────────────┘
-```
+
+**Hub-and-spoke** — all traffic flows through the central server. Single binary (Go embed), no external CDN, no third-party loaders.
 
 Tech stack: **Go 1.22** · **Vue 3** · **PostgreSQL 16** · **Redis 7** · **MinIO** · **rrweb** · **coder/websocket**
 
@@ -144,35 +132,26 @@ See the blog post: [How We Built a Self-Hosted Session Replay Alternative to Ful
 
 ---
 
+## Key design decisions
+
+| Principle | Why |
+|---|---|
+| **Data sovereignty** | Every visitor action, operator chat, and session recording lives in **your** PostgreSQL / Redis / MinIO. No third-party calls, no external dependencies. |
+| **AGPL-3.0 strong copyleft** | Every modification must be open-sourced. Cloud vendors cannot take this and re-sell it as SaaS. License-level hard protection. |
+| **Standard stack, no lock-in** | Go 1.22 + Vue 3 + PostgreSQL 16 + Redis 7 + MinIO. Industry-standard at every layer. The schema is yours. |
+| **~15KB gzip SDK** | Lightweight visitor SDK, served from your own domain. No CDN dependency, no third-party script loaders. |
+
+---
+
 ## Known limits (read before production)
 
-1. **Single-instance hub (no horizontal scaling)**
-   WebSocket routing uses an in-process map (`server/internal/hub/hub.go`).
-   Multi-instance deployment (2+ servers behind a load balancer) silently breaks —
-   visitors and operators on different instances can't see each other. The system
-   does not error; it just appears broken. To scale horizontally, introduce Redis
-   Pub/Sub or NATS as the message bus.
+1. **Single-instance hub (no horizontal scaling)** — WebSocket routing uses an in-process map (`server/internal/hub/hub.go`). Multi-instance deployment (2+ servers behind a load balancer) silently breaks — visitors and operators on different instances can't see each other. To scale horizontally, introduce Redis Pub/Sub or NATS as the message bus.
 
-2. **500 WS/room concurrency target is not load-tested**
-   PLAN.md drives single-tenant / hub-and-spoke / 1:1 locking decisions off the
-   "500 WS/room" target, but v1 has not been load-tested. Defaults
-   (`PG_MAX_CONNS=25` / `REDIS_POOL_SIZE=50`) are empirical. Capacity for your
-   workload must be verified by the deployer.
+2. **500 WS/room concurrency target is not load-tested** — PLAN.md drives single-tenant / hub-and-spoke / 1:1 locking decisions off the "500 WS/room" target, but v1 has not been load-tested. Defaults (`PG_MAX_CONNS=25` / `REDIS_POOL_SIZE=50`) are empirical. Capacity for your workload must be verified by the deployer.
 
-3. **OSS project ships no production topology**
-   docker-compose `prod` profile is reference only. Real production topology
-   (VM / k8s / reverse proxy / TLS / backup / monitoring / log aggregation /
-   resource limits) is the deployer's call. This repo guarantees only:
-   - Repeatable dev / CI paths
-   - Release binary is fail-secure (rejects weak configs by default — see [`docs/audits/`](./docs/audits/))
-   - `/healthz` + `/readyz` dependency health checks
+3. **OSS project ships no production topology** — docker-compose `prod` profile is reference only. Real production topology (VM / k8s / reverse proxy / TLS / backup / monitoring / log aggregation / resource limits) is the deployer's call. This repo guarantees only repeatable dev/CI paths, a fail-secure release binary, and `/healthz` + `/readyz` dependency health checks.
 
-4. **Trace_id end-to-end propagation (closed in slice 1z)**
-   operator browser → server → visitor SDK → server → operator forms a complete
-   trace_id loop:
-   - admin SPA injects `X-Trace-Id` on every REST call (`admin/src/api/client.ts`)
-   - visitor SDK caches trace_id on operator command, inherits across the next 10 events or 5s (`visitor-sdk/src/transport/ws.ts`)
-   - server `TraceMiddleware` + WS handler restore ctx trace_id
+4. **Trace_id end-to-end propagation (closed in slice 1z)** — operator browser → server → visitor SDK → server → operator forms a complete trace_id loop: admin SPA injects `X-Trace-Id` on every REST call; visitor SDK caches trace_id on operator command; server `TraceMiddleware` + WS handler restore ctx trace_id.
 
 ---
 
@@ -191,6 +170,19 @@ v1 is shipped. Post-v1, prioritized (see [`PLAN.md`](./PLAN.md) §8 for full bac
 
 - [How We Built a Self-Hosted Session Replay Alternative to FullStory](https://pinconsole.com/blog/building-self-hosted-session-replay/) (EN) · [中文](https://pinconsole.com/blog/self-hosted-fullstory-alternative/)
 - [AGPL-3.0 vs MIT: Why We Chose AGPL for Our Open Source Project](https://pinconsole.com/blog/agpl-vs-mit/) (EN) · [中文](https://pinconsole.com/blog/agpl-vs-mit-zh/)
+
+---
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+1. Read [`docs/project-status.md`](./docs/project-status.md) — this file is the single source of truth for project state and architecture.
+2. Check open [Issues](https://github.com/iannil/pinconsole/issues) — items tagged `good first issue` are great starting points.
+3. Open a [Discussion](https://github.com/iannil/pinconsole/discussions) before starting significant work — we align first, build second.
+4. Follow the commit conventions in [`CLAUDE.md`](./CLAUDE.md) — clear, small, single-purpose commits.
+
+**All contributions are assumed to be AGPL-3.0 licensed.** See [`CONTRIBUTING.md`](./CONTRIBUTING.md) (coming soon) for full details.
 
 ---
 

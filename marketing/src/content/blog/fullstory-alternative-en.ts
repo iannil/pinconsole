@@ -67,6 +67,11 @@ export const fullstoryAlternativeEn: BlogContent = {
       },
     ],
   },
+  relatedPosts: [
+    { title: 'Building a Production WebSocket Hub for 500 Concurrent Connections', url: '/en/blog/websocket-hub-500-concurrent/', description: 'The real-time architecture behind PinConsole\'s event pipeline.' },
+    { title: 'Building Open-Source Co-Browsing: How We Made Two Browsers Share One Session', url: '/en/blog/building-co-browsing/', description: 'Two-way co-browsing built on rrweb, WebSocket hub routing, and atomic claim protocol.' },
+    { title: 'Privacy by Design in Open-Source Session Replay', url: '/en/blog/privacy-by-design/', description: 'How PinConsole implements GDPR-first session monitoring.' },
+  ],
   cta: {
     title: 'Try PinConsole Today',
     subtitle: 'Self-hosted in 5 minutes. AGPL-3.0. Your data, your servers.',

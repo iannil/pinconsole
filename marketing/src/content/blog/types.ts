@@ -31,6 +31,7 @@ export interface BlogContent {
   content: {
     sections: BlogSection[];
   };
+  relatedPosts?: { title: string; url: string; description: string }[];
   cta: {
     title: string;
     subtitle: string;

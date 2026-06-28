@@ -24,7 +24,67 @@ const posts = [
     desc: 'A technical deep-dive into building PinConsole — Go backend, rrweb DOM capture, MinIO storage, and a single-binary deployment model.',
     tags: ['Engineering', 'Architecture', 'Self-Hosted'],
   },
+  {
+    title: 'Building Open-Source Co-Browsing: How We Made Two Browsers Share One Session',
+    url: '/blog/building-co-browsing',
+    date: '2026-06-28',
+    desc: 'Inside PinConsole\'s bidirectional co-browsing — rrweb node ID selectors, 1:1 operator locking, hub-and-spoke WebSocket routing, and safety by design.',
+    tags: ['Engineering', 'Co-Browsing', 'WebSocket'],
+  },
+  {
+    title: 'Privacy by Design in Open-Source Session Replay: Building GDPR-First Surveillance',
+    url: '/blog/privacy-by-design',
+    date: '2026-06-28',
+    desc: 'Opt-in consent, selective masking, right-to-be-forgotten, and 30-day retention — building GDPR-first visitor surveillance that\'s self-hosted and auditable.',
+    tags: ['Privacy', 'GDPR', 'Security'],
+  },
+  {
+    title: 'Defense in Depth for Session Replay: Building Anti-Bot Infrastructure in Go',
+    url: '/blog/defense-in-depth',
+    date: '2026-06-28',
+    desc: 'Rate limiting, behavioral analysis, SDK fingerprinting, and WebSocket auth — the four-layer anti-bot defense behind PinConsole.',
+    tags: ['Security', 'Anti-Bot', 'Engineering'],
+  },
+  {
+    title: 'Building a Production WebSocket Hub for 500 Concurrent Connections',
+    url: '/blog/websocket-hub-500-concurrent',
+    date: '2026-06-28',
+    desc: 'Goroutine-per-connection, non-blocking fan-out, Redis Stream batching, and MinIO flush patterns — the real-time architecture behind PinConsole.',
+    tags: ['Engineering', 'WebSocket', 'Architecture'],
+  },
+  {
+    title: 'Sustainable Open Source: AGPL-3.0 and Commercial Licensing at PinConsole',
+    url: '/blog/open-source-business-model',
+    date: '2026-06-28',
+    desc: 'No licensing servers, no sales pipeline, no contributor agreements. A transparent look at the business model behind a self-hosted open source project.',
+    tags: ['Open Source', 'Business', 'AGPL'],
+  },
 ];
+const collectionPageTitle = 'Blog — PinConsole';
+const collectionPageDesc = 'PinConsole official blog: technical deep-dives, architecture decisions, and product updates.';
+
+const blogJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'CollectionPage',
+      '@id': canonicalUrl,
+      name: collectionPageTitle,
+      description: collectionPageDesc,
+      url: canonicalUrl,
+      inLanguage: 'en-US',
+      isPartOf: { '@type': 'Blog', '@id': `${siteUrl}/en/blog/`, name: 'PinConsole Blog' },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${canonicalUrl}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'PinConsole', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: canonicalUrl },
+      ],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -60,6 +120,7 @@ const posts = [
     <link rel="mask-icon" href="/favicon.svg" color="#10B981" />
 
     <link rel="stylesheet" href={fontsCssUrl} />
+    <script type="application/ld+json" set:html={JSON.stringify(blogJsonLd)} />
   </head>
   <body>
     <Header content={enContentHeader} />

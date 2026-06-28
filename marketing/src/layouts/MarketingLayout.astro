@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import fontsCssUrl from '../styles/fonts.css?url';
+import { APP_VERSION } from '../constants';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Footer from '../components/Footer.astro';
@@ -54,7 +55,7 @@ const jsonLd = {
         `${siteUrl}/screenshots/cobrowse.webp`,
       ],
       featureList: 'Session replay, Co-browsing, Real-time visitor monitoring, Popup chat, Anti-bot protection, Self-hosted, Open source',
-      softwareVersion: '1.0.0',
+      softwareVersion: APP_VERSION,
       offers: {
         '@type': 'Offer',
         price: '0',

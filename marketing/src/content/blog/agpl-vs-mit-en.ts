@@ -51,6 +51,10 @@ export const agplVsMitEn: BlogContent = {
       },
     ],
   },
+  relatedPosts: [
+    { title: 'Sustainable Open Source: AGPL-3.0 and Commercial Licensing at PinConsole', url: '/en/blog/open-source-business-model/', description: 'How AGPL-3.0 and commercial licensing work together to fund open-source development.' },
+    { title: 'How We Built a Self-Hosted Session Replay Alternative to FullStory', url: '/en/blog/building-self-hosted-session-replay/', description: 'The architecture behind PinConsole — Go, rrweb, MinIO, and single-binary deployment.' },
+  ],
   cta: {
     title: 'Self-host PinConsole — it\'s AGPL-3.0 free',
     subtitle: 'No registration required. No session limits. Your data, your servers.',
