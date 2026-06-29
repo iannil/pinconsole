@@ -59,6 +59,10 @@ const jsonLd = {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script is:inline>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});</script>
     {gaId && <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />}
+    {gaId && <script is:inline define:vars={{ gaId }}>
+      gtag('js', new Date());
+      gtag('config', gaId, { anonymize_ip: true });
+    </script>}
   </head>
   <body>
     <Header content={zhContentHeader} />

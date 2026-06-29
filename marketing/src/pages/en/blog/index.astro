@@ -5,6 +5,8 @@ import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import { enContentHeader } from '../../../content/nav-shared';
 
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || '';
+
 const siteUrl = 'https://pinconsole.com';
 const canonicalUrl = `${siteUrl}/en/blog/`;
 const ogImageUrl = `${siteUrl}/og-image.webp`;
@@ -121,6 +123,29 @@ const blogJsonLd = {
 
     <link rel="stylesheet" href={fontsCssUrl} />
     <script type="application/ld+json" set:html={JSON.stringify(blogJsonLd)} />
+
+    <!-- GA4 Consent Mode v2 — default denied -->
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500,
+      });
+    </script>
+
+    {gaId && (
+      <Fragment>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+        <script is:inline define:vars={{ gaId }}>
+          gtag('js', new Date());
+          gtag('config', gaId, { anonymize_ip: true });
+        </script>
+      </Fragment>
+    )}
   </head>
   <body>
     <Header content={enContentHeader} />

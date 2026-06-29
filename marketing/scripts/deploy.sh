@@ -164,6 +164,10 @@ cmd_secrets() {
 
 cmd_build() {
     step "构建静态站点（astro build）"
+    # 从 wrangler.toml [vars] 导出 PUBLIC_* 变量给构建时 Vite 使用
+    # wrangler.toml [vars] 仅在 wrangler pages dev 运行时注入，
+    # 但 import.meta.env.PUBLIC_* 需要在 astro build 时由 Vite 静态替换
+    eval "$(grep '^PUBLIC_' wrangler.toml | sed 's/ = /=/g; s/^/export /')"
     pnpm build
     info "✅ build 完成：$(ls -1 dist/ | head -5 | tr '\n' ' ')"
 }

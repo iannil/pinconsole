@@ -14,7 +14,7 @@ SITE_URL = "https://pinconsole.com"
 CONTACT_EMAIL = "contact@pinconsole.com"
 TURNSTILE_SITE_KEY = "0x4AAAAAADpMi0AZU7xEXtzr"
 CF_WEB_ANALYTICS_TOKEN = ""
-PUBLIC_GA_MEASUREMENT_ID = ""
+PUBLIC_GA_MEASUREMENT_ID = "G-ELP9L7M8GB"
 
 # Secrets — set via `wrangler pages secret put <NAME>` (NEVER commit):
 #   RESEND_API_KEY     — Resend.com API key for outbound email
