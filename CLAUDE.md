@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目定位
 
-构建竞品的**开源替代品**。不考虑客户获取与销售——不做计费、注册流程、营销页。专注技术核心：访客实时监控 + 运营互动 + 录像回放 + （v1 之后）低代码页面编辑器。
+构建竞品的**开源替代品**(对标某商业竞品的技术核心)。仓库分两层(详见 [`CONTEXT.md`](CONTEXT.md) 术语表 + [`docs/adr/0001-license-split.md`](docs/adr/0001-license-split.md)):
 
-License：**AGPL-3.0**（防止云厂商 SaaS 化）。
+- **OSS Core**(`server/` `admin/` `visitor-sdk/` `landing/` `packages/` `e2e/`):**AGPL-3.0-or-later**,用户自部署。**产品本体**不考虑客户获取与销售——不做计费、注册流程、多租户 SaaS。专注技术核心:访客实时监控 + 运营互动 + 录像回放 + (v1 之后)低代码页面编辑器。
+- **Marketing Layer**(`marketing/`):**UNLICENSED / All Rights Reserved**,maintainer 独立维护的咨询转化官网(Astro + Cloudflare Pages + Workers + D1 + Resend),含 blog / use-cases / alternatives / lead 表单。**不进** OSS 分发,用户部署的实例**不**含 marketing 代码,也**不**回传询盘/分析数据给 maintainer。
 
 ## 项目指南
 
@@ -98,43 +99,46 @@ License：**AGPL-3.0**（防止云厂商 SaaS 化）。
 
 ## 事实来源优先级
 
-1. `PLAN.md` — 架构、产品定位、技术栈、切片拆分、决策理由（架构与产品层冲突以此为准）
-2. 本文件 — 给 Claude 的工作提示
+1. `PLAN.md` — 架构、产品定位、技术栈、切片拆分、决策理由(架构与产品层冲突以此为准)
+2. `CONTEXT.md` — 项目术语表(grill-with-docs 维护,术语冲突以此为准)
+3. `docs/project-status.md` — 当前阶段快照(v1 已发布 v0.1.2;post-v1 进展)
+4. `docs/adr/` — 难逆架构决策记录(license 拆分、rrweb 硬分叉等)
+5. 本文件 — 给 Claude 的工作提示
 
 ## 已锁定的架构决策（详见 PLAN.md）
 
 不要重新讨论这些——除非用户明确要求重审：
 
-- **范围**：v1 是端到端最小切片（不含页面编辑器、Tauri、自定义域名）；完整对标竞品是终局
+- **范围**:v1 是端到端最小切片(**v0.1.2 已发布 2026-06-23**);post-v1 已完成 **Widget Config Editor**(pe-1/2/3)与**自定义域名**(cd-1/cd-2);Tauri、Page Editor(拖拽 landing 编辑器,与 Widget Config Editor 是不同概念)与多租户仍未做
 - **租户**：单租户部署，schema 预留 `tenant_id`；**不做多租户 SaaS**（用户明确"不考虑客户和销售"）
 - **管道**：中心化 hub-and-spoke，所有流量经后端（不引入 WebRTC、P2P）
 - **仓库**：Monorepo，Go embed 所有静态资源（admin SPA、SDK、落地页），单二进制部署
 - **后端**：Go + Gin（**不用 Go-Zero**）+ coder/websocket（**不用 gorilla、Centrifugo、melody**）+ 自定义 hub
 - **存储**：PostgreSQL（元数据）+ Redis（presence/限流/hot）+ MinIO（rrweb 事件流 + 选择性截图）
-- **前端**：Vue 3 + TypeScript + Vite + Pinia + Element Plus + Vue I18n（中英双语 from day 1）
+- **前端**:Vue 3 + TypeScript + Vite + Pinia + Vue I18n(中英双语 from day 1);**Element Plus 已于切片 1q 移除**(2026-06-18),改用手撸样式 + Calm Crafted 设计 token(详见 [`docs/design-system.md`](docs/design-system.md))
 - **SDK**：TypeScript + Vite，构建产物 Go embed 至 `/sdk.js` 同源分发
 - **co-browsing**：rrweb 双向；元素选择器用 rrweb 节点 ID（不用 CSS/XPath）；代填防抖动 300ms
 - **截图**：选择性（仅 canvas/WebGL/跨域 iframe 触发，1fps WebP q70），不做持续全量
 - **认证**：Email/password + bcrypt + HttpOnly cookie；WebSocket 同源依赖 cookie；MFA 可选
 - **多运营**：1:1 锁定（claim/release）
 - **可观测**：仅 slog 结构化 JSON 日志到 stdout（暂不加 metrics/tracing/Sentry）
-- **域名**：v1 仅平台域名（`app.host/page/:id`）；自定义域名是后续切片
+- **域名**:v1 仅平台域名(`app.host/page/:id`);**自定义域名已由 post-v1 cd-1/cd-2 完成**(2026-06-26~27,certmagic + Let's Encrypt ACME + Host-header 路由,详见 [`docs/project-status.md`](docs/project-status.md) §2)
 - **浏览器**：Modern evergreen desktop + mobile 访客；运营仅桌面
 
 ## 实施顺序（PLAN.md §7）
 
-v1 切片拆为 1a-1j 共 10 个子切片，按顺序推进。**始终从下一个子切片开始，不要跳步**。每个子切片完成后才进入下一个。
+v1 主干切片(1a-1j) + v1 加固阶段(1k-1z) + v1 测试深化(1aa-1ai-h) 均已完成并合并;当前 post-v1 阶段(Widget Config Editor / 自定义域名 / vendor-rrweb 已完成)。切片进度全表见 [`docs/project-status.md`](docs/project-status.md) §5。"始终从下一个子切片开始,不要跳步"规则**仅适用于单一连续切片序列内部**(如 1a→1b→...→1j);post-v1 多线索并行不适用。
 
 ## 给后续 Claude 实例的工作提示
 
 - **任何架构层的工作开始前先读 `PLAN.md`**。如果当前任务与 PLAN.md 决策冲突，停下来跟用户确认，不要擅自改变方向。
-- **不要扩大范围**。PLAN.md §8 列出 post-v1 backlog；v1 切片范围见 §7。如果用户要求实现 v1 之外的能力（页面编辑器、Tauri、自定义域名、多租户），先确认是否在调整 PLAN.md，再动手。
+- **不要扩大范围**。PLAN.md §8 列出 post-v1 backlog 与已完成项。如果用户要求实现 backlog 之外的能力(Tauri、Page Editor、多租户),先确认是否在调整 PLAN.md,再动手。**注意**:Widget Config Editor(pe-1/2/3)与自定义域名(cd-1/cd-2)已不在 backlog,已完成。
 - **不要建多租户**。schema 预留 `tenant_id` 但 v1 不激活。"不考虑客户和销售"是用户明确指令。
 - **安全和防爬虫是一等公民**（PLAN.md §1/§5 明确）。任何对外接口默认 rate limit + UA 黑名单 + 行为分析 + fingerprint 纵深防御。
 - **WebSocket 并发目标（500）是单租户/单房间**，不是系统全局。不要为系统级广播过度设计 socket 层。
 - **不要为不存在的服务写代码**。新增配置/CI/脚本前先确认对应基础设施已就位（当前已存在：`docker-compose.yml`、`Makefile`、`.github/workflows/{ci,release}.yml`）；文档与代码状态分歧时，优先信任代码 + grep 验证，并修正文档。
 - **i18n from day 1**。所有用户可见文案走 Vue I18n key，不要硬编码中英文。
 - **前端设计基线见 [`docs/design-system.md`](docs/design-system.md)**(Calm Crafted · IBM Plex · Stone+Teal+Amber · Phosphor · CSS Variables)。所有 admin/SDK 视觉决策以此为准。禁用紫渐变 / Inter / slate+indigo / emoji-as-icon / Element Plus 默认蓝。
-- **AGPL-3.0 一等公民**。任何引入第三方代码前检查 license 兼容性。
+- **License 边界一等公民**。OSS Core(`server/` `admin/` `visitor-sdk/` `landing/` `packages/` `e2e/`)是 AGPL-3.0-or-later,引入第三方代码前检查 license 兼容性;`marketing/` 是 **UNLICENSED**(maintainer 专属)。**不允许**从 marketing/ 复制代码到 OSS Core,也不允许反向(若必须,先在 [`docs/adr/`](docs/adr/) 记录决策)。
 - **测试深度判定遵循 [`docs/standards/verification-depth.md`](docs/standards/verification-depth.md)**（🟢 verified-deep / 🟡 verified-shallow / 🔴 implemented-unverified 三级 + R2 rubric）。所有完成报告必须带深度 badge;新增测试要说明升级了哪个切片的深度。
 - 提交前按键监听在 GDPR/CCPA 下属敏感处理——涉及此功能时主动提示用户合规风险（详见 PLAN.md §10）。
