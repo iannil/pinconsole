@@ -4,7 +4,7 @@
 > 触发更新：用户陈述偏好、发现错误修复模式、建立项目规则、关键决策变化。
 > 与 [`memory/daily/`](./daily/) 的关系：daily 是不可变日志（流），MEMORY 是当前状态（沉积）。
 
-**最后更新**：2026-06-27(cd-1 + cd-2 自定义域名完成)
+**最后更新**：2026-06-30(grill-with-docs 审计 → marketing/ license 改 UNLICENSED + ADR-0001 锁定 OSS/marketing license 拆分 + CONTEXT.md 创建)
 
 ---
 
@@ -84,7 +84,7 @@
 - **不做（产品本身，永久）**：多租户 SaaS、计费、注册流、云托管服务
 - **v1 不做（post-v1 切片）**：页面编辑器、Tauri 桌面端、自定义域名
 - **v1 做**：监控 + 全套互动 + 录像 + 反爬虫 + i18n + CI（已完成）
-- **maintainer 营销层（2026-06-22 解禁）**：`marketing/` 独立目录做 maintainer 自有官网 + 咨询转化（Astro + Cloudflare Pages + Workers + D1）；**与 OSS `landing/` 严格区隔**——OSS 用户部署不包含 maintainer 营销代码，用户实例不收集询盘数据。详见 [`docs/progress/2026-06-22-landing-readme-design.md`](../docs/progress/2026-06-22-landing-readme-design.md)
+- **maintainer 营销层（2026-06-22 解禁，2026-06-30 license 拆分）**：`marketing/` 独立目录做 maintainer 自有官网 + 咨询转化（Astro + Cloudflare Pages + Workers + D1）；**License：UNLICENSED / All Rights Reserved**（不再 AGPL；理由：AGPL share-alike 会强制营销文案/客户案例公开可被竞品 fork）；**与 OSS `landing/` 严格物理 + 法律区隔**——OSS 用户部署不包含 maintainer 营销代码，用户实例不收集询盘数据。详见 [`docs/adr/0001-license-split.md`](../docs/adr/0001-license-split.md) + [`docs/progress/2026-06-22-landing-readme-design.md`](../docs/progress/2026-06-22-landing-readme-design.md)
 
 ### 部署目标
 - OSS 自托管为主

@@ -89,4 +89,8 @@ A simple admin viewer is intentionally not provided — maintainers should query
 
 ## License
 
-AGPL-3.0-or-later — same as the main repo. See root `LICENSE`.
+**UNLICENSED / All Rights Reserved.** This directory is the maintainer's
+proprietary marketing surface and is **not** part of the AGPL-licensed OSS
+distribution. See `./LICENSE` for the full proprietary notice, and
+`../docs/adr/0001-license-split.md` for the rationale behind the
+OSS (AGPL) / marketing (UNLICENSED) split.

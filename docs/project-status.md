@@ -8,13 +8,13 @@
 >
 > 状态变化时直接编辑本文件（rolling），不保留历史快照（用 git 历史追溯）。
 
-**最后更新**:2026-06-27(page-editor 全部 3 切片完成 + fork-3b 测试债补全 + Go 后端三包 90%+ + docs 全量归档整理)
+**最后更新**:2026-06-30(grill-with-docs 审计 → 锁定 OSS Core/marketing Layer license 拆分 [ADR-0001](./adr/0001-license-split.md) + 创建 [CONTEXT.md](../CONTEXT.md) + 修复 F4/F5/F6/F7/F8 文档分歧)
 
 ---
 
 ## 1. 一句话定位
 
-构建一款**实时访客监控 + 运营互动 + 录像回放**的 ToB 工具的**开源替代品**——目标对标某商业竞品,但不考虑客户获取与销售(不做计费、注册、营销页),专注技术核心。License:AGPL-3.0。
+构建一款**实时访客监控 + 运营互动 + 录像回放**的 ToB 工具的**开源替代品**——目标对标某商业竞品。**产品本体**(OSS Core,AGPL-3.0)不考虑客户获取与销售(不做计费、注册、多租户),专注技术核心。**Maintainer 在 `marketing/` 目录独立维护**专有(UNLICENSED)咨询转化官网接收 ToB 询盘——这是 PLG + 咨询销售路径,与 OSS Core 严格法律 + 物理隔离,详见 [`docs/adr/0001-license-split.md`](./adr/0001-license-split.md) 与 [`CONTEXT.md`](../CONTEXT.md)。
 
 ## 2. 当前阶段
 
@@ -115,9 +115,9 @@
 | observability 包覆盖 | **91.7%** 🟢(Go-1,83.3%→91.7%) |
 | logging 包覆盖 | **98.0%** 🟢(Go-2,79.6%→98.0%) |
 | hub 包覆盖 | **94.1%** 🟢(Go-3,72.4%→94.1%,race -count=3 通过) |
-| storage 包覆盖 | **86.5%** 🟡(Go-4,57.6%→86.5%;未达 90% 目标 3.5pp,剩余 scan 边缘分支 ROI 低) |
-| recording 包覆盖 | **77.7%** 🟡(Go-5,48.0%→77.7%;未达 90% 目标 12.3pp,5 表 cascade + flushSession 错误路径 ROI 低) |
-| api 包覆盖 | **47.9%** 🟡(Go-6 Commit 1,38.2%→47.9%;未达 90% 目标 42.1pp,WS handlers + HTTP 业务路径留 backlog) |
+| storage 包覆盖 | **91.5%** 🟢(Go-4 → 后续 commit 提升;57.6% → 86.5% → 91.5%) |
+| recording 包覆盖 | **90.7%** 🟢(Go-5 → 2026-06-26 commit `e24f00b` snapshot Meta 缓存 0%→100%;48.0% → 77.7% → 90.7%) |
+| api 包覆盖 | **90.0%** 🟢(Go-6 → 2026-06-26 commit `47b6460` authenticateOperatorWS 81%→90.5%;38.2% → 47.9% → 90.0%) |
 | cmd/server 包覆盖 | 4.9% 🔴(main 入口,e2e 兜底) |
 | vitest coverage 配置 | ✅ 已配 v8 provider(TS-1);admin **85.67%**(TS-3) / visitor-sdk 36.05%(TS-2 partial,src/index.ts 留 backlog) |
 
@@ -291,15 +291,19 @@
 - 任何深度 badge 虚标
 - 文档与代码状态分歧
 
-**结论**:✅ **v1 release ready**。
+**结论**:✅ **v1 已发布** — git tag `v0.1` / `v0.1.1` / `v0.1.2`(2026-06-23),VERSION = `0.1.2`。
 
 ### post-v1 候选（按优先级）
 
-1. **自定义域名**(PLAN.md §8 #3)— DNS 验证 + Let's Encrypt ACME + Host-header 路由
-2. **页面编辑器**(PLAN.md §8 #2)— 拖拽 / 低代码 / JSON schema → Go 模板渲染
+1. **自定义域名**(PLAN.md §8 #2)— DNS 验证 + Let's Encrypt ACME + Host-header 路由
+2. **Page Editor**(PLAN.md §8 #3)— 拖拽 / 低代码 / JSON schema → Go 模板渲染(landing 页可视化编辑器;**注意:与已完成的 Widget Config Editor 是两个独立功能**,详见 [`CONTEXT.md`](../CONTEXT.md) 术语表)
 3. **Tauri 桌面端**(PLAN.md §8 #4)— Win + Mac,复用 admin SPA
 4. **fork-3b 上游测试转 Playwright** — 5 组 snapshot/replayer/observer/shadow DOM/iframe/mask（~2-3d）
 5. **反爬加固**(PLAN.md §8 #5)— CAPTCHA + honeypot + 动态类名/ID
+
+**已完成**(2026-06-26):
+
+- ✅ **Widget Config Editor**(PLAN.md §8 #1,pe-1/2/3,commits `19eca36`/`42a5625`/`1dcda74`):运营表单式编辑 popup/chat/banner/consent widget 文案与基础样式 → PG `widget_configs` 表 → SDK init GET `/api/widget-config` 配置驱动渲染。spec: [`reports/completed/2026-06-26-page-editor-spec.md`](./reports/completed/2026-06-26-page-editor-spec.md)
 
 ## 8. LLM 协作提示
 

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "pinconsole maintainer marketing site — Astro + Vue, deployed to Cloudflare Pages + Workers + D1",
-  "license": "AGPL-3.0-or-later",
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

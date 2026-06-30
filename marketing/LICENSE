@@ -1,0 +1,20 @@
+Copyright (c) 2026 pinconsole maintainer (iannil). All rights reserved.
+
+This software and its associated content — including but not limited to
+source code, build scripts, blog posts, use-case pages, alternatives
+pages, marketing copy, and lead-capture workflows — is proprietary and
+confidential.
+
+Unauthorized copying, modification, merger, publication, distribution,
+sublicensing, and/or deployment of this software via any medium is
+strictly prohibited without prior written consent from the copyright
+holder.
+
+The author reserves the right to grant separate commercial licenses.
+
+This LICENSE applies ONLY to the `marketing/` directory. The rest of
+this repository is licensed under AGPL-3.0-or-later — see the root
+`LICENSE` file.
+
+For the rationale behind this split, see
+`docs/adr/0001-license-split.md`.

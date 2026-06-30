@@ -8,6 +8,8 @@
 
 **v1 主干完成后（2026-06-22）的策略扩展**：maintainer 在 `marketing/` 独立目录维护咨询转化官网（Astro + Cloudflare），接收 ToB 评估/部署/定制/合规询盘。这是 PLG + 咨询式销售路径，类似 Posthog/Plausible。**产品本身仍然**：OSS 自托管、AGPL-3.0、不计费、不做注册流、不做多租户。`marketing/` 与 OSS `landing/` 严格区隔——OSS 用户部署不包含 maintainer 营销代码，用户部署的实例不收集询盘数据。详见 [`docs/progress/2026-06-22-landing-readme-design.md`](./docs/progress/2026-06-22-landing-readme-design.md)。
 
+**License 拆分（2026-06-30 审计后锁定，[`docs/adr/0001-license-split.md`](./docs/adr/0001-license-split.md)）**：`marketing/` 目录及其全部内容（blog / use-cases / alternatives / lead 表单 / GA 等）license 改为 **UNLICENSED / All Rights Reserved**，与 AGPL 主仓**法律上**隔离。理由：AGPL 的 share-alike 会强制 maintainer 写的营销文案/客户案例公开可被竞品 fork；UNLICENSED 是 Vercel 等公司 marketing repo 的通行做法。物理边界（独立目录 + 独立 `package.json` + 独立 deploy 目标 Cloudflare Pages、从不进 Go embed）确保 OSS 部署者不会意外分发 marketing 内容。
+
 ## 2. v1 切片范围
 
 **v1 切片目标**：端到端最小可演示——1 个静态落地页上的访客被 1 个运营实时监控 + 全套互动 + 完整录像。覆盖竞品能力密度（除页面编辑器、Tauri 桌面端、自定义域名外）。
@@ -63,29 +65,37 @@
 | 认证 | Email/password + bcrypt + HttpOnly cookie；WebSocket 同源依赖 cookie；MFA 可选 | Admin SPA 同源；最简安全方案 |
 | 浏览器矩阵 | Modern evergreen desktop + mobile 访客；运营仅桌面 | 中国 H5 营销移动必不可少；运营桌面场景 |
 
-## 6. 仓库布局（提案）
+## 6. 仓库布局（实际）
 
 ```
 pinconsole/
 ├── server/                # Go monolith
-│   ├── cmd/               # main.go
+│   ├── cmd/server/        # main.go + embed.go + embedded/{admin,sdk,landing}/
 │   ├── internal/
-│   │   ├── auth/          # JWT/cookie/session
-│   │   ├── api/           # Gin REST handlers
+│   │   ├── api/           # Gin REST handlers（auth/middleware 集成于此）
 │   │   ├── hub/           # WebSocket hub + rooms
 │   │   ├── recording/     # rrweb 归档到 MinIO
-│   │   ├── ratelimit/     # Redis-based
-│   │   ├── antiscrape/    # UA + behavior + fingerprint
-│   │   └── storage/       # PG/Redis/MinIO adapters
-│   ├── migrations/        # SQL migrations
-│   └── embed.go           # //go:embed admin/ landing/ sdk/
-├── admin/                 # Vue3 SPA (运营端)
+│   │   ├── antiscrape/    # UA + behavior + fingerprint + rate limit（Redis）
+│   │   ├── storage/       # PG/Redis/MinIO adapters
+│   │   ├── config/        # env + TrustedProxies
+│   │   ├── cert/          # TLS 证书加载
+│   │   ├── logging/       # slog 结构化日志封装
+│   │   ├── observability/ # LifecycleTracker / event_type / trace_id
+│   │   ├── privacy/       # GDPR / IP 截断 / consent
+│   │   ├── proto/         # Go ↔ TS 共享类型（与 packages/proto 对齐）
+│   │   └── pages/         # 静态页面 / 模板渲染
+│   └── migrations/        # SQL migrations + embed.go
+├── admin/                 # Vue3 SPA（运营端）
 ├── visitor-sdk/           # TypeScript SDK
-├── landing/               # 静态落地页模板（后期编辑器输出）
-├── docs/                  # 中英双语文档
+├── packages/              # 跨端共享包（replay-core / proto）
+├── landing/               # 静态落地页模板（OSS，Page Editor 后期输出）
+├── e2e/                   # Playwright 验收测试
+├── marketing/             # ⚠️ maintainer 专属，UNLICENSED，不进 OSS 分发
+├── docs/                  # 中英双语文档 + adr/ + reports/ + audits/
 ├── docker-compose.yml     # Go + PG + Redis + MinIO
-├── .github/workflows/     # CI/CD
-└── LICENSE                # AGPL-3.0
+├── .github/workflows/     # ci.yml + release.yml
+├── CONTEXT.md             # 项目术语表（grill-with-docs 维护）
+└── LICENSE                # AGPL-3.0（marketing/ 有独立 LICENSE 覆盖）
 ```
 
 ## 7. v1 切片内的实施顺序
@@ -157,13 +167,14 @@ pinconsole/
 
 按优先级排序：
 
-1. **页面编辑器**（拖拽 / 低代码 / JSON schema → Go 模板渲染）—— 切片 2-3
+1. **Widget Config Editor**（运营表单式编辑 popup/chat/banner/consent 文案与基础样式 → PG → SDK 配置驱动渲染）—— **✅ 已完成**（切片 pe-1/2/3，commits `19eca36`/`42a5625`/`1dcda74`，详见 [`docs/reports/completed/2026-06-26-page-editor-spec.md`](./docs/reports/completed/2026-06-26-page-editor-spec.md)）
 2. **自定义域名**（DNS 验证 + Let's Encrypt ACME + Host-header 路由）—— 1-2 周
-3. **Tauri 桌面端**（Win + Mac，复用 admin SPA）—— 1 个月
-4. **反爬加固**（CAPTCHA + honeypot + 动态类名/ID）—— 2-3 周
-5. **SSO / SAML / OIDC**（企业）—— 2 周
-6. **分析仪表盘**（漏斗 / 热力图 / 停留）—— 1-2 个月
-7. **多租户**（激活预留的 tenant_id，配额/隔离）—— 取决于商业化方向
+3. **Page Editor**（拖拽 / 低代码 / JSON schema → Go 模板渲染 landing 页）—— 切片 2-3；**注意：与 Widget Config Editor 是两个独立功能，勿混**（详见 [`CONTEXT.md`](./CONTEXT.md) 术语表）
+4. **Tauri 桌面端**（Win + Mac，复用 admin SPA）—— 1 个月
+5. **反爬加固**（CAPTCHA + honeypot + 动态类名/ID）—— 2-3 周
+6. **SSO / SAML / OIDC**（企业）—— 2 周
+7. **分析仪表盘**（漏斗 / 热力图 / 停留）—— 1-2 个月
+8. **多租户**（激活预留的 tenant_id，配额/隔离）—— 取决于商业化方向
 
 **已完成收尾**：
 
